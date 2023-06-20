@@ -1,3 +1,4 @@
 data/simulations
 Manifest.toml
 .DS_Store
+.vscode

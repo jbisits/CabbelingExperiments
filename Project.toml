@@ -1,2 +1,3 @@
 [deps]
 DirectNumericalCabbelingShenanigans = "40aaee9f-3595-48be-b36c-f1067009652f"
+Oceananigans = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"

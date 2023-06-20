@@ -16,7 +16,7 @@ initial_conditions = TwoLayerInitialConditions(isohaline)
 set_two_layer_initial_conditions!(model, initial_conditions;
                                   perturb_salinity = true,
                                   interface_location = 0.375, interface_thickness = 5000,
-                                  salinity_perturbation_width = 100))
+                                  salinity_perturbation_width = 100)
 
 ## build the simulation
 Δt = 1e-5
