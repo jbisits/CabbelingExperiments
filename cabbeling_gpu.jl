@@ -11,12 +11,11 @@ model = DNS(architecture, domain_extent, resolution, diffusivities; reference_de
 
 ## set initial conditions
 T₀ᵘ = -1.5
-isohaline = IsohalineUpperLayerInitialConditions(T₀ᵘ)
-initial_conditions = TwoLayerInitialConditions(isohaline)
-set_two_layer_initial_conditions!(model, initial_conditions;
-                                  perturb_salinity = true,
-                                  interface_location = 0.375, interface_thickness = 5000,
-                                  salinity_perturbation_width = 100)
+S₀ᵘ = 34.568
+cabbeling = CabbelingUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
+initial_conditions = TwoLayerInitialConditions(cabbeling)
+set_two_layer_initial_conditions!(model, initial_conditions, interface_location,
+                                  salinity_perturbation = true, t = 0.0001)
 
 ## build the simulation
 Δt = 1e-5
