@@ -1,0 +1,139 @@
+"""
+    module OneDModel
+One dimensional model of water column at lower resolution to compare DNS with. This model
+has a convective adjustment scheme so we can compare the onset of instability with the DNS.
+"""
+module OneDModel
+
+export run_OneDModel
+
+using Oceananigans, SeawaterPolynomials.TEOS10, GibbsSeaWater
+using Oceananigans.Units: seconds, minutes, hours, days
+using Oceananigans: ∂z_b
+
+"""
+    function run_OneDModel(salinity_initial_condition::Symbol; params)
+Run a 1D model with initial conditions that are set to cabbeling instability at interface
+between upper (quasi mixed, ``z ∈ (-100, 0)``) and lower region
+(increasing salinity gradient, ``z ∈ (-500, -100)``).
+There is a very slight temperature gradient in upper region to avoid spurios mixing.
+By default, salinity and temperature have equal diffusivity but this can be changed by
+passing a keyword argument for `convective_κz` and `background_κz` that is a `NamedTuple`
+for the `T` and `S` diffusivities.
+
+Arguments:
+- `salinity_initial_condition`, `Symbol` either `:stable`, `:cabbeling`, `:unstable` for the
+salinity in the upper layer.
+"""
+function run_OneDModel(salinity_initial_condition::Symbol;
+                    Tᵤ = -1.5,
+                    Tₗ = 0.5,
+                    Sₗ = 34.7,
+                    Sₘ = 34.75,   # maximum salinity
+                    Nz = 500,     # number of levels
+                    Lz = 500,     # ovearll depth
+     reference_density = 1028.18,
+         convective_κz = 1.0,
+         background_κz = 1e-5,
+                     ν = 1e-4,
+                    Δt = 1,       # minutes
+              savepath = "OneDModelOutput",
+            sim_length = 1,       # in days
+             save_freq = 1        # in minutes
+        )
+
+    # Grid
+    grid = RectilinearGrid(size = Nz, z = (-Lz, 0), topology=(Flat, Flat, Bounded))
+
+    # Buoyancy, using TEOS10
+    EOS = TEOS10EquationOfState(; reference_density)
+    buoyancy = SeawaterBuoyancy(equation_of_state = EOS)
+
+    ## Turbulence closure
+    closure = ConvectiveAdjustmentVerticalDiffusivity(background_νz = ν, convective_νz = ν;
+                                                       convective_κz, background_κz)
+
+    # Set temperature initial condition
+    T₀ = Array{Float64}(undef, size(grid))
+    # This adds a temperature gradient to avoid spurios convective mixing in the mixed layer
+    Tₗ_array = fill(Tₗ, 400)
+    Tᵤ_array = reverse(range(Tᵤ + 0.01, Tᵤ, length = 100))
+    T₀[:, :, :] = vcat(Tₗ_array, Tᵤ_array)
+
+    # Set the salinity initial condition
+    S₀ = Array{Float64}(undef, size(grid))
+    Sᵤ = getfield(salinity_initial_conditions, salinity_initial_condition)
+    Sᵤ_array = fill(Sᵤ, 100)
+    Sₗ_array = range(Sₘ, Sₗ, length = 400)
+    S₀[:, :, :] = vcat(Sₗ_array, Sᵤ_array)
+
+    savefile = savepath*"_"*string(salinity_initial_condition)*".jld2"
+
+    @info "Setting up model and building simulation."
+    model = NonhydrostaticModel(grid = grid,
+                                tracers = (:T, :S),
+                                buoyancy = buoyancy,
+                                closure = closure)
+
+    set!(model, T = T₀, S = S₀)
+
+    simulation = Simulation(model, Δt = Δt * minutes, stop_time = sim_length * days)
+
+    outputs = (T = model.tracers.T, S = model.tracers.S,
+               κ = save_diffusivity, ∂z_b = save_∂z_b)
+
+    simulation.output_writers[:outputs] = JLD2OutputWriter(model, outputs,
+                                            filename = savefile,
+                                            schedule = TimeInterval(save_freq * minutes))
+
+    run!(simulation)
+
+    return nothing
+
+end
+"""
+    const salinity_initial_conditions
+Salinity initial conditions for upper layer temperature of `Tᵤ = -1.5°C`.
+"""
+const salinity_initial_conditions = (stable = 34.551, cabbeling = 34.568, unstable = 34.59,
+                                     isohaline = 34.7)
+"""
+    save_∂z_b(model)
+Save the buoyancy gradient that is calculated during the simulations.
+The `ConvectiveAdjustmentVerticalDiffusivity` closure computes the buoyancy gradient using
+`∂z_b` and applies the convective diffusivity if `∂z_b < 0` and the background diffusivity
+if `∂z_b ≥ 0`.
+"""
+function save_∂z_b(model)
+
+    buoyancy_gradient = Array{Float64}(undef, model.grid.Nz)
+
+    for i ∈ 1:model.grid.Nz
+        buoyancy_gradient[i] = ∂z_b(1, 1, i, model.grid, model.buoyancy, model.tracers)
+    end
+
+    return buoyancy_gradient
+end
+"""
+    save_diffusivity(model)
+Save the diffusivity that is applied to a region using the method in the
+`ConvectiveAdjustmentVerticalDiffusivity` closure. The code obtained to do this is from
+`Oceananigans.jl` though I do not use the `@kernel` macro as I am not on a `GPU`.
+"""
+function save_diffusivity(model)
+
+    is_stableᶜᶜᶠ(i, j, k, grid, tracers, buoyancy)=∂z_b(i, j, k, grid, buoyancy, tracers)>=0
+    diffusivities = Array{Float64}(undef, model.grid.Nz)
+
+    for i ∈ 1:model.grid.Nz
+        stable_cell = is_stableᶜᶜᶠ(1, 1, i, model.grid, model.tracers, model.buoyancy)
+
+        diffusivities[i] = ifelse(stable_cell,
+                                  model.closure.background_κz,
+                                  model.closure.convective_κz)
+    end
+
+    return diffusivities
+end
+
+end # module
