@@ -5,9 +5,9 @@ has a convective adjustment scheme so we can compare the onset of instability wi
 """
 module OneDModel
 
-export run_OneDModel
+export run_OneDModel, hovmoller_plot, TShovmoller_plot
 
-using Oceananigans, SeawaterPolynomials.TEOS10, GibbsSeaWater
+using Oceananigans, SeawaterPolynomials.TEOS10, GibbsSeaWater, CairoMakie
 using Oceananigans.Units: seconds, minutes, hours, days
 using Oceananigans: ∂z_b
 
@@ -134,6 +134,58 @@ function save_diffusivity(model)
     end
 
     return diffusivities
+end
+"""
+    function hovmoller_plot(field::FieldTimeSeries, fieldname::AbstractString;
+                            zrange = nothing,
+                            colormap = :thermal)
+Hovmoller plot of a `field`. Can zoom in region by passing `zrange` argument,
+which is index of where you want to plot.
+"""
+function hovmoller_plot(field::FieldTimeSeries, fieldname::AbstractString;
+                        zrange = nothing,
+                        colormap = :thermal)
+
+    z = isnothing(zrange) ? znodes(field[1]) : znodes(field[1])[zrange]
+    t = field.times / (60 * 60) # hours
+    plot_field = isnothing(zrange) ? interior(field, 1, 1, :, :)' :
+                                     interior(field, 1, 1, zrange, :)'
+
+    fig = Figure(size = (1000, 600))
+    ax = Axis(fig[1, 1],
+            xlabel = "t (hours)",
+            xaxisposition = :top,
+            ylabel = "z (m)")
+    hm_s = heatmap!(ax, t, z, plot_field; colormap)
+    Colorbar(fig[2, 1], hm_s, label = fieldname, vertical = false, flipaxis = false)
+
+    return fig
+
+end
+"""
+    function TShovmoller_plot(S_ts::FieldTimeSeries, T_ts::FieldTimeSeries; zrange = nothing)
+Hovmoller plot of temperature and salinity from saved ouput of the 1D model. Can zoom in
+region by passing `zrange` argument, which is index of where you want to plot.
+"""
+function TShovmoller_plot(S_ts::FieldTimeSeries, T_ts::FieldTimeSeries; zrange = nothing)
+
+    z = isnothing(zrange) ? znodes(S_ts[1]) : znodes(S_ts[1])[zrange]
+    t = S_ts.times / (60 * 60) # hours
+    S = isnothing(zrange) ? interior(S_ts, 1, 1, :, :)' : interior(S_ts, 1, 1, zrange, :)'
+    T = isnothing(zrange) ? interior(T_ts, 1, 1, :, :)' : interior(T_ts, 1, 1, zrange, :)'
+
+    fig = Figure(size = (1000, 600))
+    ax = [Axis(fig[1, i],
+            xlabel = "t (hours)",
+            xaxisposition = :top,
+            ylabel = "z (m)") for i ∈ 1:2]
+    linkyaxes!(ax[1], ax[2])
+    hm_s = heatmap!(ax[1], t, z, S; colormap = :haline)
+    Colorbar(fig[2, 1], hm_s, label = "Salinity (g/kg)", vertical = false, flipaxis = false)
+    hm_t = heatmap!(ax[2], t, z, T; colormap = :thermal)
+    Colorbar(fig[2, 2], hm_t, label = "Temperature (°C)", vertical = false, flipaxis = false)
+
+    return fig
 end
 
 end # module

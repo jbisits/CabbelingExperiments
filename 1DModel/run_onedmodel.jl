@@ -11,28 +11,17 @@ run_OneDModel(:cabbeling;
 output = joinpath(@__DIR__, "OneDModelOutput_cabbeling.jld2")
 S_ts, T_ts = FieldTimeSeries(output, "S"), FieldTimeSeries(output, "T")
 κ_interface = [jldopen(output)["timeseries"]["κ"]["$t"][400] for t ∈ string.(0:1440)]
+
 using DirectNumericalCabbelingShenanigans.OutputUtilities
 
 ## Initial snapshots
 visualise_snapshot(T_ts, "Θ (°C)", 1)
 visualise_snapshot(S_ts, "S (gkg⁻ꜝ)", 1; colormap = :haline)
 
-## Hovmoller plot
-z = znodes(S_ts[1])
-t = S_ts.times / (60 * 60) # hours
-
-fig = Figure(size = (1000, 600))
-ax = [Axis(fig[1, i],
-           xlabel = "t (hours)",
-           xaxisposition = :top,
-           ylabel = "z (m)") for i ∈ 1:2]
-linkyaxes!(ax[1], ax[2])
-hm_s = heatmap!(ax[1], t, z, interior(S_ts, 1, 1, :, :)', colormap = :haline)
-Colorbar(fig[2, 1], hm_s, label = "Salinity (g/kg)", vertical = false, flipaxis = false)
-hm_t = heatmap!(ax[2], t, z, interior(T_ts, 1, 1, :, :)', colormap = :thermal)
-Colorbar(fig[2, 2], hm_t, label = "Temperature (°C)", vertical = false, flipaxis = false)
-
-fig
+## Hovmoller plots
+hplot = TShovmoller_plot(S_ts, T_ts; zrange = 300:500)
+σ₀_ts = compute_density(S_ts, T_ts)
+hplot_density = hovmoller_plot(σ₀_ts, "σ₀ (kgm⁻³)"; colormap = :dense, zrange = 300:500)
 
 ## Diffusivity
 lines(t, κ_interface)
