@@ -302,7 +302,7 @@ TableOfContents(title = "Analytic temperature and salinity evolution")
 # ╟─ced5de2d-6e19-4e32-832c-1dcdcca82642
 # ╟─faa94bce-2a04-11ee-39f3-518323d8ad0f
 # ╟─894a827f-ba32-4e79-89ce-d9663288293b
-# ╠═da22a77d-d1e0-4da6-832b-8c1134d774b4
+# ╟─da22a77d-d1e0-4da6-832b-8c1134d774b4
 # ╠═eb85c523-f36f-4028-8ac3-55439cfa048b
 # ╟─8cf080c8-70bf-48f7-9cb4-dbdb4a492941
 # ╟─0194e952-56a2-4718-8ac2-5934f044cce3
