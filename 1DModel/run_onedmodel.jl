@@ -2,10 +2,8 @@ include("onedmodel.jl")
 using .OneDModel
 
 run_OneDModel(:cabbeling)
-run_OneDModel(:cabbeling;
-              ν = (S = 1e-4, T = 1e-4),
-              background_κz = (S = 1e-6, T = 1e-5),
-              convective_κz = (S = 1, T = 1))
+# run_OneDModel(:cabbeling;
+#               background_κz = (S = 1e-6, T = 1e-5)) not working yet.
 
 ## Output
 output = joinpath(@__DIR__, "OneDModelOutput_cabbeling.jld2")
