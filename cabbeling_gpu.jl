@@ -13,13 +13,13 @@ T₀ᵘ = -1.5
 S₀ᵘ = 34.568
 cabbeling = CabbelingUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(cabbeling)
-set_two_layer_initial_conditions!(model, initial_conditions, interface_location,
-                                  salinity_perturbation = true, t = 0.0001)
+start_time = 0.1
+set_two_layer_initial_conditions!(model, initial_conditions, interface_location, start_time)
 
 ## build the simulation
 Δt = 1e-5
 stop_time = 2
-save_schedule = 0.2 # seconds
+save_schedule = 1 # seconds
 simulation = DNS_simulation_setup(model, Δt, stop_time, save_schedule, initial_conditions)
 
 ## Run the simulation
