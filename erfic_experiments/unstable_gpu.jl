@@ -6,7 +6,7 @@ architecture = GPU()
 diffusivities = (ν = 1e-4, κ = (S = 1e-5, T = 1e-5))
 
 ## Setup the model
-model = DNS(architecture, DOMAIN_EXTENT, high_resolution, diffusivities; REFERENCE_DENSITY)
+model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities; REFERENCE_DENSITY)
 
 ## set initial conditions
 T₀ᵘ = -1.5
