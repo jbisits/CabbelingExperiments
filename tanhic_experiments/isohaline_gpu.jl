@@ -6,14 +6,15 @@ architecture = GPU()
 diffusivities = (ν = 1e-4, κ = (S = 1e-, T = 1e-5))
 
 ## Setup the model
-model = DNS(architecture, domain_extent, high_resolution, diffusivities; reference_density)
+model = DNS(architecture, DOMAIN_EXTENT, high_resolution, diffusivities; REFERENCE_DENSITY)
 
 ## set initial conditions
 T₀ᵘ = -1.5
 isohaline = IsohalineUpperLayerInitialConditions(T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(isohaline)
-start_time = 0.1
-set_two_layer_initial_conditions!(model, initial_conditions, interface_location, start_time)
+interface_width = 50
+set_two_layer_initial_conditions!(model, initial_conditions, INTERFACE_LOCATION, :tanh,
+                                  interface_width; salinity_perturbation = true)
 
 ## build the simulation
 Δt = 1e-5
