@@ -3,7 +3,7 @@ using DirectNumericalCabbelingShenanigans
 using DirectNumericalCabbelingShenanigans.TwoLayerDNS
 
 architecture = GPU()
-diffusivities = (ν = 1e-4, κ = (S = 1e-, T = 1e-5))
+diffusivities = (ν = 1e-4, κ = (S = 1e-5, T = 1e-5))
 
 ## Setup the model
 model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities; REFERENCE_DENSITY)
