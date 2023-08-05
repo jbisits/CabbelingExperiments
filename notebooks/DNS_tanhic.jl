@@ -60,7 +60,7 @@ md"""
 """
 
 # ╔═╡ 45390e18-6a04-46ff-a2fd-20f2d1176177
-add_veolcity_random_noise!(model, 1e-20, -0.375)
+add_velocity_random_noise!(model, 1e-20, -0.375)
 
 # ╔═╡ 81f1cbb8-f365-4e57-acab-258214dc9213
 model.velocities.u.data[:, :, 9]
