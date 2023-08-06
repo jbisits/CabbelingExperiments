@@ -3,13 +3,13 @@ using Oceananigans.Fields
 using DirectNumericalCabbelingShenanigans.OutputUtilities
 
 ## Load in saved output
-sim_path = joinpath(SIMULATION_PATH, "isohaline.jld2")
+sim_path = joinpath(SIMULATION_PATH, "tanhic/equal_diffusivity/stable.jld2")
 T_ts = FieldTimeSeries(sim_path, "T")
 S_ts = FieldTimeSeries(sim_path, "S")
 
 ## Initial snapshots
-visualise_snapshot(T_ts, "Θ (°C)", 1)
-visualise_snapshot(S_ts, "S (gkg⁻ꜝ)", 1; colormap = :haline)
+visualise_snapshot(T_ts, "Θ (°C)", 6)
+visualise_snapshot(S_ts, "S (gkg⁻ꜝ)", 6; colormap = :haline)
 
 ## Animations (x-z)
 animate_2D_field(T_ts, "Θ (°C)", (:x, :z))
