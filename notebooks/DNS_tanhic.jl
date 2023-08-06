@@ -51,9 +51,9 @@ begin
 	S₀ᵘ = 34.551
 	stable = StableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 	initial_conditions = TwoLayerInitialConditions(stable)
-	interface_width = 50
-	set_two_layer_initial_conditions!(model, initial_conditions, INTERFACE_LOCATION, :tanh, interface_width; salinity_perturbation = true, salinity_perturbation_width = 100)
-	visualise_initial_conditions(model)
+	interface_width = 75
+	set_two_layer_initial_conditions!(model, initial_conditions, INTERFACE_LOCATION, :tanh, interface_width; salinity_perturbation = true, salinity_perturbation_width = 30)
+	fig = visualise_initial_conditions(model)
 end
 
 # ╔═╡ 67ac5731-a756-4e5e-9233-eaa9dc36055f
