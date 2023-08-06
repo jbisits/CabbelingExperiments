@@ -20,7 +20,7 @@ set_two_layer_initial_conditions!(model, initial_conditions, INTERFACE_LOCATION,
 
 ## build the simulation
 Δt = 1e-5
-stop_time = 5
+stop_time = 1 * 60 # minutes
 save_schedule = 1 # seconds
 simulation = DNS_simulation_setup(model, Δt, stop_time, save_schedule, initial_conditions)
 
