@@ -19,7 +19,7 @@ set_two_layer_initial_conditions!(model, initial_conditions, INTERFACE_LOCATION,
                                   interface_width;
                                   salinity_perturbation = true,
                                   salinity_perturbation_width = 30)
-add_velocity_random_noise!(model, 1e-2, INTERFACE_LOCATION / 2)
+add_velocity_random_noise!(model, 1e-2)
 
 ## build the simulation
 Δt = 1e-5
