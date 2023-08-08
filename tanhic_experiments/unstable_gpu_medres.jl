@@ -12,19 +12,17 @@ model = DNS(architecture, DOMAIN_EXTENT, resolution, diffusivities;
 
 ## set initial conditions
 T₀ᵘ = -1.5
-S₀ᵘ = 34.551
-stable = StableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
-initial_conditions = TwoLayerInitialConditions(stable)
+S₀ᵘ = 34.59
+unstable = UnstableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
+initial_conditions = TwoLayerInitialConditions(unstable)
 interface_width = 100
 set_two_layer_initial_conditions!(model, initial_conditions, INTERFACE_LOCATION, :tanh,
-                                  interface_width;
-                                  salinity_perturbation = true,
-                                  salinity_perturbation_width = 100)
+                                  interface_width)
 add_velocity_random_noise!(model, 1e-2)
 
 ## build the simulation
 Δt = 1e-5
-stop_time = 60 # seconds (in simulation time)
+stop_time = 60
 save_schedule = 1 # seconds
 simulation = DNS_simulation_setup(model, Δt, stop_time, save_schedule, initial_conditions)
 
