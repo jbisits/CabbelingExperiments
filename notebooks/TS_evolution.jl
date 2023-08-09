@@ -22,6 +22,14 @@ begin
 	using DirectNumericalCabbelingShenanigans.TwoLayerDNS
 	using DirectNumericalCabbelingShenanigans.OutputUtilities
 	using PlutoUI, GibbsSeaWater
+	using SpecialFunctions: erf
+end
+
+# ╔═╡ 3d90f332-f3f1-45f1-bfea-3fa4d1c648af
+begin
+	import DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution
+	erf_tracer_solution(z, Cₗ::Number, ΔC::Number, κ::Number, time, interface_location) =
+    Cₗ + 0.5 * ΔC * (1 + erf((z - interface_location) / sqrt(4 * κ * time)))
 end
 
 # ╔═╡ faa94bce-2a04-11ee-39f3-518323d8ad0f
@@ -96,9 +104,9 @@ let
 
 	z = range(-500, 0, length = 500)
 	κ = 1e-5
-    erf = Erf(-100, time)
-	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, S_star, ΔS, κ, erf)
-	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, Θ_star, ΔΘ, κ, erf)
+    interface_location = -100.0
+	S = erf_tracer_solution.(z, S_star, ΔS, κ, time, interface_location)
+	T = erf_tracer_solution.(z, Θ_star, ΔΘ, κ, time, interface_location)
 	σ₀ = gsw_rho.(S, T, 0)
 
 	fontsize = 22
@@ -156,9 +164,9 @@ let
 
 	z = range(-500, 0, length = 500)
 	κₛ, κₜ = 1e-7, 1e-5
-    erf = Erf(-100, time2)
-	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, S_star, ΔS, κₛ, erf)
-	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, Θ_star, ΔΘ, κₜ, erf)
+    interface_location = -100.0
+	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, S_star, ΔS, κₛ, time2, interface_location)
+	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, Θ_star, ΔΘ, κₜ, time2, interface_location)
 	σ₀ = gsw_rho.(S, T, 0)
 
 	fontsize = 22
@@ -214,9 +222,9 @@ let
 
 	z = range(-1, 0, length = 500)
 	κ = 1e-5
-    erf = Erf(-0.375, timeDNS)
-	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, S_star, ΔS, κ, erf)
-	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, Θ_star, ΔΘ, κ, erf)
+    interface_location = -0.375
+	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, S_star, ΔS, κ, timeDNS, interface_location)
+	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, Θ_star, ΔΘ, κ, timeDNS, interface_location)
 	σ₀ = gsw_rho.(S, T, 0)
 
 	fontsize = 22
@@ -263,9 +271,9 @@ let
 
 	z = range(-1, 0, length = 500)
 	κₛ, κₜ = 1e-7, 1e-5
-    erf = Erf(-0.375, timeDNS2)
-	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, S_star, ΔS, κₛ, erf)
-	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, Θ_star, ΔΘ, κₜ, erf)
+    interface_location = -0.375
+	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, S_star, ΔS, κₛ, timeDNS2, interface_location)
+	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, Θ_star, ΔΘ, κₜ, timeDNS2, interface_location)
 	σ₀ = gsw_rho.(S, T, 0)
 
 	fontsize = 22
@@ -304,6 +312,7 @@ TableOfContents(title = "Analytic temperature and salinity evolution")
 
 # ╔═╡ Cell order:
 # ╟─ced5de2d-6e19-4e32-832c-1dcdcca82642
+# ╟─3d90f332-f3f1-45f1-bfea-3fa4d1c648af
 # ╟─faa94bce-2a04-11ee-39f3-518323d8ad0f
 # ╟─894a827f-ba32-4e79-89ce-d9663288293b
 # ╟─da22a77d-d1e0-4da6-832b-8c1134d774b4
