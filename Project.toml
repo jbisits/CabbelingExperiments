@@ -7,4 +7,4 @@ PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 SeawaterPolynomials = "d496a93d-167e-4197-9f49-d3af4ff8fe40"
 
 [compat]
-DirectNumericalCabbelingShenanigans = "0.2"
+DirectNumericalCabbelingShenanigans = "0.3"
