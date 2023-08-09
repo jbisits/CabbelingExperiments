@@ -96,10 +96,11 @@ let
 
 	z = range(-500, 0, length = 500)
 	κ = 1e-5
-	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, S_star, ΔS, κ, time, -100)
-	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, Θ_star, ΔΘ, κ, time, -100)
+    erf = Erf(-100, time)
+	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, S_star, ΔS, κ, erf)
+	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, Θ_star, ΔΘ, κ, erf)
 	σ₀ = gsw_rho.(S, T, 0)
-	
+
 	fontsize = 22
 	labelsize = 16
 	fig = Figure(size = (900, 400); fontsize)
@@ -124,11 +125,11 @@ let
 	axislegend(ax2; labelsize)
 	axislegend(ax[1], position = :lb; labelsize)
 	hideydecorations!(ax[2], grid = false)
-	
+
 	linkyaxes!(ax[1], ax[2])
 	colsize!(fig.layout, 1, Relative(3/5))
 	fig
-	
+
 end
 
 # ╔═╡ 56fb1d65-2bcf-45ca-88f8-f310c9d992b4
@@ -155,10 +156,11 @@ let
 
 	z = range(-500, 0, length = 500)
 	κₛ, κₜ = 1e-7, 1e-5
-	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, S_star, ΔS, κₛ, time2, -100)
-	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, Θ_star, ΔΘ, κₜ, time2, -100)
+    erf = Erf(-100, time2)
+	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, S_star, ΔS, κₛ, erf)
+	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, Θ_star, ΔΘ, κₜ, erf)
 	σ₀ = gsw_rho.(S, T, 0)
-	
+
 	fontsize = 22
 	labelsize = 16
 	fig = Figure(size = (900, 400); fontsize)
@@ -183,11 +185,11 @@ let
 	axislegend(ax2; labelsize)
 	axislegend(ax[1], position = :lb; labelsize)
 	hideydecorations!(ax[2], grid = false)
-	
+
 	linkyaxes!(ax[1], ax[2])
 	colsize!(fig.layout, 1, Relative(3/5))
 	fig
-	
+
 end
 
 # ╔═╡ c8b85349-2358-43fc-8aa6-1e70adf4feb5
@@ -212,10 +214,11 @@ let
 
 	z = range(-1, 0, length = 500)
 	κ = 1e-5
-	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, S_star, ΔS, κ, timeDNS, -0.375)
-	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, Θ_star, ΔΘ, κ, timeDNS, -0.375)
+    erf = Erf(-0.375, timeDNS)
+	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, S_star, ΔS, κ, erf)
+	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, Θ_star, ΔΘ, κ, erf)
 	σ₀ = gsw_rho.(S, T, 0)
-	
+
 	fontsize = 22
 	labelsize = 16
 	fig = Figure(size = (900, 400); fontsize)
@@ -240,11 +243,11 @@ let
 	axislegend(ax2; labelsize)
 	axislegend(ax[1], position = :lb; labelsize)
 	hideydecorations!(ax[2], grid = false)
-	
+
 	linkyaxes!(ax[1], ax[2])
 	colsize!(fig.layout, 1, Relative(3/5))
 	fig
-	
+
 end
 
 # ╔═╡ 70b786cc-81d9-4a25-a911-7adb78e8ae82
@@ -260,10 +263,11 @@ let
 
 	z = range(-1, 0, length = 500)
 	κₛ, κₜ = 1e-7, 1e-5
-	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, S_star, ΔS, κₛ, timeDNS2, -0.375)
-	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, Θ_star, ΔΘ, κₜ, timeDNS2, -0.375)
+    erf = Erf(-0.375, timeDNS2)
+	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, S_star, ΔS, κₛ, erf)
+	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, Θ_star, ΔΘ, κₜ, erf)
 	σ₀ = gsw_rho.(S, T, 0)
-	
+
 	fontsize = 22
 	labelsize = 16
 	fig = Figure(size = (900, 400); fontsize)
@@ -288,11 +292,11 @@ let
 	axislegend(ax2; labelsize)
 	axislegend(ax[1], position = :lb; labelsize)
 	hideydecorations!(ax[2], grid = false)
-	
+
 	linkyaxes!(ax[1], ax[2])
 	colsize!(fig.layout, 1, Relative(3/5))
 	fig
-	
+
 end
 
 # ╔═╡ 090d2949-cf5a-41e4-8216-460d207fc0f5
