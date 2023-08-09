@@ -51,8 +51,8 @@ begin
 	S₀ᵘ = 34.551
 	stable = StableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 	initial_conditions = TwoLayerInitialConditions(stable)
-	interface_width = 75
-	set_two_layer_initial_conditions!(model, initial_conditions, INTERFACE_LOCATION, :tanh, interface_width; salinity_perturbation = true, salinity_perturbation_width = 30)
+	profile_function = HyperbolicTangent(INTERFACE_LOCATION, 100)
+	set_two_layer_initial_conditions!(model, initial_conditions, profile_function)
 	fig = visualise_initial_conditions(model)
 end
 
