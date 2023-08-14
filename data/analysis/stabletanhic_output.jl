@@ -8,8 +8,8 @@ T_ts = FieldTimeSeries(sim_path, "T")
 S_ts = FieldTimeSeries(sim_path, "S")
 
 ## Initial snapshots
-visualise_snapshot(T_ts, "Θ (°C)", 1, 1, 1)
-visualise_snapshot(S_ts, "S (gkg⁻ꜝ)", 1, 1, 1; colormap = :haline)
+visualise_snapshot(T_ts, "Θ (°C)", 10, 10, 11)
+visualise_snapshot(S_ts, "S (gkg⁻ꜝ)", 10, 10, 11; colormap = :haline)
 
 ## Animations (x-z)
 animate_2D_field(T_ts, "Θ (°C)", 1, 1)
@@ -17,4 +17,4 @@ animate_2D_field(T_ts, "Θ (°C)", 1, 1)
 ## Compute a density `FieldTimeSeries`
 σ₀_ts = compute_density(S_ts, T_ts)
 visualise_snapshot(σ₀_ts, "σ₀ (kgm⁻³)", 1, 1, 1; colormap = :dense)
-animate_2D_field(σ₀_ts, "σ₀ (kgm⁻³)", 1, 1; colormap = :dense)
+animate_2D_field(σ₀_ts, "σ₀ (kgm⁻³)", 10, 10; colormap = :dense)
