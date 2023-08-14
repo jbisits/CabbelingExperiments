@@ -22,6 +22,14 @@ begin
 	using DirectNumericalCabbelingShenanigans.TwoLayerDNS
 	using DirectNumericalCabbelingShenanigans.OutputUtilities
 	using PlutoUI, GibbsSeaWater
+	using SpecialFunctions: erf
+end
+
+# ╔═╡ 3d90f332-f3f1-45f1-bfea-3fa4d1c648af
+begin
+	import DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution
+	erf_tracer_solution(z, Cₗ::Number, ΔC::Number, κ::Number, time, interface_location) =
+    Cₗ + 0.5 * ΔC * (1 + erf((z - interface_location) / sqrt(4 * κ * time)))
 end
 
 # ╔═╡ faa94bce-2a04-11ee-39f3-518323d8ad0f
@@ -86,20 +94,24 @@ begin
 end
 
 # ╔═╡ eb85c523-f36f-4028-8ac3-55439cfa048b
-(ΔΘ * gsw_alpha(S_star, Θ_star, 0)) / (ΔS * gsw_beta(S_star, Θ_star, 0))
+#(ΔΘ * gsw_alpha(S_star, Θ_star, 0)) / (ΔS * gsw_beta(S_star, Θ_star, 0))
 
 # ╔═╡ 8cf080c8-70bf-48f7-9cb4-dbdb4a492941
 @bind time PlutoUI.Slider(0.00001:1000.00001)
+
+# ╔═╡ 83147607-4047-4bd6-8eb6-a8e17fdd0c84
+@bind zoom Select(["Full", "zoom"])
 
 # ╔═╡ 0194e952-56a2-4718-8ac2-5934f044cce3
 let
 
 	z = range(-500, 0, length = 500)
 	κ = 1e-5
-	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, S_star, ΔS, κ, time, -100)
-	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, Θ_star, ΔΘ, κ, time, -100)
+    interface_location = -100.0
+	S = erf_tracer_solution.(z, S_star, ΔS, κ, time, interface_location)
+	T = erf_tracer_solution.(z, Θ_star, ΔΘ, κ, time, interface_location)
 	σ₀ = gsw_rho.(S, T, 0)
-	
+
 	fontsize = 22
 	labelsize = 16
 	fig = Figure(size = (900, 400); fontsize)
@@ -124,11 +136,16 @@ let
 	axislegend(ax2; labelsize)
 	axislegend(ax[1], position = :lb; labelsize)
 	hideydecorations!(ax[2], grid = false)
-	
+
+	if isequal(zoom, "zoom")
+		ylims!(ax[1], -150, -50)
+		ylims!(ax[2], -150, -50)
+		ylims!(ax2, -150, -50)
+	end
 	linkyaxes!(ax[1], ax[2])
 	colsize!(fig.layout, 1, Relative(3/5))
 	fig
-	
+
 end
 
 # ╔═╡ 56fb1d65-2bcf-45ca-88f8-f310c9d992b4
@@ -150,15 +167,19 @@ I am not sure why this is the case but will be somehting to look at more, to see
 # ╔═╡ d6625648-77d0-468a-ae25-ed2a74a22d9a
 @bind time2 PlutoUI.Slider(0.00001:8000.00001)
 
+# ╔═╡ e3aea046-a6b4-4f87-816e-4ca7c3f57248
+@bind zoom1 Select(["Full", "zoom"])
+
 # ╔═╡ ddc4f162-09c8-4eed-86b8-8fb4b5767625
 let
 
 	z = range(-500, 0, length = 500)
 	κₛ, κₜ = 1e-7, 1e-5
-	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, S_star, ΔS, κₛ, time2, -100)
-	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, Θ_star, ΔΘ, κₜ, time2, -100)
+    interface_location = -100.0
+	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, S_star, ΔS, κₛ, time2, interface_location)
+	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, Θ_star, ΔΘ, κₜ, time2, interface_location)
 	σ₀ = gsw_rho.(S, T, 0)
-	
+
 	fontsize = 22
 	labelsize = 16
 	fig = Figure(size = (900, 400); fontsize)
@@ -180,14 +201,21 @@ let
 	ax[2].title = "Density at t = $(round(time2/60; digits = 2)) mins."
 	ax[2].xlabel = "σ₀ (kgm⁻³)"
 	ax[2].xticklabelrotation = π/4
+	ax[2].limits = (nothing, (-100, 0))
 	axislegend(ax2; labelsize)
 	axislegend(ax[1], position = :lb; labelsize)
 	hideydecorations!(ax[2], grid = false)
+
+	if isequal(zoom1, "zoom")
+		ylims!(ax[1], -150, -50)
+		ylims!(ax[2], -150, -50)
+		ylims!(ax2, -150, -50)
+	end
 	
-	linkyaxes!(ax[1], ax[2])
+	linkyaxes!(ax[1], ax[2], ax2)
 	colsize!(fig.layout, 1, Relative(3/5))
 	fig
-	
+
 end
 
 # ╔═╡ c8b85349-2358-43fc-8aa6-1e70adf4feb5
@@ -212,10 +240,11 @@ let
 
 	z = range(-1, 0, length = 500)
 	κ = 1e-5
-	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, S_star, ΔS, κ, timeDNS, -0.375)
-	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, Θ_star, ΔΘ, κ, timeDNS, -0.375)
+    interface_location = -0.375
+	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, S_star, ΔS, κ, timeDNS, interface_location)
+	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, Θ_star, ΔΘ, κ, timeDNS, interface_location)
 	σ₀ = gsw_rho.(S, T, 0)
-	
+
 	fontsize = 22
 	labelsize = 16
 	fig = Figure(size = (900, 400); fontsize)
@@ -240,11 +269,11 @@ let
 	axislegend(ax2; labelsize)
 	axislegend(ax[1], position = :lb; labelsize)
 	hideydecorations!(ax[2], grid = false)
-	
+
 	linkyaxes!(ax[1], ax[2])
 	colsize!(fig.layout, 1, Relative(3/5))
 	fig
-	
+
 end
 
 # ╔═╡ 70b786cc-81d9-4a25-a911-7adb78e8ae82
@@ -260,10 +289,11 @@ let
 
 	z = range(-1, 0, length = 500)
 	κₛ, κₜ = 1e-7, 1e-5
-	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, S_star, ΔS, κₛ, timeDNS2, -0.375)
-	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.tracer_solution.(z, Θ_star, ΔΘ, κₜ, timeDNS2, -0.375)
+    interface_location = -0.375
+	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, S_star, ΔS, κₛ, timeDNS2, interface_location)
+	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, Θ_star, ΔΘ, κₜ, timeDNS2, interface_location)
 	σ₀ = gsw_rho.(S, T, 0)
-	
+
 	fontsize = 22
 	labelsize = 16
 	fig = Figure(size = (900, 400); fontsize)
@@ -288,11 +318,11 @@ let
 	axislegend(ax2; labelsize)
 	axislegend(ax[1], position = :lb; labelsize)
 	hideydecorations!(ax[2], grid = false)
-	
+
 	linkyaxes!(ax[1], ax[2])
 	colsize!(fig.layout, 1, Relative(3/5))
 	fig
-	
+
 end
 
 # ╔═╡ 090d2949-cf5a-41e4-8216-460d207fc0f5
@@ -300,14 +330,17 @@ TableOfContents(title = "Analytic temperature and salinity evolution")
 
 # ╔═╡ Cell order:
 # ╟─ced5de2d-6e19-4e32-832c-1dcdcca82642
+# ╟─3d90f332-f3f1-45f1-bfea-3fa4d1c648af
 # ╟─faa94bce-2a04-11ee-39f3-518323d8ad0f
 # ╟─894a827f-ba32-4e79-89ce-d9663288293b
 # ╟─da22a77d-d1e0-4da6-832b-8c1134d774b4
-# ╠═eb85c523-f36f-4028-8ac3-55439cfa048b
+# ╟─eb85c523-f36f-4028-8ac3-55439cfa048b
 # ╟─8cf080c8-70bf-48f7-9cb4-dbdb4a492941
+# ╟─83147607-4047-4bd6-8eb6-a8e17fdd0c84
 # ╟─0194e952-56a2-4718-8ac2-5934f044cce3
 # ╟─56fb1d65-2bcf-45ca-88f8-f310c9d992b4
 # ╟─d6625648-77d0-468a-ae25-ed2a74a22d9a
+# ╟─e3aea046-a6b4-4f87-816e-4ca7c3f57248
 # ╟─ddc4f162-09c8-4eed-86b8-8fb4b5767625
 # ╟─c8b85349-2358-43fc-8aa6-1e70adf4feb5
 # ╟─71904be8-4b2a-4811-802a-f280478abd0f

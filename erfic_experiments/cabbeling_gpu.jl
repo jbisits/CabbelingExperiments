@@ -14,8 +14,8 @@ T₀ᵘ = -1.5
 S₀ᵘ = 34.568
 cabbeling = CabbelingUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(cabbeling)
-start_time = 0.1
-set_two_layer_initial_conditions!(model, initial_conditions, INTERFACE_LOCATION, start_time)
+profile_function = Erf(INTERFACE_LOCATION, 0.1)
+set_two_layer_initial_conditions!(model, initial_conditions, profile_function)
 
 ## build the simulation
 Δt = 1e-5

@@ -14,12 +14,12 @@ T₀ᵘ = -1.5
 S₀ᵘ = 34.551
 stable = StableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(stable)
-interface_width = 75
-set_two_layer_initial_conditions!(model, initial_conditions, INTERFACE_LOCATION, :tanh,
-                                  interface_width;
-                                  salinity_perturbation = true,
-                                  salinity_perturbation_width = 100)
-add_velocity_random_noise!(model, 1e-2)
+profile_function = HyperbolicTangent(INTERFACE_LOCATION, 100)
+z = znodes(model.grid, Center(), Center(), Center())
+depth_idx = findfirst(z .> INTERFACE_LOCATION / 2)
+salinity_perturbation = GaussianBlob(z[depth_idx], [0, 0], 1.0)
+set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
+                                  salinity_perturbation)
 
 ## build the simulation
 Δt = 1e-5

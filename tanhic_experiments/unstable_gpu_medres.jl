@@ -15,9 +15,8 @@ T₀ᵘ = -1.5
 S₀ᵘ = 34.59
 unstable = UnstableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(unstable)
-interface_width = 100
-set_two_layer_initial_conditions!(model, initial_conditions, INTERFACE_LOCATION, :tanh,
-                                  interface_width)
+profile_function = HyperbolicTangent(INTERFACE_LOCATION, 100)
+set_two_layer_initial_conditions!(model, initial_conditions, profile_function)
 add_velocity_random_noise!(model, 1e-2)
 
 ## build the simulation
