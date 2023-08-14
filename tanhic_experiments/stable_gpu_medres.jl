@@ -17,7 +17,7 @@ stable = StableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(stable)
 profile_function = HyperbolicTangent(INTERFACE_LOCATION, 100.0)
 z = znodes(model.grid, Center(), Center(), Center())
-depth_idx = findfirst(z .> 2 * INTERFACE_LOCATION / 3)
+#depth_idx = findfirst(z .> 2 * INTERFACE_LOCATION / 3)
 salinity_perturbation = GaussianBlob(-0.24958333333333338, [0.0, 0.0], 1.5)
 set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
                                   salinity_perturbation)
