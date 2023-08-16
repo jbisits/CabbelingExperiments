@@ -24,7 +24,7 @@ set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
 
 ## build the simulation
 Δt = 1e-5
-stop_time = 10 # seconds (in simulation time)
+stop_time = 60 # seconds (in simulation time)
 save_schedule = 1 # seconds
 simulation = DNS_simulation_setup(model, Δt, stop_time, save_schedule, initial_conditions)
 
