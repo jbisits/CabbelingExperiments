@@ -17,7 +17,7 @@ stable = StableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(stable)
 profile_function = HyperbolicTangent(INTERFACE_LOCATION, 1000.0)
 # Need to find this depth manually because `GPU()` does not like scalar indexing.
-salinity_perturbation = GaussianBlob(-0.36361111111111116, [0.0, 0.0], 1.0)
+salinity_perturbation = GaussianBlob(-0.3629166666666667, [0.0, 0.0], 1.0)
 set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
                                   salinity_perturbation)
 
