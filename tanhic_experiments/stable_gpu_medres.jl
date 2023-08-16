@@ -4,7 +4,7 @@ using DirectNumericalCabbelingShenanigans.TwoLayerDNS
 
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
-resolution = (Nx = 50, Ny = 50, Nz = 1000)
+resolution = (Nx = 50, Ny = 50, Nz = 1100)
 
 ## Setup the model
 model = DNS(architecture, DOMAIN_EXTENT, resolution, diffusivities;
@@ -17,7 +17,7 @@ stable = StableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(stable)
 profile_function = HyperbolicTangent(INTERFACE_LOCATION, 1000.0)
 # Need to find this depth manually because `GPU()` does not like scalar indexing.
-salinity_perturbation = GaussianBlob(-0.3629166666666667, [0.0, 0.0], 1.0)
+salinity_perturbation = GaussianBlob(-0.3632575757575758, [0.0, 0.0], 1.0)
 set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
                                   salinity_perturbation)
 
