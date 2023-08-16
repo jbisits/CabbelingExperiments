@@ -3,7 +3,7 @@ using Oceananigans.Fields
 using DirectNumericalCabbelingShenanigans.OutputUtilities
 
 ## Load in saved output
-sim_path = joinpath(SIMULATION_PATH, "tanhic/equal_diffusivity/perturb_salinity/stable.jld2")
+sim_path = joinpath(SIMULATION_PATH, "tanhic/equal_diffusivity/perturb_salinity/stable_medres_5min.jld2")
 T_ts = FieldTimeSeries(sim_path, "T")
 S_ts = FieldTimeSeries(sim_path, "S")
 
@@ -16,5 +16,5 @@ animate_2D_field(T_ts, "Θ (°C)", 1, 1)
 
 ## Compute a density `FieldTimeSeries`
 σ₀_ts = compute_density(S_ts, T_ts)
-visualise_snapshot(σ₀_ts, "σ₀ (kgm⁻³)", 1, 1, 1; colormap = :dense)
+visualise_snapshot(σ₀_ts, "σ₀ (kgm⁻³)", 10, 10, 10; colormap = :dense)
 animate_2D_field(σ₀_ts, "σ₀ (kgm⁻³)", 10, 10; colormap = :dense)
