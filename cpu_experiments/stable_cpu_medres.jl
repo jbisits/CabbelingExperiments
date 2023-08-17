@@ -4,7 +4,7 @@ using DirectNumericalCabbelingShenanigans.TwoLayerDNS
 
 architecture = CPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
-resolution = (Nx = 50, Ny = 50, Nz = 1300)
+resolution = (Nx = 50, Ny = 50, Nz = 1400)
 
 ## Setup the model
 model = DNS(architecture, DOMAIN_EXTENT, resolution, diffusivities;
