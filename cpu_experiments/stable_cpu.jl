@@ -23,6 +23,7 @@ set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
 
 DNCS.OutputUtilities.visualise_initial_conditions(model, 1, 1)
 DNCS.OutputUtilities.visualise_initial_density(model, 1, 1, 0)
+
 ## build the simulation
 Δt = 1e-5
 stop_time = 60 # seconds (in simulation time)

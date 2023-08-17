@@ -14,7 +14,7 @@ T₀ᵘ = -1.5
 S₀ᵘ = 34.568
 cabbeling = CabbelingUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(cabbeling)
-profile_function = HyperbolicTangent(INTERFACE_LOCATION, 100)
+profile_function = HyperbolicTangent(INTERFACE_LOCATION, 100.0)
 set_two_layer_initial_conditions!(model, initial_conditions, profile_function)
 
 ## build the simulation

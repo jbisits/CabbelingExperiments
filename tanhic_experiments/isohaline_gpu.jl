@@ -13,7 +13,7 @@ model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
 T₀ᵘ = -1.5
 isohaline = IsohalineUpperLayerInitialConditions(T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(isohaline)
-profile_function = HyperbolicTangent(INTERFACE_LOCATION, 100)
+profile_function = HyperbolicTangent(INTERFACE_LOCATION, 100.0)
 set_two_layer_initial_conditions!(model, initial_conditions, profile_function)
 
 ## build the simulation
