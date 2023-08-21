@@ -51,7 +51,7 @@ begin
 	S₀ᵘ = 34.551
 	stable = StableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 	initial_conditions = TwoLayerInitialConditions(stable)
-	profile_function = HyperbolicTangent(INTERFACE_LOCATION, 1400.0)
+	profile_function = HyperbolicTangent(INTERFACE_LOCATION, 3500.0)
 	set_two_layer_initial_conditions!(model, initial_conditions, profile_function)
 	fig = visualise_initial_conditions(model, 1, 1)
 end
