@@ -101,7 +101,7 @@ let
 	fig, ax = scatterlines(tz, z; label = "z nodes", markersize = 8)
 	ax.title = "Location of znodes at $cf for initial condition"
 	if isequal(zoomint, "Interface")
-		ylims!(ax, -0.55, -0.45)
+		ylims!(ax, -0.425, -0.325)
 	end
 	axislegend(ax)
 	fig
