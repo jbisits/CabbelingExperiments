@@ -21,6 +21,7 @@ begin
 	using DirectNumericalCabbelingShenanigans
 	using DirectNumericalCabbelingShenanigans.TwoLayerDNS
 	using DirectNumericalCabbelingShenanigans.OutputUtilities
+	using Oceananigans.Fields
 	using PlutoUI, GibbsSeaWater
 	using SpecialFunctions: erf
 end
@@ -93,23 +94,36 @@ begin
 	nothing
 end
 
-# ╔═╡ eb85c523-f36f-4028-8ac3-55439cfa048b
-#(ΔΘ * gsw_alpha(S_star, Θ_star, 0)) / (ΔS * gsw_beta(S_star, Θ_star, 0))
-
 # ╔═╡ 8cf080c8-70bf-48f7-9cb4-dbdb4a492941
-@bind time PlutoUI.Slider(0.00001:1000.00001)
+begin
+	time = @bind times PlutoUI.Slider(0.00001:10000.00001)
+	κₛ = @bind κₛ PlutoUI.Slider([1e-5, 1e-6, 1e-7, 1e-8, 1e-9], show_value = true)
+	κₜ = @bind κₜ PlutoUI.Slider([1e-5, 1e-6, 1e-7, 1e-8, 1e-9], show_value = true)
+	md"""
+	### Diffusivities
+	Salt = $(κₛ) m²s⁻¹
+	
+	Temperature = $(κₜ) m²s⁻¹
+
+	### Time
+	t = $(time)
+	"""
+end
 
 # ╔═╡ 83147607-4047-4bd6-8eb6-a8e17fdd0c84
-@bind zoom Select(["Full", "zoom"])
+@bind zoom Select(["Full profile", "Zoom on interface"])
 
 # ╔═╡ 0194e952-56a2-4718-8ac2-5934f044cce3
 let
 
 	z = range(-500, 0, length = 500)
-	κ = 1e-5
     interface_location = -100.0
-	S = erf_tracer_solution.(z, S_star, ΔS, κ, time, interface_location)
-	T = erf_tracer_solution.(z, Θ_star, ΔΘ, κ, time, interface_location)
+	S = erf_tracer_solution.(z, S_star, ΔS, κₛ, times, interface_location)
+	T = erf_tracer_solution.(z, Θ_star, ΔΘ, κₜ, times, interface_location)
+	Sᵢ = erf_tracer_solution.(z, S_star, ΔS, κₛ, 1e-5, interface_location)
+	Tᵢ = erf_tracer_solution.(z, Θ_star, ΔΘ, κₜ, 1e-5, interface_location)
+	σ₀ᵢ = gsw_rho.(Sᵢ, Tᵢ, 0)
+	σ_limits = (σ₀ᵢ[end] - 0.004, σ₀ᵢ[1] + 0.04)
 	σ₀ = gsw_rho.(S, T, 0)
 
 	fontsize = 22
@@ -127,17 +141,18 @@ let
 	           xticklabelcolor = :red,
 	           xlabel = "Θ (°C)",
 	           xlabelcolor = :red,
-	           title = "Temperature and salinity profiles\nat t = $(round(time/60; digits = 2)) mins")
+	           title = "Temperature and salinity profiles\nat t = $(round(times/60; digits = 2)) mins")
 	lines!(ax2, T, z; color = (:red, 0.5), label = "Temeperature")
 	lines!(ax[2], σ₀, z; color = (:black, 0.5))
-	ax[2].title = "Density at t = $(round(time/60; digits = 2)) mins."
+	ax[2].title = "Density at t = $(round(times/60; digits = 2)) mins."
 	ax[2].xlabel = "σ₀ (kgm⁻³)"
 	ax[2].xticklabelrotation = π/4
+	xlims!(ax[2], σ_limits)
 	axislegend(ax2; labelsize)
 	axislegend(ax[1], position = :lb; labelsize)
 	hideydecorations!(ax[2], grid = false)
 
-	if isequal(zoom, "zoom")
+	if isequal(zoom, "Zoom on interface")
 		ylims!(ax[1], -150, -50)
 		ylims!(ax[2], -150, -50)
 		ylims!(ax2, -150, -50)
@@ -164,60 +179,6 @@ As this analytic solution is stepped forward, we can also see decreas in density
 I am not sure why this is the case but will be somehting to look at more, to see how this affects the convective adjustment scheme, once the 1D model can run with different ``S`` and ``\Theta`` diffusivities.
 """
 
-# ╔═╡ d6625648-77d0-468a-ae25-ed2a74a22d9a
-@bind time2 PlutoUI.Slider(0.00001:8000.00001)
-
-# ╔═╡ e3aea046-a6b4-4f87-816e-4ca7c3f57248
-@bind zoom1 Select(["Full", "zoom"])
-
-# ╔═╡ ddc4f162-09c8-4eed-86b8-8fb4b5767625
-let
-
-	z = range(-500, 0, length = 500)
-	κₛ, κₜ = 1e-7, 1e-5
-    interface_location = -100.0
-	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, S_star, ΔS, κₛ, time2, interface_location)
-	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, Θ_star, ΔΘ, κₜ, time2, interface_location)
-	σ₀ = gsw_rho.(S, T, 0)
-
-	fontsize = 22
-	labelsize = 16
-	fig = Figure(size = (900, 400); fontsize)
-	ax = [Axis(fig[1, i]) for i ∈ 1:2]
-	lines!(ax[1], S, z; color = (:blue, 0.5), label = "Salinity")
-	xlims!(ax[1], 34.52, 34.72)
-	ax[1].xlabel = "Salinity (gkg⁻¹)"
-	ax[1].xlabelcolor = :blue
-	ax[1].xticklabelcolor = :blue
-	ax[1].ylabel = "z (m)"
-	ax2 = Axis(fig[1, 1];
-	           xaxisposition = :top,
-	           xticklabelcolor = :red,
-	           xlabel = "Θ (°C)",
-	           xlabelcolor = :red,
-	           title = "Temperature and salinity profiles\nat t = $(round(time2/60; digits = 2)) mins.")
-	lines!(ax2, T, z; color = (:red, 0.5), label = "Temeperature")
-	lines!(ax[2], σ₀, z; color = (:black, 0.5))
-	ax[2].title = "Density at t = $(round(time2/60; digits = 2)) mins."
-	ax[2].xlabel = "σ₀ (kgm⁻³)"
-	ax[2].xticklabelrotation = π/4
-	ax[2].limits = (nothing, (-100, 0))
-	axislegend(ax2; labelsize)
-	axislegend(ax[1], position = :lb; labelsize)
-	hideydecorations!(ax[2], grid = false)
-
-	if isequal(zoom1, "zoom")
-		ylims!(ax[1], -150, -50)
-		ylims!(ax[2], -150, -50)
-		ylims!(ax2, -150, -50)
-	end
-	
-	linkyaxes!(ax[1], ax[2], ax2)
-	colsize!(fig.layout, 1, Relative(3/5))
-	fig
-
-end
-
 # ╔═╡ c8b85349-2358-43fc-8aa6-1e70adf4feb5
 md"""
 ## DNS
@@ -232,17 +193,29 @@ This may mean that instead of this we set stable density then have a salinity pe
 ### Equal diffusivity for salinity and temperature
 """
 
-# ╔═╡ 71904be8-4b2a-4811-802a-f280478abd0f
-@bind timeDNS PlutoUI.Slider(0.00001:0.005:100.00001)
+# ╔═╡ 828c6a69-a61f-4a98-ba06-e09661d8a973
+begin
+	timeDNS = @bind timeDNS PlutoUI.Slider(0.00001:10000.00001)
+	κₛDNS = @bind κₛDNS PlutoUI.Slider([1e-5, 1e-6, 1e-7, 1e-8, 1e-9], show_value = true)
+	κₜDNS = @bind κₜDNS PlutoUI.Slider([1e-5, 1e-6, 1e-7, 1e-8, 1e-9], show_value = true)
+	md"""
+	### Diffusivities
+	Salt = $(κₛDNS) m²s⁻¹
+	
+	Temperature = $(κₜDNS) m²s⁻¹
+
+	### Time
+	t = $timeDNS
+	"""
+end
 
 # ╔═╡ 7b5ff0ab-1fbd-4252-9d3a-27285c9b5dab
 let
 
 	z = range(-1, 0, length = 500)
-	κ = 1e-5
     interface_location = -0.375
-	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, S_star, ΔS, κ, timeDNS, interface_location)
-	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, Θ_star, ΔΘ, κ, timeDNS, interface_location)
+	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, S_star, ΔS, κₛDNS, timeDNS, interface_location)
+	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, Θ_star, ΔΘ, κₜDNS, timeDNS, interface_location)
 	σ₀ = gsw_rho.(S, T, 0)
 
 	fontsize = 22
@@ -281,25 +254,42 @@ md"""
 ### Different diffusivity for salinity and temperature
 """
 
-# ╔═╡ 2fe200d6-804a-4f82-b853-152f3e1dc466
-@bind timeDNS2 PlutoUI.Slider(0.00001:0.005:100.00001)
+# ╔═╡ adaf329a-9316-4e0c-b7e3-cba513cebf68
+md"""
+# Numerical evolution of temperature and salinity
+"""
 
-# ╔═╡ 2521d6e2-a3a4-4c61-93d5-780652f31c56
+# ╔═╡ f73d2ef6-fbca-4306-a838-0079ee34d6dd
+begin
+	output = joinpath(@__DIR__, "../1Dmodel/OneDModelOutput_cabbeling.jld2")
+	S_ts, T_ts = FieldTimeSeries(output, "S"), FieldTimeSeries(output, "T")
+	model_times_idx = @bind mt_idx PlutoUI.Slider(eachindex(S_ts.times))
+	model_times = S_ts.times
+	z_model = znodes(S_ts[1])
+	nothing
+end
+
+# ╔═╡ e04e5e49-8b5b-4c01-9184-c371c3651cdd
+md"""
+t = $model_times_idx $(model_times[mt_idx] / 60) mins
+"""
+
+# ╔═╡ 5a020f83-0c13-4ca0-94fc-756c5b0494ba
+@bind zoom_model Select(["Full profile", "Zoom on interface"])
+
+# ╔═╡ 03494eb9-b3fd-4380-9492-014d4954b73a
 let
 
-	z = range(-1, 0, length = 500)
-	κₛ, κₜ = 1e-7, 1e-5
-    interface_location = -0.375
-	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, S_star, ΔS, κₛ, timeDNS2, interface_location)
-	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, Θ_star, ΔΘ, κₜ, timeDNS2, interface_location)
+	S = interior(S_ts, 1, 1, :, mt_idx)
+	T = interior(T_ts, 1, 1, :, mt_idx)
 	σ₀ = gsw_rho.(S, T, 0)
 
 	fontsize = 22
 	labelsize = 16
 	fig = Figure(size = (900, 400); fontsize)
 	ax = [Axis(fig[1, i]) for i ∈ 1:2]
-	lines!(ax[1], S, z; color = (:blue, 0.5), label = "Salinity")
-	xlims!(ax[1], 34.52, 34.72)
+	lines!(ax[1], S, z_model; color = (:blue, 0.5), label = "Salinity")
+	xlims!(ax[1], 34.52, 34.76)
 	ax[1].xlabel = "Salinity (gkg⁻¹)"
 	ax[1].xlabelcolor = :blue
 	ax[1].xticklabelcolor = :blue
@@ -309,24 +299,29 @@ let
 	           xticklabelcolor = :red,
 	           xlabel = "Θ (°C)",
 	           xlabelcolor = :red,
-	           title = "Temperature and salinity profiles\nat t = $(round(timeDNS2/60; digits = 4)) mins")
-	lines!(ax2, T, z; color = (:red, 0.5), label = "Temeperature")
-	lines!(ax[2], σ₀, z; color = (:black, 0.5))
-	ax[2].title = "Density at t = $(round(timeDNS2/60; digits = 4)) mins."
+	           title = "Temperature and salinity profiles\nat t = $(model_times[mt_idx] / 60) mins")
+	lines!(ax2, T, z_model; color = (:red, 0.5), label = "Temeperature")
+	lines!(ax[2], σ₀, z_model; color = (:black, 0.5))
+	ax[2].title = "Density at t = $(model_times[mt_idx] / 60) mins."
 	ax[2].xlabel = "σ₀ (kgm⁻³)"
 	ax[2].xticklabelrotation = π/4
+	#xlims!(ax[2], σ_limits)
 	axislegend(ax2; labelsize)
 	axislegend(ax[1], position = :lb; labelsize)
 	hideydecorations!(ax[2], grid = false)
 
+	if isequal(zoom_model, "Zoom on interface")
+		ylims!(ax[1], -150, -50)
+		ylims!(ax[2], -150, -50)
+		ylims!(ax2, -150, -50)
+	end
 	linkyaxes!(ax[1], ax[2])
 	colsize!(fig.layout, 1, Relative(3/5))
 	fig
-
 end
 
 # ╔═╡ 090d2949-cf5a-41e4-8216-460d207fc0f5
-TableOfContents(title = "Analytic temperature and salinity evolution")
+TableOfContents(title = "Analytic and numeric temperature and salinity evolution")
 
 # ╔═╡ Cell order:
 # ╟─ced5de2d-6e19-4e32-832c-1dcdcca82642
@@ -334,18 +329,17 @@ TableOfContents(title = "Analytic temperature and salinity evolution")
 # ╟─faa94bce-2a04-11ee-39f3-518323d8ad0f
 # ╟─894a827f-ba32-4e79-89ce-d9663288293b
 # ╟─da22a77d-d1e0-4da6-832b-8c1134d774b4
-# ╟─eb85c523-f36f-4028-8ac3-55439cfa048b
 # ╟─8cf080c8-70bf-48f7-9cb4-dbdb4a492941
 # ╟─83147607-4047-4bd6-8eb6-a8e17fdd0c84
 # ╟─0194e952-56a2-4718-8ac2-5934f044cce3
 # ╟─56fb1d65-2bcf-45ca-88f8-f310c9d992b4
-# ╟─d6625648-77d0-468a-ae25-ed2a74a22d9a
-# ╟─e3aea046-a6b4-4f87-816e-4ca7c3f57248
-# ╟─ddc4f162-09c8-4eed-86b8-8fb4b5767625
 # ╟─c8b85349-2358-43fc-8aa6-1e70adf4feb5
-# ╟─71904be8-4b2a-4811-802a-f280478abd0f
+# ╟─828c6a69-a61f-4a98-ba06-e09661d8a973
 # ╟─7b5ff0ab-1fbd-4252-9d3a-27285c9b5dab
 # ╟─70b786cc-81d9-4a25-a911-7adb78e8ae82
-# ╟─2fe200d6-804a-4f82-b853-152f3e1dc466
-# ╟─2521d6e2-a3a4-4c61-93d5-780652f31c56
+# ╟─adaf329a-9316-4e0c-b7e3-cba513cebf68
+# ╟─f73d2ef6-fbca-4306-a838-0079ee34d6dd
+# ╟─e04e5e49-8b5b-4c01-9184-c371c3651cdd
+# ╟─5a020f83-0c13-4ca0-94fc-756c5b0494ba
+# ╟─03494eb9-b3fd-4380-9492-014d4954b73a
 # ╟─090d2949-cf5a-41e4-8216-460d207fc0f5

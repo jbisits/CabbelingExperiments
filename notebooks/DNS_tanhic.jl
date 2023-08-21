@@ -51,39 +51,64 @@ begin
 	S₀ᵘ = 34.551
 	stable = StableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 	initial_conditions = TwoLayerInitialConditions(stable)
-	profile_function = HyperbolicTangent(INTERFACE_LOCATION, 100)
+	profile_function = HyperbolicTangent(INTERFACE_LOCATION, 1400.0)
 	set_two_layer_initial_conditions!(model, initial_conditions, profile_function)
-	fig = visualise_initial_conditions(model)
+	fig = visualise_initial_conditions(model, 1, 1)
+end
+
+# ╔═╡ 4829ebc6-ea75-49df-8a95-4ba277f07df1
+md"""
+## Setting ``\tanh`` steepness
+
+The initial condition for the temperature profiles, similar for salinity, is
+```math
+\tag{1}
+\Theta_{l} + \frac{\Delta \Theta}{2}\left(1 + \tanh s\left(z - i \right)\right)
+```
+where ``i`` is the `interface_location` and `s` is some scaling to set the steepness of the chnage between the two layers.
+What I would like is to be able to **control the number of `znodes` that go over the transition between the two layers.**
+If I cannot figure out a function or some other method I can always use this notebook to find the number of nodes that are on the change between the two layers.
+
+The slider `s` below increases ``s`` in ``(1)`` and the plot shows the location of the `znodes`.
+In the extreme we see that we get two layers with a step change between them.
+In DNS these large jumps (effectively they are discontinuities) will cause the simulation to blow up.
+When meeting with Bishakh he said that to ensure the simulation does not blow up require the change to take place over ``10\eta`` where ``\eta`` is the Kolmogorov length scale
+```math
+\tag{2}
+\eta \propto \left(\frac{\nu^{3}}{\epsilon}\right)^{\frac{1}{4}}.
+```
+
+I am yet to calculate ``(2)`` ([Oceanostics.jl](https://github.com/tomchor/Oceanostics.jl) can help with ``\epsilon``) but assuming that ``\eta`` is around the size of the vertical resolution in the upper part of the domain want 10`znodes` across the interface.
+"""
+
+# ╔═╡ a8cbdf00-42d4-4ab2-8e3d-3d1430cc4887
+begin
+	s = @bind scale PlutoUI.Slider(1:10000, show_value = true)
+	cell_part = @bind cf Select([:Center, :Face])
+	zoom = @bind zoomint Select(["Full Profile", "Interface"])
+	md"""
+	$cell_part
+	$zoom
+	s = $s
+	"""
 end
 
 # ╔═╡ 67ac5731-a756-4e5e-9233-eaa9dc36055f
 let
-	T = interior(model.tracers.T, 1, 1, :, 1)
-	S = interior(model.tracers.S, 1, 1, :, 1)
-	fig, ax = scatterlines(S, T, markersize = 4)
-	ax.title = "Initial profile in TS space"
+	z = cf == :Center ? znodes(model.grid, Center(), Center(), Center()) :
+					    znodes(model.grid, Face(), Face(), Face())
+	tz = @. 0.5 + (-2 / 2) * (1 + tanh(scale * (z + 0.375)))
+	fig, ax = scatterlines(tz, z; label = "z nodes", markersize = 8)
+	ax.title = "Location of znodes at $cf for initial condition"
+	if isequal(zoomint, "Interface")
+		ylims!(ax, -0.55, -0.45)
+	end
+	axislegend(ax)
 	fig
 end
 
 # ╔═╡ f27bf1d8-407d-44a1-8834-15c868d08b60
-visualise_initial_density(model, 0)
-
-# ╔═╡ 2a7a4a77-f597-4f87-82ca-ef3650ca4ffc
-md"""
-# Look at what random noise looks like
-"""
-
-# ╔═╡ 45390e18-6a04-46ff-a2fd-20f2d1176177
-add_velocity_random_noise!(model, 1e-20, -0.375)
-
-# ╔═╡ 81f1cbb8-f365-4e57-acab-258214dc9213
-model.velocities.u.data[:, :, 4000]
-
-# ╔═╡ 4d54c569-c3d2-410a-b67e-d56ca66b5c1d
-findall(znodes(model.grid, Face()) .== -0.375)
-
-# ╔═╡ 512ecbf5-0c3d-4385-9d07-ca732709245c
-model.velocities.w.data[:, :, 9]
+visualise_initial_density(model, 1, 1, 0)
 
 # ╔═╡ 10c2f596-2285-41f9-b5d4-4d3dc9d78df6
 md"""
@@ -104,18 +129,19 @@ begin
 	Base.Text(text)
 end
 
+# ╔═╡ 01077793-82d9-4222-98a1-590b2b940a96
+TableOfContents(title = "Initial conditions")
+
 # ╔═╡ Cell order:
 # ╟─a12a28a5-de8d-4cfb-9ad4-f524cdc002ec
 # ╟─764fee0a-31bb-11ee-1ec7-8b7bc121a8ed
 # ╟─691a96e7-7818-4cd4-8caf-1f70b24e915c
-# ╠═86cdf29f-4ca0-4ac2-a673-34d4b8447eec
-# ╠═67ac5731-a756-4e5e-9233-eaa9dc36055f
-# ╠═f27bf1d8-407d-44a1-8834-15c868d08b60
-# ╟─2a7a4a77-f597-4f87-82ca-ef3650ca4ffc
-# ╠═45390e18-6a04-46ff-a2fd-20f2d1176177
-# ╠═81f1cbb8-f365-4e57-acab-258214dc9213
-# ╠═4d54c569-c3d2-410a-b67e-d56ca66b5c1d
-# ╠═512ecbf5-0c3d-4385-9d07-ca732709245c
+# ╟─86cdf29f-4ca0-4ac2-a673-34d4b8447eec
+# ╟─4829ebc6-ea75-49df-8a95-4ba277f07df1
+# ╟─a8cbdf00-42d4-4ab2-8e3d-3d1430cc4887
+# ╟─67ac5731-a756-4e5e-9233-eaa9dc36055f
+# ╟─f27bf1d8-407d-44a1-8834-15c868d08b60
 # ╟─10c2f596-2285-41f9-b5d4-4d3dc9d78df6
 # ╟─6afda154-5286-47c3-860a-ed920bd4abbc
 # ╟─1533101a-47b0-473c-8504-3357404dcca8
+# ╟─01077793-82d9-4222-98a1-590b2b940a96

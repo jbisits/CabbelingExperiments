@@ -2,8 +2,6 @@ include("onedmodel.jl")
 using .OneDModel
 
 run_OneDModel(:cabbeling)
-# run_OneDModel(:cabbeling;
-#               background_κz = (S = 1e-6, T = 1e-5)) not working yet.
 
 ## Output
 output = joinpath(@__DIR__, "OneDModelOutput_cabbeling.jld2")
@@ -13,8 +11,8 @@ S_ts, T_ts = FieldTimeSeries(output, "S"), FieldTimeSeries(output, "T")
 using DirectNumericalCabbelingShenanigans.OutputUtilities
 
 ## Initial snapshots
-visualise_snapshot(T_ts, "Θ (°C)", 1)
-visualise_snapshot(S_ts, "S (gkg⁻ꜝ)", 1; colormap = :haline)
+visualise_snapshot(T_ts, "Θ (°C)", 1, 1, 1)
+visualise_snapshot(S_ts, "S (gkg⁻ꜝ)", 1, 1, 1; colormap = :haline)
 
 ## Hovmoller plots
 hplot = TShovmoller_plot(S_ts, T_ts; zrange = 300:500)
