@@ -10,8 +10,8 @@ model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
             reference_density = REFERENCE_DENSITY)
 
 ## set initial conditions
-T₀ᵘ = -0.5
-S₀ᵘ = 34.625
+T₀ᵘ = -1.5
+S₀ᵘ = 34.551
 stable = StableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(stable)
 profile_function = HyperbolicTangent(INTERFACE_LOCATION, 3500.0)
