@@ -3,9 +3,7 @@ using Oceananigans.Fields
 using DirectNumericalCabbelingShenanigans.OutputUtilities
 
 ## Load in saved output
-# sim_path = joinpath(SIMULATION_PATH,
-#                     "tanhic/equal_diffusivity/perturb_salinity/cabbeling.jld2") # local
-sim_path = joinpath(SIMULATION_PATH, "cabbeling.jld2") # gadi
+sim_path = joinpath(SIMULATION_PATH, "cabbeling.jld2")
 T_ts = FieldTimeSeries(sim_path, "T")
 S_ts = FieldTimeSeries(sim_path, "S")
 
