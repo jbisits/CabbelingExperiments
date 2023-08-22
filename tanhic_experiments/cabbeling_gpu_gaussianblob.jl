@@ -17,21 +17,11 @@ initial_conditions = TwoLayerInitialConditions(cabbeling)
 profile_function = HyperbolicTangent(INTERFACE_LOCATION, 3500.0)
 
 ## `GaussianBlob`
-# z = znodes(model.grid, Center(), Center(), Center())
-# depth_idx = findfirst(z .> INTERFACE_LOCATION / 2)
-# salinity_perturbation = GaussianBlob(-0.3560416666666667, [0.0, 0.0], 10.0)
-# set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
-#                                   salinity_perturbation)
-
-## `GaussianProfile` eith `RandomPerturbations`
-salinity_perturbation = GaussianProfile(INTERFACE_LOCATION, INTERFACE_LOCATION / 1.1,
-                                        100.0, 2.0)
-# z = znodes(model.grid, Center(), Center(), Center())
-# depth_idx = findfirst(z .> INTERFACE_LOCATION / 1.1)
-salinity_noise = RandomPerturbations(-0.34077380952380953, 0.1)
+z = znodes(model.grid, Center(), Center(), Center())
+depth_idx = findfirst(z .> INTERFACE_LOCATION / 2)
+salinity_perturbation = GaussianBlob(-0.3560416666666667, [0.0, 0.0], 10.0)
 set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
-                                  salinity_perturbation, salinity_noise)
-
+                                  salinity_perturbation)
 
 ## build the simulation
 Δt = 1e-5
