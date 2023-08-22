@@ -21,15 +21,20 @@ depth_idx = findfirst(z .> 9 * INTERFACE_LOCATION / 10)
 salinity_perturbation = GaussianBlob(z[depth_idx], [0.0, 0.0], 10.0)
 set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
                                   salinity_perturbation)
-## `GaussianProfile` with `RandomPerturbations`
+## `GaussianProfile`
 salinity_perturbation = GaussianProfile(INTERFACE_LOCATION, INTERFACE_LOCATION / 1.1,
-                                        100.0, 2.0)
-z = znodes(model.grid, Center(), Center(), Center())
-depth_idx = findfirst(z .> INTERFACE_LOCATION / 1.1)
-z[depth_idx]
-salinity_noise = RandomPerturbations(-0.34077380952380953, 0.1)
+                                        100.0, 10.0)
+
 set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
-                                  salinity_perturbation, salinity_noise)
+                                  salinity_perturbation)
+
+## With `RandomPerturbations`
+# z = znodes(model.grid, Center(), Center(), Center())
+# depth_idx = findfirst(z .> INTERFACE_LOCATION / 1.1)
+# z[depth_idx]
+# salinity_noise = RandomPerturbations(-0.34077380952380953, 0.1)
+# set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
+#                                   salinity_perturbation, salinity_noise)
 ## Look at the output
 DNCS.OutputUtilities.visualise_initial_conditions(model, 1, 1)
 DNCS.OutputUtilities.visualise_initial_density(model, 1, 1, 0)
