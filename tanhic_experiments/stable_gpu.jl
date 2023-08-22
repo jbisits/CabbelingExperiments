@@ -25,7 +25,7 @@ profile_function = HyperbolicTangent(INTERFACE_LOCATION, 3500.0)
 
 ## `GaussianProfile` eith `RandomPerturbations`
 salinity_perturbation = GaussianProfile(INTERFACE_LOCATION, INTERFACE_LOCATION / 1.1,
-                                        100.0, 4.0)
+                                        100.0, 5.0)
 # z = znodes(model.grid, Center(), Center(), Center())
 # depth_idx = findfirst(z .> INTERFACE_LOCATION / 1.1)
 salinity_noise = RandomPerturbations(-0.34077380952380953, 0.1)
@@ -34,7 +34,7 @@ set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
 
 ## build the simulation
 Δt = 1e-5
-stop_time = 5 * 60 # seconds (in simulation time)
+stop_time = 8 * 60 # seconds (in simulation time)
 save_schedule = 5 # seconds
 simulation = DNS_simulation_setup(model, Δt, stop_time, save_schedule, initial_conditions)
 
