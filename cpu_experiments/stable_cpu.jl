@@ -23,7 +23,7 @@ set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
                                   salinity_perturbation)
 ## `GaussianProfile`
 salinity_perturbation = GaussianProfile(INTERFACE_LOCATION, INTERFACE_LOCATION / 1.1,
-                                        100.0, 8.0)
+                                        100.0, 5.0)
 
 # set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
 #                                   salinity_perturbation)
