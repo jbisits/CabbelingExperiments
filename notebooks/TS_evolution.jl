@@ -97,8 +97,8 @@ end
 # ╔═╡ 8cf080c8-70bf-48f7-9cb4-dbdb4a492941
 begin
 	time = @bind times PlutoUI.Slider(0.00001:10000.00001)
-	κₛ = @bind κₛ PlutoUI.Slider([1e-5, 1e-6, 1e-7, 1e-8, 1e-9], show_value = true)
-	κₜ = @bind κₜ PlutoUI.Slider([1e-5, 1e-6, 1e-7, 1e-8, 1e-9], show_value = true)
+	κₛ = @bind κₛ PlutoUI.Slider([1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9], show_value = true)
+	κₜ = @bind κₜ PlutoUI.Slider([1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9], show_value = true)
 	md"""
 	### Diffusivities
 	Salt = $(κₛ) m²s⁻¹
