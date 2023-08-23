@@ -1,5 +1,5 @@
 using Oceananigans.Fields
-using DNCS.OutputUtilities: compute_density
+using DirectNumericalCabbelingShenanigans.OutputUtilities: compute_density
 
 ## Load in saved output
 sim_path = joinpath(SIMULATION_PATH, "stable.jld2")
