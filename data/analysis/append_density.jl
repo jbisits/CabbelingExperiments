@@ -1,4 +1,4 @@
-using DirectNumericalCabbelingShenanigans.OutputUtilities: compute_density!
+using DirectNumericalCabbelingShenanigans.OutputUtilities
 
 saved_simulations = readdir(SIMULATION_PATH)
 for simulation ∈ saved_simulations
