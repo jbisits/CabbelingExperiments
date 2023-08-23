@@ -1,4 +1,4 @@
-using DirectNumericalCabbelingShenanigans.OutputUtilities
+using DirectNumericalCabbelingShenanigans.OutputUtilities: animate_2D_field
 
 ## Animations (x-z)
 @info "Animating temperature"
