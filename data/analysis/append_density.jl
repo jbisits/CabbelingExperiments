@@ -1,6 +1,6 @@
 using DirectNumericalCabbelingShenanigans.OutputUtilities
 
-saved_simulations = readdir(SIMULATION_PATH)
+saved_simulations = readdir(SIMULATION_PATH, join = true)
 for simulation ∈ saved_simulations
     if "σ₀" ∉ keys(jldopen(simulation)["timeseries"])
         compute_density!(simulation, density_string = "σ₀")
