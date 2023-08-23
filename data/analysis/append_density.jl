@@ -8,5 +8,6 @@ for simulation ∈ saved_simulations
         compute_density!(simulation, density_string = "σ₀")
     else
         @info "A timeseries with that symbol already exists in $simulation."
+        close(open_sim)
     end
 end
