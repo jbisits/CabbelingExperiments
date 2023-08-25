@@ -25,6 +25,8 @@ This can be done by:
 - an **isohaline** profile.
 
 This notebook finds a similar dnesity profile to what we use for the current *large perturbation* experiment but with **isohaline** salinity.
+
+It might still be the case that we use a linear EOS but at this stage I prefer this option.
 """
 
 # ╔═╡ d28668b4-ba87-43cb-9e59-9700e558e98f
