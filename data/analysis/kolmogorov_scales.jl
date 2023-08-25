@@ -22,6 +22,6 @@ function minimum_η(ϵ::FieldTimeSeries; ν = 1e-6)
         minimum_η_t[i] = minimum(η.(ν, ϵ[i]))
     end
 
-    return (minimum_η_t)
+    return minimum(minimum_η_t)
 
 end
