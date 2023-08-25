@@ -19,7 +19,7 @@ function minimum_η(ϵ::FieldTimeSeries; ν = 1e-6)
     t = ϵ.times
     minimum_η_t = similar(t)
     for i ∈ eachindex(t)
-        minimum_η_t[i] = minimum(η.(ν, ϵ[i]))
+        minimum_η_t[i] = minimum(η.(ν, ϵ[i].data))
     end
 
     return minimum(minimum_η_t)
