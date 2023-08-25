@@ -1,11 +1,11 @@
 "Calculate the Kolmogorov length scale `η` from viscousity and average TKE dissapation."
 η(ν, ϵ) = (ν^3 / ϵ)^(1/4)
 
-function field_ts_mean(field_ts::FieldTimeSeries)
+function field_ts_timemean(field_ts::FieldTimeSeries)
 
     t = field_ts.times
-    field_data = field_ts[2].data
-    for i ∈ 3:length(t)
+    field_data = field_ts[1].data
+    for i ∈ 2:length(t)
         field_data .+= field_ts[i].data
     end
 
