@@ -11,6 +11,7 @@ begin
 	using DirectNumericalCabbelingShenanigans
 	using DirectNumericalCabbelingShenanigans.TwoLayerDNS
 	using DirectNumericalCabbelingShenanigans.OutputUtilities
+	using PlutoUI
 end
 
 # ╔═╡ 14c81daa-42d8-11ee-1e5c-63e4bd60e8c2
@@ -121,6 +122,9 @@ md"""
 Up to the small random noise that is seeded (and even this could made the same) at the `GaussianProfile` mean.
 """
 
+# ╔═╡ d65133b1-a33d-4aea-b137-be7e971f362f
+TableOfContents(title = "Isohaline density profile")
+
 # ╔═╡ Cell order:
 # ╟─14c81daa-42d8-11ee-1e5c-63e4bd60e8c2
 # ╟─373eac8c-d51c-4ac7-8731-57662d7fda11
@@ -135,3 +139,4 @@ Up to the small random noise that is seeded (and even this could made the same) 
 # ╟─9a54507f-6d07-4d2c-b95b-0c829dcc4b6e
 # ╟─5189781e-31d2-4d21-8cce-cbea9a725d33
 # ╟─e508a976-6173-46ec-b634-581cd7840507
+# ╟─d65133b1-a33d-4aea-b137-be7e971f362f
