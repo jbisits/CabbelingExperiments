@@ -16,7 +16,7 @@ end
 "Find the minimum `η` from the output `ϵ` time series."
 function minimum_η(ϵ::FieldTimeSeries; ν = 1e-6)
 
-    t = field_ts.times
+    t = ϵ.times
     minimum_η_t = similar(t)
     for i ∈ eachindex(t)
         minimum_η_t[i] = minimum(η.(ν, ϵ[i]))
