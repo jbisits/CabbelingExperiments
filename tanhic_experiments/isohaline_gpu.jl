@@ -11,15 +11,25 @@ model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
 
 ## set initial conditions
 T₀ᵘ = -1.5
-isohaline = IsohalineUpperLayerInitialConditions(T₀ᵘ)
+S = 16.3240507756
+isohaline = IsohalineUpperLayerInitialConditions(S, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(isohaline)
-profile_function = HyperbolicTangent(INTERFACE_LOCATION, 100.0)
-set_two_layer_initial_conditions!(model, initial_conditions, profile_function)
+profile_function = HyperbolicTangent(INTERFACE_LOCATION, 3500.0)
+
+## `GaussianProfile` with `RandomPerturbations`
+salinity_perturbation = GaussianProfile(INTERFACE_LOCATION, INTERFACE_LOCATION / 1.1,
+                                        100.0, 10.0)
+# z = znodes(model.grid, Center(), Center(), Center())
+# depth_idx = findfirst(z .> INTERFACE_LOCATION / 1.1)
+salinity_noise = RandomPerturbations(-0.34077380952380953, 0.001)
+set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
+                                  salinity_perturbation, salinity_noise)
+
 
 ## build the simulation
 Δt = 1e-5
-stop_time = 5
-save_schedule = 1 # seconds
+stop_time = 10 * 60 # seconds (in simulation time)
+save_schedule = 5 # seconds
 simulation = DNS_simulation_setup(model, Δt, stop_time, save_schedule, initial_conditions)
 
 ## Run the simulation
