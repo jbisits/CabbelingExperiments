@@ -20,7 +20,7 @@ begin
 	Pkg.activate("..")
 	using DirectNumericalCabbelingShenanigans
 	using DirectNumericalCabbelingShenanigans.TwoLayerDNS
-	using DirectNumericalCabbelingShenanigans.OutputUtilities
+    using CairoMakie
 	using PlutoUI
 end
 

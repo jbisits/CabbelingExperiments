@@ -35,8 +35,9 @@ salinity_noise = RandomPerturbations(z[depth_idx], 0.001)
 set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
                                   salinity_perturbation, salinity_noise)
 ## Look at the output
-DNCS.OutputUtilities.visualise_initial_conditions(model, 1, 1)
-DNCS.OutputUtilities.visualise_initial_density(model, 1, 1, 0)
+using CairoMakie
+visualise_initial_conditions(model, 1, 1)
+visualise_initial_density(model, 1, 1, 0)
 
 ## build the simulation
 Δt = 1e-5

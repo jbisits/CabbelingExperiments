@@ -102,7 +102,7 @@ begin
 	md"""
 	### Diffusivities
 	Salt = $(κₛ) m²s⁻¹
-	
+
 	Temperature = $(κₜ) m²s⁻¹
 
 	### Time
@@ -201,7 +201,7 @@ begin
 	md"""
 	### Diffusivities
 	Salt = $(κₛDNS) m²s⁻¹
-	
+
 	Temperature = $(κₜDNS) m²s⁻¹
 
 	### Time
@@ -265,7 +265,7 @@ begin
 	S_ts, T_ts = FieldTimeSeries(output, "S"), FieldTimeSeries(output, "T")
 	model_times_idx = @bind mt_idx PlutoUI.Slider(eachindex(S_ts.times))
 	model_times = S_ts.times
-	z_model = znodes(S_ts[1])
+	z_model = znodes(S_ts[1], Center())
 	nothing
 end
 

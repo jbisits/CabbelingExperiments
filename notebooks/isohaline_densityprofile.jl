@@ -10,7 +10,7 @@ begin
 	Pkg.activate("..")
 	using DirectNumericalCabbelingShenanigans
 	using DirectNumericalCabbelingShenanigans.TwoLayerDNS
-	using DirectNumericalCabbelingShenanigans.OutputUtilities
+	using CairoMakie
 	using PlutoUI
 end
 
@@ -33,11 +33,11 @@ It might still be the case that we use a linear EOS but at this stage I prefer t
 begin
 	architecture = CPU()
 	diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
-	
+
 	## Setup the model
 	model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
 	            reference_density = REFERENCE_DENSITY)
-	
+
 	## set initial conditions
 	T₀ᵘ = -1.5
 	S₀ᵘ = 34.551
@@ -46,9 +46,9 @@ begin
 	profile_function = HyperbolicTangent(INTERFACE_LOCATION, 3500.0)
 
 	## `GaussianProfile`
-	salinity_perturbation = GaussianProfile(INTERFACE_LOCATION, 
+	salinity_perturbation = GaussianProfile(INTERFACE_LOCATION,
 											INTERFACE_LOCATION / 1.1, 100.0, 10.0)
-	
+
 	## With `RandomPerturbations`
 	z = znodes(model.grid, Center(), Center(), Center())
 	depth_idx = findfirst(z .> INTERFACE_LOCATION / 1.1)
@@ -69,10 +69,10 @@ begin
 	md"""
 	This is the setup for the **stable** configuration with a *large salinity perturbation* (scale the `GaussianProfile` by ``10``).
 	This gives a density diffference between the upper layer (ignoring the perturbation) of ``\Delta\sigma_{0} = \sigma_{0}^{\mathrm{lower}} - \sigma_{0}^{\mathrm{upper}} = `` $(Δσ_stable).
-	
-	To find an isohaline profile that matches this need to find a salinity value to give us a change in density as above. 
+
+	To find an isohaline profile that matches this need to find a salinity value to give us a change in density as above.
 	I have already done some playing around and I know that ``S \approx 16.324`` gives a good estimate, ``\Delta\sigma_{0}^{\mathrm{isohaline}} = `` $(gsw_sigma0(16.324, T₀ˡ) - gsw_sigma0(16.324, T₀ᵘ)).
-	
+
 	This salinity value is refined below.
 	"""
 end
@@ -94,13 +94,13 @@ begin
 	## Setup the model
 	model_iso = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
 	            reference_density = REFERENCE_DENSITY)
-	
+
 	## set initial conditions
 	isohaline = IsohalineUpperLayerInitialConditions(S_range[find_S-1], T₀ᵘ)
 	initial_conditions_iso = TwoLayerInitialConditions(isohaline)
-	
+
 	## With `RandomPerturbations`
-	set_two_layer_initial_conditions!(model_iso, initial_conditions_iso, 			 
+	set_two_layer_initial_conditions!(model_iso, initial_conditions_iso,
 									profile_function, salinity_perturbation, salinity_noise)
 	visualise_initial_conditions(model_iso, 1, 1)
 end

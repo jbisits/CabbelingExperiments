@@ -1,4 +1,4 @@
-using DirectNumericalCabbelingShenanigans.OutputUtilities
+using DirectNumericalCabbelingShenanigans.TwoLayerDNS
 
 saved_simulations = readdir(SIMULATION_PATH, join = true)
 for simulation ∈ saved_simulations

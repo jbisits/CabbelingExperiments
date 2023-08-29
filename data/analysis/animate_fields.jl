@@ -1,4 +1,5 @@
-using DirectNumericalCabbelingShenanigans.OutputUtilities: animate_2D_field
+using CairoMakie
+using DirectNumericalCabbelingShenanigans: animate_2D_field
 
 ## Animations (x-z)
 @info "Animating temperature"

@@ -11,7 +11,8 @@ model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
 
 ## set initial conditions
 T₀ᵘ = -1.5
-isohaline = IsohalineUpperLayerInitialConditions(T₀ᵘ)
+S = 34.7
+isohaline = IsohalineUpperLayerInitialConditions(34.7, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(isohaline)
 profile_function = Erf(INTERFACE_LOCATION, 0.1)
 set_two_layer_initial_conditions!(model, initial_conditions, profile_function)
