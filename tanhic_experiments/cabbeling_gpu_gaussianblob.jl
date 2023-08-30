@@ -15,8 +15,9 @@ initial_conditions = TwoLayerInitialConditions(cabbeling)
 profile_function = HyperbolicTangent(INTERFACE_LOCATION, 3500.0)
 
 ## `GaussianBlob`
-z = znodes(model.grid, Center(), Center(), Center())
-depth_idx = findfirst(z .> INTERFACE_LOCATION / 2)
+# z = znodes(model.grid, Center(), Center(), Center())
+# depth_idx = findfirst(z .> INTERFACE_LOCATION / 2)
+depth = find_depth(model, INTERFACE_LOCATION / 1.1)
 tracer_perturbation = GaussianBlob(-0.3560416666666667, [0.0, 0.0], 10.0)
 dns = TwoLayerDNS(model, profile_function, initial_conditions; tracer_perturbation)
 

@@ -14,9 +14,10 @@ stable = StableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(stable)
 profile_function = HyperbolicTangent(INTERFACE_LOCATION, 3500.0)
 ## `GaussianBlob`
-z = znodes(model.grid, Center(), Center(), Center())
-depth_idx = findfirst(z .> 9 * INTERFACE_LOCATION / 10)
-salinity_perturbation = GaussianBlob(z[depth_idx], [0.0, 0.0], 10.0)
+# z = znodes(model.grid, Center(), Center(), Center())
+# depth_idx = findfirst(z .> INTERFACE_LOCATION / 1.1)
+depth = find_depth(model, INTERFACE_LOCATION / 1.1)
+salinity_perturbation = GaussianBlob(depth, [0.0, 0.0], 10.0)
 dns = TwoLayerDNS(model, profile_function, initial_conditions, salinity_perturbation)
 set_two_layer_initial_conditions!(dns)
 ## `GaussianProfile`
@@ -27,9 +28,10 @@ salinity_perturbation = GaussianProfile(INTERFACE_LOCATION, INTERFACE_LOCATION /
 #                                   salinity_perturbation)
 
 ## With `RandomPerturbations`
-z = znodes(model.grid, Center(), Center(), Center())
-depth_idx = findfirst(z .> INTERFACE_LOCATION / 1.1)
-salinity_noise = RandomPerturbations(z[depth_idx], 0.001)
+# z = znodes(model.grid, Center(), Center(), Center())
+# depth_idx = findfirst(z .> INTERFACE_LOCATION / 1.1)
+depth = find_depth(model, INTERFACE_LOCATION / 1.1)
+salinity_noise = RandomPerturbations(depth, 0.001)
 dns = TwoLayerDNS(model, profile_function, initial_conditions, salinity_perturbation)
 
 ## Look at the output

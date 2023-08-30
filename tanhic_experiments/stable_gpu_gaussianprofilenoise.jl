@@ -19,6 +19,7 @@ tracer_perturbation = GaussianProfile(INTERFACE_LOCATION, INTERFACE_LOCATION / 1
                                         100.0, 10.0)
 # z = znodes(model.grid, Center(), Center(), Center())
 # depth_idx = findfirst(z .> INTERFACE_LOCATION / 1.1)
+depth = find_depth(model, INTERFACE_LOCATION / 1.1)
 initial_noise = RandomPerturbations(-0.34077380952380953, 0.001)
 dns = TwoLayerDNS(model, profile_function, initial_conditions;
                   tracer_perturbation, initial_noise)
