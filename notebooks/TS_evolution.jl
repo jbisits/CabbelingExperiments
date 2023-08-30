@@ -18,9 +18,7 @@ end
 begin
 	using Pkg
 	Pkg.activate("..")
-	using DirectNumericalCabbelingShenanigans
-	using DirectNumericalCabbelingShenanigans.TwoLayerDNS
-	using DirectNumericalCabbelingShenanigans.OutputUtilities
+	using TwoLayerDirectNumericalShenanigans
 	using Oceananigans.Fields
 	using PlutoUI, GibbsSeaWater
 	using SpecialFunctions: erf
@@ -28,7 +26,7 @@ end
 
 # ╔═╡ 3d90f332-f3f1-45f1-bfea-3fa4d1c648af
 begin
-	import DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution
+	import TwoLayerDirectNumericalShenanigans.erf_tracer_solution
 	erf_tracer_solution(z, Cₗ::Number, ΔC::Number, κ::Number, time, interface_location) =
     Cₗ + 0.5 * ΔC * (1 + erf((z - interface_location) / sqrt(4 * κ * time)))
 end
@@ -214,8 +212,8 @@ let
 
 	z = range(-1, 0, length = 500)
     interface_location = -0.375
-	S = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, S_star, ΔS, κₛDNS, timeDNS, interface_location)
-	T = DirectNumericalCabbelingShenanigans.TwoLayerDNS.erf_tracer_solution.(z, Θ_star, ΔΘ, κₜDNS, timeDNS, interface_location)
+	S = TwoLayerDirectNumericalShenanigans.erf_tracer_solution.(z, S_star, ΔS, κₛDNS, timeDNS, interface_location)
+	T = TwoLayerDirectNumericalShenanigans.erf_tracer_solution.(z, Θ_star, ΔΘ, κₜDNS, timeDNS, interface_location)
 	σ₀ = gsw_rho.(S, T, 0)
 
 	fontsize = 22

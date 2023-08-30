@@ -8,8 +8,7 @@ using InteractiveUtils
 begin
 	using Pkg
 	Pkg.activate("..")
-	using DirectNumericalCabbelingShenanigans
-	using DirectNumericalCabbelingShenanigans.TwoLayerDNS
+	using TwoLayerDirectNumericalShenanigans
 	using CairoMakie
 	using PlutoUI
 end
