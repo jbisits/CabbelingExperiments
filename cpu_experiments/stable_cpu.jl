@@ -1,6 +1,4 @@
-# High resolution two layer simulation
-using DirectNumericalCabbelingShenanigans
-using DirectNumericalCabbelingShenanigans.TwoLayerDNS
+using TwoLayerDirectNumericalShenanigans
 
 architecture = CPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
@@ -19,8 +17,8 @@ profile_function = HyperbolicTangent(INTERFACE_LOCATION, 3500.0)
 z = znodes(model.grid, Center(), Center(), Center())
 depth_idx = findfirst(z .> 9 * INTERFACE_LOCATION / 10)
 salinity_perturbation = GaussianBlob(z[depth_idx], [0.0, 0.0], 10.0)
-set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
-                                  salinity_perturbation)
+dns = TwoLayerDNS(model, profile_function, initial_conditions, salinity_perturbation)
+set_two_layer_initial_conditions!(dns)
 ## `GaussianProfile`
 salinity_perturbation = GaussianProfile(INTERFACE_LOCATION, INTERFACE_LOCATION / 1.1,
                                         100.0, 10.0)
@@ -32,18 +30,18 @@ salinity_perturbation = GaussianProfile(INTERFACE_LOCATION, INTERFACE_LOCATION /
 z = znodes(model.grid, Center(), Center(), Center())
 depth_idx = findfirst(z .> INTERFACE_LOCATION / 1.1)
 salinity_noise = RandomPerturbations(z[depth_idx], 0.001)
-set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
-                                  salinity_perturbation, salinity_noise)
+dns = TwoLayerDNS(model, profile_function, initial_conditions, salinity_perturbation)
+
 ## Look at the output
 using CairoMakie
-visualise_initial_conditions(model, 1, 1)
-visualise_initial_density(model, 1, 1, 0)
+visualise_initial_conditions(dns, 1, 1)
+visualise_initial_density(dns, 1, 1, 0)
 
 ## build the simulation
 Δt = 1e-5
 stop_time = 60 # seconds (in simulation time)
 save_schedule = 1 # seconds
-simulation = DNS_simulation_setup(model, Δt, stop_time, save_schedule, initial_conditions)
+simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule)
 
 ## Run the simulation
 run!(simulation)

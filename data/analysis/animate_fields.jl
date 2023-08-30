@@ -1,5 +1,4 @@
-using CairoMakie
-using DirectNumericalCabbelingShenanigans: animate_2D_field
+using CairoMakie, TwoLayerDirectNumericalShenanigans
 
 ## Animations (x-z)
 @info "Animating temperature"

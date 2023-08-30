@@ -1,6 +1,4 @@
-# High resolution two layer simulation
-using DirectNumericalCabbelingShenanigans
-using DirectNumericalCabbelingShenanigans.TwoLayerDNS
+using TwoLayerDirectNumericalShenanigans
 
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
@@ -15,13 +13,14 @@ S₀ᵘ = 34.59
 unstable = UnstableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(unstable)
 profile_function = Erf(INTERFACE_LOCATION, 0.1)
-set_two_layer_initial_conditions!(model, initial_conditions, profile_function)
+dns = TwoLayerDNS(model, profile_function, initial_conditions)
+set_two_layer_initial_conditions!(dns)
 
 ## build the simulation
 Δt = 1e-5
 stop_time = 5
 save_schedule = 1 # seconds
-simulation = DNS_simulation_setup(model, Δt, stop_time, save_schedule, initial_conditions)
+simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule)
 
 ## Run the simulation
 run!(simulation)

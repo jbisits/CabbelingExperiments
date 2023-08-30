@@ -1,6 +1,4 @@
-# High resolution two layer simulation
-using DirectNumericalCabbelingShenanigans
-using DirectNumericalCabbelingShenanigans.TwoLayerDNS
+using TwoLayerDirectNumericalShenanigans
 
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
@@ -19,15 +17,17 @@ profile_function = HyperbolicTangent(INTERFACE_LOCATION, 3500.0)
 ## `GaussianBlob`
 z = znodes(model.grid, Center(), Center(), Center())
 depth_idx = findfirst(z .> INTERFACE_LOCATION / 2)
-salinity_perturbation = GaussianBlob(-0.3560416666666667, [0.0, 0.0], 10.0)
+tracer_perturbation = GaussianBlob(-0.3560416666666667, [0.0, 0.0], 10.0)
+dns = TwoLayerDNS(model, profile_function, initial_conditions; tracer_perturbation)
+
 set_two_layer_initial_conditions!(model, initial_conditions, profile_function,
-                                  salinity_perturbation)
+                                  tracer_perturbation)
 
 ## build the simulation
 Δt = 1e-5
 stop_time = 5 * 60
 save_schedule = 5 # seconds
-simulation = DNS_simulation_setup(model, Δt, stop_time, save_schedule, initial_conditions)
+simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule)
 
 ## Run the simulation
 run!(simulation)
