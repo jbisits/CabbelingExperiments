@@ -5,7 +5,8 @@ diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
 
 ## Setup the model
 model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
-            reference_density = REFERENCE_DENSITY)
+            reference_density = REFERENCE_DENSITY,
+            linear_eos = true)
 
 ## set initial conditions
 T₀ᵘ = -1.5
