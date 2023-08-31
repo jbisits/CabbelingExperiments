@@ -54,6 +54,13 @@ findfirst(zn .> -0.75)
 # ╔═╡ 8256f01f-f9cb-40aa-9e9e-ce4607f00d6b
 Δz[300]
 
+# ╔═╡ cb2220e5-cc6e-4539-9161-eb4d67640e2d
+md"""
+```math
+\eta = \left(\frac{\nu^{3}}{\epsilon}\right)^{1/4}
+```
+"""
+
 # ╔═╡ Cell order:
 # ╟─fa3ec8c0-471f-11ee-39aa-9b599105dfdd
 # ╟─da38ebd2-601c-4092-bf2f-6ea061e5d0b7
@@ -63,3 +70,4 @@ findfirst(zn .> -0.75)
 # ╠═42de73f0-4db0-442d-9247-49812b056d21
 # ╠═b3c79f92-fa80-430f-ae3b-2eaa366f8708
 # ╠═8256f01f-f9cb-40aa-9e9e-ce4607f00d6b
+# ╠═cb2220e5-cc6e-4539-9161-eb4d67640e2d
