@@ -21,6 +21,8 @@ The horizontal resolution has been updated to resolve this but need to change gr
 
 See the plot below but updating `refinement = 1.05` and `stretching = 40` gives a ``\Delta z \approx 7mm`` in the upper 3/4 of the domain.
 The domain then increases to a maximum `dz ≈ 1.4mm` which is still less than the Kolmogorov scale and should be ok for out purposes.
+
+Running the DNS at this resolution I found minimum space time ``\eta`` for the length of the sim was 1.8mm so we are safe.
 """
 
 # ╔═╡ a306c81f-d6d7-42ff-af76-adda342a683a
