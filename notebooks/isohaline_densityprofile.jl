@@ -4,6 +4,16 @@
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
+        el
+    end
+end
+
 # ╔═╡ 373eac8c-d51c-4ac7-8731-57662d7fda11
 begin
 	using Pkg
@@ -31,11 +41,15 @@ It might still be the case that we use a linear EOS but at this stage I prefer t
 # ╔═╡ e8695f4e-31d1-4f99-b634-78f79b32f359
 md"""
 ## Stable system
-
-One option is to leave the salinity field as it as and use an isothermal temperature initial condition.
 """
 
-# ╔═╡ b7f8c64a-cb1c-4a13-9598-f38be1f3243d
+# ╔═╡ cf0a359e-6b62-4f98-a88c-72bd81e23786
+salinity_perturbation = @bind sp Select(["Small", "Medium", "Large"])
+
+# ╔═╡ 1a896dc3-afdf-466f-af1a-865585cbe96d
+scale = isequal(sp, "Small") ? 5.0 : isequal(sp, "Medium") ? 8.0 : 10.0
+
+# ╔═╡ f37b8757-2b7c-4539-a30c-10a6013fdab7
 begin
 	architecture = CPU()
 	diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
@@ -43,7 +57,11 @@ begin
 	## Setup the model
 	model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
 	            reference_density = REFERENCE_DENSITY)
+	nothing
+end
 
+# ╔═╡ b7f8c64a-cb1c-4a13-9598-f38be1f3243d
+begin
 	## set initial conditions
 	T₀ᵘ = -1.5
 	S₀ᵘ = 34.551
@@ -53,7 +71,7 @@ begin
 
 	## `GaussianProfile`
 	tracer_perturbation = SalinityGaussianProfile(INTERFACE_LOCATION,
-											INTERFACE_LOCATION / 1.1, 100.0, 10.0)
+											INTERFACE_LOCATION / 1.1, 100.0, scale)
 
 	## With `RandomPerturbations`
 	z = znodes(model.grid, Center(), Center(), Center())
@@ -79,23 +97,35 @@ begin
 	"""
 end
 
-# ╔═╡ f468fbe1-5294-48c6-bff4-269c1b703528
-md"""
-## Isothermal
+# ╔═╡ 852556d9-bba8-4722-a5b3-9c0f27fa688d
+begin
+	S_isothermalrange = range(34.665, 34.6651, step = 0.0000001)
+	Δσ_isothermal = @. gsw_sigma0(S₀ˡ, 0.5) - gsw_sigma0(S_isothermalrange, 0.5)
+	find_S_isothermal = findfirst(Δσ_isothermal .< Δσ_stable)
+	md"""
+	## Isothermal
+	
+	One option is to leave the salinity field as it as and use an isothermal temperature initial condition.
+	
+	``\Delta\sigma_{0}^{\mathrm{isothermal}} =`` $(Δσ_isothermal[find_S_isothermal]) for salinity value ``S =`` $(S_isothermalrange[find_S_isothermal]).
+	
+	With a value of $(S_isothermalrange[find_S_isothermal]) for the salinity in the upper layer we get a fairly similr density profile and still quite realistic values. Refine this and I think this is the way to go but isohaline option is also below.
+	"""
+end
 
-One option is to leave the salinity field as it as and use an isothermal temperature initial condition.
-"""
+# ╔═╡ 2d64c18f-f3dc-4859-b9d6-94f90a00ca78
+begin 
+	model_isothermal = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities; reference_density = REFERENCE_DENSITY)
+	nothing
+end
 
 # ╔═╡ 1a244403-6b71-40b4-aac0-98e478da773e
 begin
-	## Setup the model
-	model_isothermal = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities; reference_density = REFERENCE_DENSITY)
-
 	## set initial conditions
-	isothermal = IsothermalUpperLayerInitialConditions(34.666, 0.5)
+	isothermal = IsothermalUpperLayerInitialConditions(S_isothermalrange[find_S_isothermal], 0.5)
 	initial_conditions_isothermal = TwoLayerInitialConditions(isothermal)
 	tracer_perturbation_iso = SalinityGaussianProfile(INTERFACE_LOCATION,
-											INTERFACE_LOCATION / 1.1, 100.0, 10.0)
+											INTERFACE_LOCATION / 1.1, 100.0, scale)
 
 	dns_isothermal = TwoLayerDNS(model_isothermal, profile_function, initial_conditions_isothermal, tracer_perturbation = tracer_perturbation_iso; initial_noise)
 
@@ -106,14 +136,6 @@ end
 
 # ╔═╡ ce6e0248-9e5f-427f-8f3f-ee92061c889e
 fig_density_isothermal = visualise_initial_density(dns_isothermal, 1, 1, 0)
-
-# ╔═╡ 1d6e4a58-a006-48fd-926c-71ed3532524a
-gsw_sigma0(S₀ˡ, 0.5) - gsw_sigma0(34.666, 0.5)
-
-# ╔═╡ a5dc9f9b-a28a-4cba-971b-2d702c4420f2
-md"""
-With a value of 34.666 for the salinity in the upper layer we get a fairly similr density profile and still quite realistic values. Refine this and I think this is the way to go but isohaline option is also below.
-"""
 
 # ╔═╡ 29de4ead-4db0-4a56-8819-3e374367d3dd
 begin
@@ -192,15 +214,17 @@ TableOfContents(title = "Isohaline density profile")
 # ╟─14c81daa-42d8-11ee-1e5c-63e4bd60e8c2
 # ╟─373eac8c-d51c-4ac7-8731-57662d7fda11
 # ╟─e8695f4e-31d1-4f99-b634-78f79b32f359
+# ╟─cf0a359e-6b62-4f98-a88c-72bd81e23786
+# ╟─1a896dc3-afdf-466f-af1a-865585cbe96d
+# ╟─f37b8757-2b7c-4539-a30c-10a6013fdab7
 # ╟─b7f8c64a-cb1c-4a13-9598-f38be1f3243d
 # ╟─b3662810-178e-42ff-968d-b33500592d14
 # ╟─f5c5ff99-6125-45f6-87c6-f44baf785f23
 # ╟─bc86ddff-b42b-4fed-82ed-80ed331e3e33
-# ╟─f468fbe1-5294-48c6-bff4-269c1b703528
+# ╟─852556d9-bba8-4722-a5b3-9c0f27fa688d
+# ╟─2d64c18f-f3dc-4859-b9d6-94f90a00ca78
 # ╟─1a244403-6b71-40b4-aac0-98e478da773e
 # ╟─ce6e0248-9e5f-427f-8f3f-ee92061c889e
-# ╟─1d6e4a58-a006-48fd-926c-71ed3532524a
-# ╟─a5dc9f9b-a28a-4cba-971b-2d702c4420f2
 # ╟─29de4ead-4db0-4a56-8819-3e374367d3dd
 # ╟─65eb5760-855e-483c-95b6-7fb961ca4fcc
 # ╟─a94ffb8f-8ab3-48b3-83d6-72f9e3431e6a

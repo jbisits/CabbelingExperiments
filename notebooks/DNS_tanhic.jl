@@ -51,8 +51,9 @@ begin
 	stable = StableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 	initial_conditions = TwoLayerInitialConditions(stable)
 	profile_function = HyperbolicTangent(INTERFACE_LOCATION, 3500.0)
-	set_two_layer_initial_conditions!(model, initial_conditions, profile_function)
-	fig = visualise_initial_conditions(model, 1, 1)
+	dns = TwoLayerDNS(model, profile_function, initial_conditions)
+	set_two_layer_initial_conditions!(dns)
+	fig = visualise_initial_conditions(dns, 1, 1)
 end
 
 # ╔═╡ 4829ebc6-ea75-49df-8a95-4ba277f07df1
@@ -78,6 +79,12 @@ When meeting with Bishakh he said that to ensure the simulation does not blow up
 ```
 
 I am yet to calculate ``(2)`` ([Oceanostics.jl](https://github.com/tomchor/Oceanostics.jl) can help with ``\epsilon``) but assuming that ``\eta`` is around the size of the vertical resolution in the upper part of the domain want 10`znodes` across the interface.
+
+Calculating ``\eta`` where are below the Kolmogorov scale so all fine there.
+As our system is stable it does not matter how many grid cells are over our interface, this just determines how rapidly the instability develops dues to mixing through the grid cells.
+This may need to be revisited but for now I think it is ok to run the experiments like this though such a sudden change in temperature is something that may need to justified or changed later to be more realistic.
+
+From our 1D experiment we do start with the step change so maybe as a science experiment for cabbeling this is ok
 """
 
 # ╔═╡ a8cbdf00-42d4-4ab2-8e3d-3d1430cc4887
@@ -107,7 +114,7 @@ let
 end
 
 # ╔═╡ f27bf1d8-407d-44a1-8834-15c868d08b60
-visualise_initial_density(model, 1, 1, 0)
+visualise_initial_density(dns, 1, 1, 0)
 
 # ╔═╡ 10c2f596-2285-41f9-b5d4-4d3dc9d78df6
 md"""
