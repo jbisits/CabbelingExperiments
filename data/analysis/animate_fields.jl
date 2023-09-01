@@ -1,13 +1,13 @@
 using CairoMakie, TwoLayerDirectNumericalShenanigans
 
 ## Animations (x-z)
-@info "Animating temperature"
-colormap = cgrad(:thermal)[2:end-1]
-colorrange = extrema(T_ts[1])
-lowclip = cgrad(:thermal)[1]
-highclip = cgrad(:thermal)[end]
-#  Temperatures
-animate_2D_field(T_ts, "Θ (°C)", 10, 10; colormap, colorrange, highclip, lowclip)
+# @info "Animating temperature"
+# colormap = cgrad(:thermal)[2:end-1]
+# colorrange = extrema(T_ts[1])
+# lowclip = cgrad(:thermal)[1]
+# highclip = cgrad(:thermal)[end]
+# #  Temperatures
+# animate_2D_field(T_ts, "Θ (°C)", 10, 10; colormap, colorrange, highclip, lowclip)
 ## Salinity
 @info "Animating salinity"
 colormap = cgrad(:haline)[2:end-1]
