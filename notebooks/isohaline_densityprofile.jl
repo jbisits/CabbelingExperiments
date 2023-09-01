@@ -84,6 +84,9 @@ end
 # ╔═╡ b3662810-178e-42ff-968d-b33500592d14
 fig_ics_stable = visualise_initial_conditions(dns, 1, 1)
 
+# ╔═╡ 0c0b2157-bc39-4ec1-8894-436e1c22c06e
+#save("stable_mp_ics.png", fig_ics_stable)
+
 # ╔═╡ f5c5ff99-6125-45f6-87c6-f44baf785f23
 fig_density_stable = visualise_initial_density(dns, 1, 1, 0)
 
@@ -133,6 +136,9 @@ begin
 	set_two_layer_initial_conditions!(dns_isothermal)
 	fig_ic_isothermal = visualise_initial_conditions(dns_isothermal, 1, 1)
 end
+
+# ╔═╡ e6aa5e48-8824-4c48-baf5-9fc66fe044d0
+#save("isothermal_mp_ics.png", fig_ic_isothermal)
 
 # ╔═╡ ce6e0248-9e5f-427f-8f3f-ee92061c889e
 fig_density_isothermal = visualise_initial_density(dns_isothermal, 1, 1, 0)
@@ -219,11 +225,13 @@ TableOfContents(title = "Isohaline density profile")
 # ╟─f37b8757-2b7c-4539-a30c-10a6013fdab7
 # ╟─b7f8c64a-cb1c-4a13-9598-f38be1f3243d
 # ╟─b3662810-178e-42ff-968d-b33500592d14
+# ╠═0c0b2157-bc39-4ec1-8894-436e1c22c06e
 # ╟─f5c5ff99-6125-45f6-87c6-f44baf785f23
 # ╟─bc86ddff-b42b-4fed-82ed-80ed331e3e33
 # ╟─852556d9-bba8-4722-a5b3-9c0f27fa688d
 # ╟─2d64c18f-f3dc-4859-b9d6-94f90a00ca78
 # ╟─1a244403-6b71-40b4-aac0-98e478da773e
+# ╠═e6aa5e48-8824-4c48-baf5-9fc66fe044d0
 # ╟─ce6e0248-9e5f-427f-8f3f-ee92061c889e
 # ╟─29de4ead-4db0-4a56-8819-3e374367d3dd
 # ╟─65eb5760-855e-483c-95b6-7fb961ca4fcc
