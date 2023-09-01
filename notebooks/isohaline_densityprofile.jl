@@ -104,17 +104,17 @@ begin
 	find_S_isothermal = findfirst(Δσ_isothermal .< Δσ_stable)
 	md"""
 	## Isothermal
-	
+
 	One option is to leave the salinity field as it as and use an isothermal temperature initial condition.
-	
+
 	``\Delta\sigma_{0}^{\mathrm{isothermal}} =`` $(Δσ_isothermal[find_S_isothermal]) for salinity value ``S =`` $(S_isothermalrange[find_S_isothermal]).
-	
+
 	With a value of $(S_isothermalrange[find_S_isothermal]) for the salinity in the upper layer we get a fairly similr density profile and still quite realistic values. Refine this and I think this is the way to go but isohaline option is also below.
 	"""
 end
 
 # ╔═╡ 2d64c18f-f3dc-4859-b9d6-94f90a00ca78
-begin 
+begin
 	model_isothermal = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities; reference_density = REFERENCE_DENSITY)
 	nothing
 end
@@ -144,7 +144,7 @@ begin
 	find_S = findfirst(Δσ_iso .< Δσ_stable)
 	md"""
 	## Isohaline
-	
+
 	To find an isohaline profile that matches this need to find a salinity value to give us a change in density as above.
 	I have already done some playing around and I know that ``S \approx 16.324`` gives a good estimate, ``\Delta\sigma_{0}^{\mathrm{isohaline}} = `` $(gsw_sigma0(16.324, T₀ˡ) - gsw_sigma0(16.324, T₀ᵘ)).
 
