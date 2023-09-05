@@ -4,5 +4,4 @@ using Oceananigans.Fields
 sim_path = joinpath(SIMULATION_PATH, "verystable_tanh_salinitygaussianprofile_mp_10min.jld2")
 T_ts = FieldTimeSeries(sim_path, "T", backend = OnDisk())
 S_ts = FieldTimeSeries(sim_path, "S", backend = OnDisk())
-ϵ_ts = FieldTimeSeries(sim_path, "ϵ", backend = OnDisk())
 σ₀_ts = FieldTimeSeries(sim_path, "σ₀", backend = OnDisk())
