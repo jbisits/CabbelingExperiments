@@ -17,11 +17,8 @@ profile_function = HyperbolicTangent(INTERFACE_LOCATION, 3500.0)
 ## `GaussianProfile` with `RandomPerturbations`
 tracer_perturbation = SalinityGaussianProfile(INTERFACE_LOCATION, INTERFACE_LOCATION / 1.1,
                                               100.0, 10.0)
-# z = znodes(model.grid, Center(), Center(), Center())
-# depth_idx = findfirst(z .> INTERFACE_LOCATION / 1.1)
-#initial_noise = RandomPerturbations(-0.34077380952380953, 0.001)
-#depth = find_depth(model, INTERFACE_LOCATION / 1.1)
-initial_noise = SalinityNoise(-0.34047619048073924, 0.001)
+noise_depth = find_depth(model, INTERFACE_LOCATION / 1.1)
+initial_noise = SalinityNoise(noise_depth, 0.001)
 dns = TwoLayerDNS(model, profile_function, initial_conditions;
                   tracer_perturbation, initial_noise)
 set_two_layer_initial_conditions!(dns)
