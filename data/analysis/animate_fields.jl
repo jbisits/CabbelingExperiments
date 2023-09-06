@@ -16,9 +16,9 @@ lowclip = cgrad(:haline)[1]
 highclip = cgrad(:haline)[end]
 animate_2D_field(S_ts, "S (gkg⁻¹)", 10, 10; colormap, colorrange, highclip, lowclip)
 ## Density (x-z)
-@info "Animating density"
-colormap = cgrad(:dense)[2:end-1]
-colorrange = extrema(σ₀_ts[1])
-lowclip = cgrad(:dense)[1]
-highclip = cgrad(:dense)[end]
-animate_2D_field(σ₀_ts, "σ₀ (kgm⁻³)", 10, 10; colormap, colorrange, highclip, lowclip)
+# @info "Animating density"
+# colormap = cgrad(:dense)[2:end-1]
+# colorrange = extrema(σ₀_ts[1])
+# lowclip = cgrad(:dense)[1]
+# highclip = cgrad(:dense)[end]
+# animate_2D_field(σ₀_ts, "σ₀ (kgm⁻³)", 10, 10; colormap, colorrange, highclip, lowclip)
