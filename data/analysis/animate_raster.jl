@@ -2,20 +2,20 @@ using TwoLayerDirectNumericalShenanigans, CairoMakie, Rasters, NCDatasets
 
 ## Animations (x-z)
 @info "Reading into T into Raster"
-rs = Raster(stable_lp, lazy = true, name = :T)
+T_rs = Raster(stable_lp, lazy = true, name = :T)
 @info "Animating temperature"
 colormap = cgrad(:thermal)[2:end-1]
-colorrange = extrema(rs)
+colorrange = extrema(T_rs[:, :, :, 1])
 lowclip = cgrad(:thermal)[1]
 highclip = cgrad(:thermal)[end]
 #  Temperatures
 animate_2D_field(rs, 10, 10; colormap, colorrange, highclip, lowclip)
 ## Salinity
 @info "Reading into S into Raster"
-rs = Raster(stable_lp, lazy = true, name = :S)
+S_rs = Raster(stable_lp, lazy = true, name = :S)
 @info "Animating salinity"
 colormap = cgrad(:haline)[2:end-1]
-colorrange = extrema(rs)
+colorrange = extrema(S_rs[:, :, :, 1])
 lowclip = cgrad(:haline)[1]
 highclip = cgrad(:haline)[end]
 animate_2D_field(rs, 10, 10; colormap, colorrange, highclip, lowclip)
