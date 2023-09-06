@@ -9,7 +9,7 @@ colorrange = extrema(T_rs[:, :, :, 1])
 lowclip = cgrad(:thermal)[1]
 highclip = cgrad(:thermal)[end]
 #  Temperatures
-animate_2D_field(rs, 10, 10; colormap, colorrange, highclip, lowclip)
+animate_2D_field(T_rs, 10, 10; colormap, colorrange, highclip, lowclip)
 ## Salinity
 @info "Reading into S into Raster"
 S_rs = Raster(stable_lp, lazy = true, name = :S)
@@ -18,7 +18,7 @@ colormap = cgrad(:haline)[2:end-1]
 colorrange = extrema(S_rs[:, :, :, 1])
 lowclip = cgrad(:haline)[1]
 highclip = cgrad(:haline)[end]
-animate_2D_field(rs, 10, 10; colormap, colorrange, highclip, lowclip)
+animate_2D_field(S_rs, 10, 10; colormap, colorrange, highclip, lowclip)
 ## Density (x-z)
 # @info "Reading into S into Raster"
 # rs = Raster(stable_lp, name = :σ)
