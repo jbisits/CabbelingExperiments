@@ -119,6 +119,9 @@ end
 # ╔═╡ b9910098-4ec6-4e2d-91a4-c8538a91a05c
 md"""
 In ``S-T`` space this clearly gives us an initial condition that is unstable to cabbeling (the `cabbeling2` initial condition that is) but it is not that unstable to cabbeling. This is a good first test case though and given there is still a fair bit of time on NCI for this quarter two good experiments would be these with only salinity noise to kick off mixing and see what happens.
+
+### Initial S-T profiles that are set
+From the figure below I can see that the key thing for setting these initial conditions is **where the S and T nodes are**. If there was a way that the spacing between the salinity and temperature nodes then it could be that the nodes could always be put where they were stable rather than the line joining and having some in the unstable part of ``S-T`` space.
 """
 
 # ╔═╡ 3d801dd0-c1d7-4c6f-9cd1-61cbbbcfdeeb
@@ -195,7 +198,7 @@ TableOfContents(title = "Initial density profile")
 # ╟─642dbd18-d0aa-46de-9c30-9a3cbb994560
 # ╟─dbf28579-232e-440c-815d-6f11607c334c
 # ╟─796798a1-4700-4d1c-9afd-6053a77c7172
-# ╠═b9910098-4ec6-4e2d-91a4-c8538a91a05c
+# ╟─b9910098-4ec6-4e2d-91a4-c8538a91a05c
 # ╟─3d801dd0-c1d7-4c6f-9cd1-61cbbbcfdeeb
 # ╟─3e7fedfd-e0bd-4358-aa46-ce68fd90c015
 # ╟─96c44a1f-96d4-4844-a363-f47752b9c014
