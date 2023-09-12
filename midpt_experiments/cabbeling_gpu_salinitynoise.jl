@@ -16,7 +16,7 @@ depth = find_depth(model, INTERFACE_LOCATION)
 profile_function = MidPoint(depth)
 
 ## Salinity noise
-initial_noise = SalinityNoise(depth, 0.001)
+initial_noise = SalinityNoise(depth, 1e-4)
 dns = TwoLayerDNS(model, profile_function, initial_conditions; initial_noise)
 
 set_two_layer_initial_conditions!(dns)
