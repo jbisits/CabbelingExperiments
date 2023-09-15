@@ -43,7 +43,7 @@ end
 @bind ulic Select(["stable", "cabbeling"])
 
 # ╔═╡ 6774341e-21f9-40b5-aabb-60593225013d
-S₀ᵘ = (stable = 34.551, cabbeling = 34.567)
+S₀ᵘ = (stable = 34.551, cabbeling = 34.58)
 
 # ╔═╡ edea3bef-54dc-4dcf-8818-e8691c350888
 md"""
@@ -128,7 +128,7 @@ TableOfContents()
 # ╟─7c0a9f46-9318-40b7-9765-d5c70b751688
 # ╟─613ed422-1bd1-4229-ba32-4ae618e5dd6a
 # ╟─002c37b8-90b9-4922-b7a6-dac85eb869a6
-# ╟─6774341e-21f9-40b5-aabb-60593225013d
+# ╠═6774341e-21f9-40b5-aabb-60593225013d
 # ╟─edea3bef-54dc-4dcf-8818-e8691c350888
 # ╠═55400c9e-63ed-4856-aec6-aa4034514416
 # ╟─b59482c8-b66d-4182-bb1e-d47829619472
