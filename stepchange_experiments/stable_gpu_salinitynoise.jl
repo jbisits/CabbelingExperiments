@@ -18,7 +18,7 @@ profile_function = StepChange(depth)
 ## Salinity noise
 depths = find_depth(model, [INTERFACE_LOCATION + 0.01, INTERFACE_LOCATION - 0.01])
 scales = similar(depths)
-fill!(scales, 2e-4)
+fill!(scales, 5e-4)
 initial_noise = SalinityNoise(depths, scales)
 dns = TwoLayerDNS(model, profile_function, initial_conditions; initial_noise)
 
@@ -26,7 +26,7 @@ set_two_layer_initial_conditions!(dns)
 
 ## build the simulation
 Δt = 1e-4
-stop_time = 10 * 60 # seconds (in simulation time)
+stop_time = 5 * 60 # seconds (in simulation time)
 save_schedule = 5 # seconds
 simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule)
 
