@@ -21,7 +21,7 @@ profile_function = HyperbolicTangent(INTERFACE_LOCATION, 3500.0)
 depths = find_depth(model, [INTERFACE_LOCATION + 0.02, INTERFACE_LOCATION - 0.02])
 scales = similar(depths)
 fill!(scales, 1e-4)
-initial_noise = SalinityNoise(Array(depths), Array(scales))
+initial_noise = SalinityNoise(depths, scales)
 
 dns = TwoLayerDNS(model, profile_function, initial_conditions; initial_noise)
 
