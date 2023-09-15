@@ -61,7 +61,7 @@ begin
 	initial_conditions = TwoLayerInitialConditions(upper)
 	profile_function = StepChange(INTERFACE_LOCATION)
 	depth = find_depth(model, INTERFACE_LOCATION)
-	depths = find_depth(model, [INTERFACE_LOCATION + 0.01, INTERFACE_LOCATION - 0.01])
+	depths = find_depth(model, [INTERFACE_LOCATION + 0.005, INTERFACE_LOCATION - 0.005])
 	scales = similar(depths)
 	fill!(scales, 2e-4)
 	initial_noise = SalinityNoise(depths, scales)
