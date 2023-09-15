@@ -20,7 +20,7 @@ profile_function = StepChange(depth)
 # scales = similar(depths)
 # fill!(scales, 2e-4)
 # initial_noise = SalinityNoise(depths, scales)
-initial_noise = SalinityNoise(depth, 5e-3)
+initial_noise = SalinityNoise(-0.373809523827038, 5e-3)
 dns = TwoLayerDNS(model, profile_function, initial_conditions; initial_noise)
 
 set_two_layer_initial_conditions!(dns)
