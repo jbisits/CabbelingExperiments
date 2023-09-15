@@ -9,7 +9,7 @@ model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
 
 ## set initial conditions
 T₀ᵘ = -1.5
-S₀ᵘ = 34.567
+S₀ᵘ = 34.568
 cabbeling = CabbelingUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(cabbeling)
 depth = find_depth(model, INTERFACE_LOCATION)
