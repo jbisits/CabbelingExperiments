@@ -78,6 +78,11 @@ md"""
 # ╔═╡ f4ef6c9d-397a-4159-8392-c6db1222d777
 visualise_initial_density(dns, 1, 1, 0)
 
+# ╔═╡ 29afdbd7-a662-4640-bcfc-47aef90370b3
+md"""
+## Initial conditions in ``S-T`` space
+"""
+
 # ╔═╡ 1e4eca15-65f3-41f6-870a-5907f09e66f0
 let
 	S_star, Θ_star = 34.7, 0.5
@@ -120,6 +125,99 @@ let
 	#save("initialTSprofiles.png", fig)
 end
 
+# ╔═╡ 2dd60351-f416-4beb-97d2-03ca8cb449df
+md"""
+# Isothermal `StepChange`
+
+As well as running the experiment with the `stable` and `cabbeling` initial conditions above, we will run in the isothermal configuration I used preivously.
+This time we will be comparing the `cabbeling` initial condition to an isothermal configuration so the density differnece will be different from last time.
+
+With the `cabbeling` initial condition being more extreme this time the isothermal salinity required to match the initial density difference is *very close* to the salinity in the lower layer.
+This is means it is very nearly isothermal and isohaline.
+It could mean that the 
+"""
+
+# ╔═╡ 153fe311-94f4-4941-94a0-81aecbaec29d
+model_isothermal = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
+	            reference_density = REFERENCE_DENSITY)
+
+# ╔═╡ 3f0730f5-2f23-4952-8a3a-ed4d1b35ae98
+begin
+	Δσ_c = gsw_rho(34.7, 0.5, 0) - gsw_rho(34.58, -1.5, 0)
+	S_range = range(34.6943, 34.69432, step = 1e-8)
+	Δσ_range = gsw_rho(34.7, 0.5, 0) .- gsw_rho.(S_range, 0.5, 0)
+	find_s = findfirst(Δσ_range .≤ Δσ_c)
+	Δσ_iso = gsw_rho(34.7, 0.5, 0) - gsw_rho(S_range[find_s], 0.5, 0)
+	md"""
+	If ``S =`` $(S_range[find_s]) then ``\Delta\sigma_{0}^{\mathrm{cab}} ≈ \Delta\sigma_{0}^{\mathrm{isothermal}}`` with $Δσ_c and $Δσ_iso respectively.
+	If the accuracy of this needs to be improved can do that.
+
+	## Initial salinity and temperature profiles
+	"""
+end
+
+# ╔═╡ df8de0eb-57f5-47f4-a330-a2385feb5f46
+begin
+	upper_isothermal = IsothermalUpperLayerInitialConditions(S_range[find_s], 0.5)
+	initial_conditions_isothermal = TwoLayerInitialConditions(upper_isothermal)
+	dns_isothermal = TwoLayerDNS(model_isothermal, profile_function, initial_conditions_isothermal; initial_noise)
+	set_two_layer_initial_conditions!(dns_isothermal)
+	visualise_initial_conditions(dns_isothermal, 1, 1)
+end
+
+# ╔═╡ 62209d01-888f-4c5a-adeb-5725691e4993
+md"""
+## Initial density
+"""
+
+# ╔═╡ 66b71108-3210-42bc-ae51-b5abbbb800f4
+visualise_initial_density(dns_isothermal, 1, 1, 0)
+
+# ╔═╡ 910bc50d-d8b0-4040-a19c-f0e011480884
+md"""
+## Initial conditions in ``S-T`` space
+"""
+
+# ╔═╡ d958d2ba-e907-4976-9402-64694e331225
+let
+	S_star, Θ_star = 34.7, 0.5
+	S_s, Θ_s = S₀ᵘ.stable, T₀ᵘ
+	S_c = S₀ᵘ.cabbeling
+	T_profile = interior(dns_isothermal.model.tracers.T, 1, 1, :)
+	S_profile = interior(dns_isothermal.model.tracers.S, 1, 1, :)
+	Θ_c = T₀ᵘ
+	N = 2000
+	S_range, Θ_range = range(34.52, 34.72, length = N), range(-2, 1, length = N)
+	S_grid, Θ_grid = ones(N) .* S_range', ones(N)' .* Θ_range
+	ρ = gsw_rho.(S_grid, Θ_grid, 0)
+	ρ_star = gsw_rho(S_star, Θ_star, 0)
+	α_star = gsw_alpha(S_star, Θ_star, 0)
+	β_star = gsw_beta(S_star, Θ_star, 0)
+	ρ_s = gsw_rho(S_s, Θ_s, 0)
+	find_Θ = findfirst(Θ_range .> -1.5)
+	find_S = findfirst(ρ[find_Θ, :] .> ρ_star)
+	S_iso, Θ_iso = S_range[find_S], Θ_range[find_Θ]
+	gsw_rho(S_iso, Θ_iso, 0)
+
+	αₗ, βₗ = gsw_alpha(S_star, Θ_star, 0), gsw_beta(S_star, Θ_star, 0)
+	m = βₗ / αₗ
+	Θ_linear = @. Θ_star + m * (S_range - S_star)
+	fig = Figure(size = (500, 500), fontsize = 22)
+	ax = Axis(fig[1, 1];
+			  title = "Water masses in salinity-temperature space",
+			  xlabel = "Absolute salinity (gkg⁻¹)",
+			  ylabel = "Conservative temperature (°C)",
+			  limits = (extrema(S_range), extrema(Θ_range)))
+	contour!(ax, S_range, Θ_range, ρ'; levels = [ρ_star], color = :black, linewidth = 0.4, labelsize = 18)
+	lines!(ax, S_range, Θ_linear, color = :blue, linestyle = :dash)
+	scatterlines!(ax, S_profile, T_profile, color = :purple, label = "Initial profile")
+	scatter!(ax, [S_star], [Θ_star]; color = :red, label = "Lower layer")
+	#scatter!(ax, [S_mid], [Θ_mid])
+	axislegend(ax, position = :rb)
+	fig
+	#save("initialTSprofiles.png", fig)
+end
+
 # ╔═╡ 6e41ac9a-84b1-4dfe-bc5c-b3d18b00bac5
 TableOfContents()
 
@@ -128,10 +226,19 @@ TableOfContents()
 # ╟─7c0a9f46-9318-40b7-9765-d5c70b751688
 # ╟─613ed422-1bd1-4229-ba32-4ae618e5dd6a
 # ╟─002c37b8-90b9-4922-b7a6-dac85eb869a6
-# ╠═6774341e-21f9-40b5-aabb-60593225013d
+# ╟─6774341e-21f9-40b5-aabb-60593225013d
 # ╟─edea3bef-54dc-4dcf-8818-e8691c350888
-# ╠═55400c9e-63ed-4856-aec6-aa4034514416
+# ╟─55400c9e-63ed-4856-aec6-aa4034514416
 # ╟─b59482c8-b66d-4182-bb1e-d47829619472
 # ╟─f4ef6c9d-397a-4159-8392-c6db1222d777
+# ╟─29afdbd7-a662-4640-bcfc-47aef90370b3
 # ╟─1e4eca15-65f3-41f6-870a-5907f09e66f0
+# ╟─2dd60351-f416-4beb-97d2-03ca8cb449df
+# ╟─153fe311-94f4-4941-94a0-81aecbaec29d
+# ╟─3f0730f5-2f23-4952-8a3a-ed4d1b35ae98
+# ╟─df8de0eb-57f5-47f4-a330-a2385feb5f46
+# ╟─62209d01-888f-4c5a-adeb-5725691e4993
+# ╟─66b71108-3210-42bc-ae51-b5abbbb800f4
+# ╟─910bc50d-d8b0-4040-a19c-f0e011480884
+# ╟─d958d2ba-e907-4976-9402-64694e331225
 # ╟─6e41ac9a-84b1-4dfe-bc5c-b3d18b00bac5
