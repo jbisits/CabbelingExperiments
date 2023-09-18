@@ -23,9 +23,11 @@ depths = find_depth(model, [INTERFACE_LOCATION + 0.02, INTERFACE_LOCATION - 0.02
 scales = similar(depths)
 fill!(scales, 2e-4)
 initial_noise = SalinityNoise(depths, scales)
+@info "Building DNS"
+dns = TwoLayerDNS(model, profile_function, initial_conditions; initial_noise)
 
 @info "Setting two layer initial conditions"
-dns = TwoLayerDNS(model, profile_function, initial_conditions; initial_noise)
+set_two_layer_initial_conditions!(dns)
 
 ## build the simulation
 Δt = 1e-4
