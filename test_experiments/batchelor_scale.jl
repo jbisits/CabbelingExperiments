@@ -2,7 +2,7 @@ using TwoLayerDirectNumericalShenanigans
 
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
-DNS_resolution = (Nx = 200, Ny = 200, Nz = 2000)
+DNS_resolution = (Nx = 160, Ny = 160, Nz = 1600)
 
 ## Setup the model
 @info "Model setup"
