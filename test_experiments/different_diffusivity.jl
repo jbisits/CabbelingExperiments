@@ -29,7 +29,7 @@ set_two_layer_initial_conditions!(dns)
 
 ## build the simulation
 Δt = 1e-4
-stop_time = 10 * 60
+stop_time = 3 * 60
 save_schedule = 5 # seconds
 simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule)
 
