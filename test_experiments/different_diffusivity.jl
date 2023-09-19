@@ -5,7 +5,7 @@ architecture = GPU()
 ## Setup the model
 @info "Model setup"
 model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, SO_DIFFUSIVITIES;
-            reference_density = REFERENCE_DENSITY)
+            reference_density = REFERENCE_DENSITY, zgrid_stretching = false)
 
 ## set initial conditions
 @info "Setting initial conditions"

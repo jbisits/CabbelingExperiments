@@ -6,7 +6,7 @@ DNS_resolution = (Nx = 200, Ny = 200, Nz = 2000)
 ## Setup the model
 @info "Model setup"
 model = DNS(architecture, DOMAIN_EXTENT, DNS_resolution, SO_DIFFUSIVITIES;
-            reference_density = REFERENCE_DENSITY)
+            reference_density = REFERENCE_DENSITY, zgrid_stretching = false)
 
 ## set initial conditions
 @info "Setting initial conditions"
