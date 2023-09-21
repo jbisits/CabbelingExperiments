@@ -30,9 +30,13 @@ set_two_layer_initial_conditions!(dns)
 
 ## build the simulation
 Δt = 1e-4
-stop_time = 10 * 60
-save_schedule = 5 # seconds
+stop_time = 60 * 60
+save_schedule = 60 # seconds
 simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule)
 
 ## Run the simulation
 run!(simulation)
+@info "Computing density and appending to netcdf file"
+compute_density!(simulation.output_writers[:outputs].filepath)
+@info "Computing Kolmogorov and Batchelor scales and appending to netcdf"
+TLDNS.kolmogorov_and_batchelor_scale!(simulation.output_writers[:outputs].filepath)
