@@ -1,9 +1,9 @@
 using Rasters, NCDatasets, CairoMakie
-cab_file = "data/simulations/data/simulations/cabbeling_stepchange_dd_3min.nc"
+cab_file = "data/simulations/cabbeling_vs_stable/cabbeling_stepchange_nothing_10min.nc"
 σ = Raster(cab_file, name = :σ, lazy = true)
 x, y, t = lookup(σ, :xC), lookup(σ, :zC), lookup(σ, :Ti)
 
-yslice, snapshot = 62, 25
+yslice, snapshot = 62, 120
 fig = Figure(size = (500, 500))
 ax = Axis(fig[1, 1],
           xlabel = "x (m)",
