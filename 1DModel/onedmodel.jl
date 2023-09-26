@@ -80,7 +80,8 @@ function run_OneDModel(salinity_initial_condition::Symbol;
     simulation = Simulation(model, Δt = Δt * minutes, stop_time = sim_length * days)
 
     outputs = (T = model.tracers.T, S = model.tracers.S,
-               κ = save_diffusivity, ∂z_b = save_∂z_b)
+               κ = save_diffusivity, ∂z_b = save_∂z_b,
+               w = model.velocities.w)
 
     simulation.output_writers[:outputs] = JLD2OutputWriter(model, outputs,
                                             filename = savefile,
