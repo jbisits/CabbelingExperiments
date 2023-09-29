@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.27
+# v0.19.29
 
 using Markdown
 using InteractiveUtils
@@ -125,6 +125,75 @@ let
 	#save("initialTSprofiles.png", fig)
 end
 
+# ╔═╡ 6bd6898e-f92c-4073-98d1-c14d8d0ca6e0
+md"""
+## Maximum density
+
+Given that the mixed water *must* fall along the mixing line we should be able to predict the density of the densest water.
+I was going to have a look at this theoretically but instead will just use a numerical approach to estimate.
+"""
+
+# ╔═╡ 216ddfc4-771a-401d-a805-0395fbe0bc3e
+begin
+	S_star, Θ_star = 34.7, 0.5
+	Θᵘ = -1.5
+	slope = (Θᵘ - Θ_star) / (upper.S₀ᵘ - S_star)
+	S_mix = range(upper.S₀ᵘ, S_star, step = 0.000001)
+	Θ_mix = @. Θᵘ - (slope) * (upper.S₀ᵘ - S_mix)
+	#lines(S_mix, Θ_mix)
+	ρ_mix = gsw_rho.(S_mix, Θ_mix, 0)
+	max_rho, max_rho_idx = findmax(ρ_mix)
+	Δρ_mix = max_rho - gsw_rho(S_star, Θ_star, 0)
+	md"""
+	Find that the gain in density is $Δρ_mix with the maximum density being $max_rho.
+	This is at salinity $(round(S_mix[max_rho_idx], digits = 3))gkg⁻¹ and temperature $(round(Θ_mix[max_rho_idx], digits = 2))°C. So not at midpoint.
+	"""
+end 
+
+# ╔═╡ 14de00c7-1d40-474f-bbb4-10d3d1baf4ac
+let
+	S_star, Θ_star = 34.7, 0.5
+	S_s, Θ_s = S₀ᵘ.stable, T₀ᵘ
+	S_c = S₀ᵘ.cabbeling
+	S_mid = 0.5*(S_c + S_star)
+	Θ_mid = 0.5*(Θ_star + Θ_s)
+	T_profile = interior(dns.model.tracers.T, 1, 1, :)
+	S_profile = interior(dns.model.tracers.S, 1, 1, :)
+	Θ_c = T₀ᵘ
+	N = 2000
+	S_range, Θ_range = range(34.52, 34.72, length = N), range(-2, 1, length = N)
+	S_grid, Θ_grid = ones(N) .* S_range', ones(N)' .* Θ_range
+	ρ = gsw_rho.(S_grid, Θ_grid, 0)
+	ρ_star = gsw_rho(S_star, Θ_star, 0)
+	α_star = gsw_alpha(S_star, Θ_star, 0)
+	β_star = gsw_beta(S_star, Θ_star, 0)
+	ρ_s = gsw_rho(S_s, Θ_s, 0)
+	find_Θ = findfirst(Θ_range .> -1.5)
+	find_S = findfirst(ρ[find_Θ, :] .> ρ_star)
+	S_iso, Θ_iso = S_range[find_S], Θ_range[find_Θ]
+	gsw_rho(S_iso, Θ_iso, 0)
+
+	αₗ, βₗ = gsw_alpha(S_star, Θ_star, 0), gsw_beta(S_star, Θ_star, 0)
+	m = βₗ / αₗ
+	Θ_linear = @. Θ_star + m * (S_range - S_star)
+	fig = Figure(size = (500, 500), fontsize = 22)
+	ax = Axis(fig[1, 1];
+			  title = "Water masses in salinity-temperature space",
+			  xlabel = "Absolute salinity (gkg⁻¹)",
+			  ylabel = "Conservative temperature (°C)",
+			  limits = (extrema(S_range), extrema(Θ_range)))
+	contour!(ax, S_range, Θ_range, ρ'; levels = [ρ_star], color = :black, linewidth = 0.4, labelsize = 18, label = "Density at deep water")
+	#lines!(ax, S_range, Θ_linear, color = :blue, linestyle = :dash)
+	scatterlines!(ax, S_profile, T_profile, color = :purple, label = "Initial profile")
+	scatter!(ax, [S_star], [Θ_star]; color = :red, label = "Lower layer")
+	lines!(ax, S_mix, Θ_mix, color = :blue, label = "mixed water")
+	scatter!(ax, S_mix[max_rho_idx], Θ_mix[max_rho_idx], color = :green, label = "maximum mixed density")
+	contour!(ax, S_range, Θ_range, ρ', levels = [max_rho], color = :green, label = "maximum density")
+	axislegend(ax, position = :lt)
+	fig
+	#save("initialTSprofiles.png", fig)
+end
+
 # ╔═╡ 2dd60351-f416-4beb-97d2-03ca8cb449df
 md"""
 # Isothermal `StepChange`
@@ -233,6 +302,9 @@ TableOfContents()
 # ╟─f4ef6c9d-397a-4159-8392-c6db1222d777
 # ╟─29afdbd7-a662-4640-bcfc-47aef90370b3
 # ╟─1e4eca15-65f3-41f6-870a-5907f09e66f0
+# ╟─6bd6898e-f92c-4073-98d1-c14d8d0ca6e0
+# ╟─216ddfc4-771a-401d-a805-0395fbe0bc3e
+# ╟─14de00c7-1d40-474f-bbb4-10d3d1baf4ac
 # ╟─2dd60351-f416-4beb-97d2-03ca8cb449df
 # ╟─153fe311-94f4-4941-94a0-81aecbaec29d
 # ╟─3f0730f5-2f23-4952-8a3a-ed4d1b35ae98
