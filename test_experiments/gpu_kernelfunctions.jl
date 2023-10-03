@@ -19,7 +19,7 @@ in `model`.
                                     C(i, j, k, grid, tracers.T),
                                     0)
 
-@inline function densityᶜᶜᶜ(i, j, k, grid, b::SeawaterBuoyancy, C)
+@inline function densityᶜᶜᶜ(i, j, k, grid, b::SeawaterBuoyancy, C, pᵣ)
     T, S = get_temperature_and_salinity(b, C)
     return  b.equation_of_state.reference_density + ρ′(i, j, k, grid, b.equation_of_state, T, S, pᵣ)
 end
