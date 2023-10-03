@@ -24,6 +24,6 @@ function DensityField(model)
 
     #tracers = (S = model.tracers.S, T = model.tracers.T)
 
-   return KernelFunctionOperation{Center, Center, Center}(ρ′, model.grid, model.buoyancy.model.equation_of_state)
+   return KernelFunctionOperation{Center, Center, Center}(Oceananigans.BuoyancyModels.ρ′, model.grid, model.buoyancy.model.equation_of_state)
 
 end
