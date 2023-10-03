@@ -1,4 +1,28 @@
 using Printf
+"""
+    C(i, j, k, grid, C)
+Get tracer `C` values for use in other function. There may be another way to do this for
+`KernelFunctionOperation`s but I have not found it so will use this for now. **Note:** this
+return the value of the tracer with no interpolation so if the tracer `C` is at
+`(Center, Center, Center)` the value extracted will be at (Center, Center, Center)`.
+"""
+C(i, j, k, grid, C) = C[i, j, k]
+"""
+    σ(i, j, k, grid, model, reference_pressure)
+Compute potential density `σ` at `reference_pressure` from salinity and temperature tracers
+in `model`.
+"""
+σ(i, j, k, grid, model, reference_pressure) = gsw_rho(C(i, j, k, grid, model.tracers.S),
+                                                      C(i, j, k, grid, model.tracers.T),
+                                                      reference_pressure)
+"""
+    DensityField(model, reference_pressure)
+Return an `KernelFunctionOperation` at `(Center, Center, Center)` that computes the
+potential density from the salinity and temperature tracers in `model` at `reference_pressure`.
+"""
+DensityField(model, reference_pressure) =
+    KernelFunctionOperation{Center, Center, Center}(σ, model.grid, model,
+                                                    reference_pressure)
 function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
                             stop_time::Number, save_schedule::Number,
                             output_writer::Symbol=:netcdf;
@@ -21,7 +45,7 @@ function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
     # custom saved output
 
     # Density
-    σ = TLDNS.DensityField(model, density_reference_pressure)
+    σ = DensityField(model, density_reference_pressure)
 
     # Inferred vertical diffusivity
     # σ_anomaly_interpolated = TLDNS.InterpolatedDensityAnomaly(model, density_reference_pressure)
@@ -76,3 +100,42 @@ simulation_progress(sim) = @printf("i: % 6d, sim time: % 1.3f, wall time: % 10s,
                                     iteration(sim), time(sim), prettytime(sim.run_wall_time),
                                     sim.Δt, AdvectiveCFL(sim.Δt)(sim.model),
                                     DiffusiveCFL(sim.Δt)(sim.model))
+
+## A test model
+architecture = GPU()
+diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
+DNS_resolution = (Nx = 100, Ny = 100, Nz = 1000)
+
+## Setup the model
+@info "Model setup"
+model = DNS(architecture, DOMAIN_EXTENT, DNS_resolution, diffusivities;
+            reference_density = REFERENCE_DENSITY, zgrid_stretching = false)
+
+## set initial conditions
+@info "Setting initial conditions"
+T₀ᵘ = -1.5
+S₀ᵘ = 34.58
+cabbeling = CabbelingUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
+initial_conditions = TwoLayerInitialConditions(cabbeling)
+depth = find_depth(model, INTERFACE_LOCATION)
+profile_function = StepChange(depth)
+
+## Salinity noise
+depths = find_depth(model, [INTERFACE_LOCATION + 0.02, INTERFACE_LOCATION - 0.02])
+scales = similar(depths)
+fill!(scales, 2e-4)
+initial_noise = SalinityNoise(depths, scales)
+@info "Building DNS"
+dns = TwoLayerDNS(model, profile_function, initial_conditions; initial_noise)
+
+@info "Setting two layer initial conditions"
+set_two_layer_initial_conditions!(dns)
+
+## build the simulation
+Δt = 1e-4
+stop_time = 1 * 60
+save_schedule = 5 # seconds
+simulation = DNS_simulation_setup_test(dns, Δt, stop_time, save_schedule)
+
+## Run the simulation
+run!(simulation)
