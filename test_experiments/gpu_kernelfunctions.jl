@@ -12,8 +12,8 @@ C(i, j, k, grid, C) = C[i, j, k]
 Compute potential density `σ` at `reference_pressure` from salinity and temperature tracers
 in `model`.
 """
-σ(i, j, k, grid, tracers) = ρ′(C(i, j, k, grid, tracers.S),
-                               C(i, j, k, grid, tracers.T),
+σ(i, j, k, grid, tracers) = gsw_rho(C(i, j, k, grid, tracers.S),
+                                    C(i, j, k, grid, tracers.T),
                                     0)
 """
     DensityField(model, reference_pressure)
