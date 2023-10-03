@@ -105,11 +105,11 @@ dns = TwoLayerDNS(model, profile_function, initial_conditions; initial_noise)
 @info "Setting two layer initial conditions"
 set_two_layer_initial_conditions!(dns)
 
-## build the simulation
-Δt = 1e-4
-stop_time = 3 * 60
-save_schedule = 1 # seconds
-simulation = DNS_simulation_setup_test(dns, Δt, stop_time, save_schedule)
+# ## build the simulation
+# Δt = 1e-4
+# stop_time = 3 * 60
+# save_schedule = 1 # seconds
+# simulation = DNS_simulation_setup_test(dns, Δt, stop_time, save_schedule)
 
-## Run the simulation
-run!(simulation)
+# ## Run the simulation
+# run!(simulation)
