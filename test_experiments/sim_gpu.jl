@@ -43,12 +43,12 @@ function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
     # outputs to be saved during the simulation
     outputs = Dict("S" => S, "T" => T, "σ" => σ, "κᵥ" => κᵥ)
     if save_velocities
-    u, v = model.velocities.u, model.velocities.v
-    velocities = Dict("u" => u, "v" => v, "w" => w)
-    merge!(outputs, velocities)
+        u, v = model.velocities.u, model.velocities.v
+        velocities = Dict("u" => u, "v" => v, "w" => w)
+        merge!(outputs, velocities)
     end
 
-    filename = form_filename(dns, stop_time, output_writer)
+    filename = TLDNS.form_filename(dns, stop_time, output_writer)
     simulation.output_writers[:outputs] = output_writer == :netcdf ?
                     NetCDFOutputWriter(model, outputs,
                                     filename = filename,
