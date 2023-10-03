@@ -1,5 +1,5 @@
 using Printf
-using Oceananigans: BuoyancyModels.ρ′
+using Oceananigans: BuoyancyModels.ρ′, BuoyancyModels.get_temperature_and_salinity
 """
     C(i, j, k, grid, C)
 Get tracer `C` values for use in other function. There may be another way to do this for
