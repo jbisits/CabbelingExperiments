@@ -1,4 +1,5 @@
 using Printf
+using Oceananigans: BuoyancyModels.ρ′
 """
     C(i, j, k, grid, C)
 Get tracer `C` values for use in other function. There may be another way to do this for
@@ -15,15 +16,23 @@ in `model`.
 σ(i, j, k, grid, tracers) = gsw_rho(C(i, j, k, grid, tracers.S),
                                     C(i, j, k, grid, tracers.T),
                                     0)
+
+@inline function densityᶜᶜᶜ(i, j, k, grid, b::SeawaterBuoyancy, C)
+    T, S = get_temperature_and_salinity(b, C)
+    return  b.equation_of_state.reference_density + ρ′(i, j, k, grid, b.equation_of_state, T, S)
+end
+density(model) = density(model.buoyancy, model.grid, model.tracers)
+density(b, grid, tracers) = KernelFunctionOperation{Center, Center, Center}(densityᶜᶜᶜ, grid, b.model, tracers)
+DensityField(model) = Field(density(model))
 """
     DensityField(model, reference_pressure)
 Return an `KernelFunctionOperation` at `(Center, Center, Center)` that computes the
 potential density from the salinity and temperature tracers in `model` at `reference_pressure`.
 """
-function DensityField(model)
+# function DensityField(model)
 
-    #tracers = (S = model.tracers.S, T = model.tracers.T)
-    parameters = (eos = model.buoyancy.model.equation_of_state)
-   return KernelFunctionOperation{Center, Center, Center}(Oceananigans.BuoyancyModels.ρ′, model.grid, parameters)
+#     #tracers = (S = model.tracers.S, T = model.tracers.T)
+#     parameters = (eos = model.buoyancy.model.equation_of_state)
+#     return KernelFunctionOperation{Center, Center, Center}(densityᶜᶜᶜ, model.grid, parameters)
 
-end
+# end
