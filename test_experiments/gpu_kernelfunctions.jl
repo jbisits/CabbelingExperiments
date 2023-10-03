@@ -1,5 +1,7 @@
 using Printf
 using Oceananigans: BuoyancyModels.ρ′, BuoyancyModels.get_temperature_and_salinity
+import Oceananigans.BuoyancyModels.ρ′
+@inline ρ′(i, j, k, grid, eos, θ, sᴬ, pᵣ) = ρ′(θ_and_sᴬ(i, j, k, θ, sᴬ)..., pᵣ, eos)
 """
     C(i, j, k, grid, C)
 Get tracer `C` values for use in other function. There may be another way to do this for
@@ -19,10 +21,10 @@ in `model`.
 
 @inline function densityᶜᶜᶜ(i, j, k, grid, b::SeawaterBuoyancy, C)
     T, S = get_temperature_and_salinity(b, C)
-    return  b.equation_of_state.reference_density + ρ′(i, j, k, grid, b.equation_of_state, T, S)
+    return  b.equation_of_state.reference_density + ρ′(i, j, k, grid, b.equation_of_state, T, S, pᵣ)
 end
 density(model) = density(model.buoyancy, model.grid, model.tracers)
-density(b, grid, tracers) = KernelFunctionOperation{Center, Center, Center}(densityᶜᶜᶜ, grid, b.model, tracers)
+density(b, grid, tracers; pᵣ = 0) = KernelFunctionOperation{Center, Center, Center}(densityᶜᶜᶜ, grid, b.model, tracers, pᵣ)
 DensityField(model) = Field(density(model))
 """
     DensityField(model, reference_pressure)
