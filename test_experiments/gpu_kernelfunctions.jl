@@ -1,5 +1,6 @@
 using Printf
 using Oceananigans: BuoyancyModels.ρ′, BuoyancyModels.get_temperature_and_salinity
+import Oceananigans.BuoyancyModels.ρ′
 @inline ρ′(i, j, k, grid, eos, θ, sᴬ) = ρ′(θ_and_sᴬ(i, j, k, θ, sᴬ)..., 0, eos)
 """
     C(i, j, k, grid, C)
