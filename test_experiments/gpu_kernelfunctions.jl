@@ -12,13 +12,18 @@ C(i, j, k, grid, C) = C[i, j, k]
 Compute potential density `σ` at `reference_pressure` from salinity and temperature tracers
 in `model`.
 """
-σ(i, j, k, grid, model) = gsw_rho(C(i, j, k, grid, model.tracers.S),
-                                                      C(i, j, k, grid, model.tracers.T),
-                                                      0)
+σ(i, j, k, grid, tracers) = gsw_rho(C(i, j, k, grid, tracers.S),
+                                    C(i, j, k, grid, tracers.T),
+                                    0)
 """
     DensityField(model, reference_pressure)
 Return an `KernelFunctionOperation` at `(Center, Center, Center)` that computes the
 potential density from the salinity and temperature tracers in `model` at `reference_pressure`.
 """
-DensityField(model) =
-    KernelFunctionOperation{Center, Center, Center}(σ, model.grid, model)
+function DensityField(model)
+
+    tracers = (S = model.tracers.S, T = model.tracers.T)
+
+   return KernelFunctionOperation{Center, Center, Center}(σ, model.grid, tracers)
+
+end
