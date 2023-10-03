@@ -2,7 +2,7 @@ using TwoLayerDirectNumericalShenanigans
 
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
-DNS_resolution = (Nx = 160, Ny = 160, Nz = 1600)
+DNS_resolution = (Nx = 170, Ny = 170, Nz = 1700)
 
 ## Setup the model
 @info "Model setup"
@@ -33,7 +33,7 @@ set_two_layer_initial_conditions!(dns)
 Δt = 1e-4
 stop_time = 3 * 60
 save_schedule = 5 # seconds
-simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule, max_Δt = 0.025)
+simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule, max_Δt = 0.075)
 
 ## Run the simulation
 run!(simulation)
