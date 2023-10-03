@@ -24,16 +24,16 @@ function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
     σ = TLDNS.DensityField(model, density_reference_pressure)
 
     # Inferred vertical diffusivity
-    σ_anomaly_interpolated = TLDNS.InterpolatedDensityAnomaly(model, density_reference_pressure)
-    w = model.velocities.w
-    κᵥ = Integral((-w * σ_anomaly_interpolated) / σ)
+    # σ_anomaly_interpolated = TLDNS.InterpolatedDensityAnomaly(model, density_reference_pressure)
+    # w = model.velocities.w
+    # κᵥ = Integral((-w * σ_anomaly_interpolated) / σ)
 
     # Minimum in space Kolmogorov length scale
     #ϵ = KineticEnergyDissipationRate(model)
     #η_space(model) = minimum(model.closure.ν ./ ϵ)
 
     # Dimensions and attributes for custom saved output
-    dims = Dict("σ" => ("xC", "xC", "zC"), "κᵥ" => ())
+    dims = Dict("σ" => ("xC", "xC", "zC"))
     oa = Dict(
                 "σ" => Dict("longname" => "Seawater potential density calculated using TEOS-10 at $(density_reference_pressure)dbar",
                 "units" => "kgm⁻³"),
@@ -42,7 +42,7 @@ function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
                 "units" => "m²s⁻¹"))
 
     # outputs to be saved during the simulation
-    outputs = Dict("S" => S, "T" => T, "σ" => σ, "κᵥ" => κᵥ)
+    outputs = Dict("S" => S, "T" => T, "σ" => σ)
     if save_velocities
         u, v = model.velocities.u, model.velocities.v
         velocities = Dict("u" => u, "v" => v, "w" => w)
