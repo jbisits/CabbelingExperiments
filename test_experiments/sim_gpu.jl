@@ -71,3 +71,7 @@ function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
     return simulation
 
 end
+simulation_progress(sim) = @printf("i: % 6d, sim time: % 1.3f, wall time: % 10s, Δt: % 1.4f, advective CFL: %.2e, diffusive CFL: %.2e\n",
+                                    iteration(sim), time(sim), prettytime(sim.run_wall_time),
+                                    sim.Δt, AdvectiveCFL(sim.Δt)(sim.model),
+                                    DiffusiveCFL(sim.Δt)(sim.model))
