@@ -23,7 +23,7 @@ potential density from the salinity and temperature tracers in `model` at `refer
 function DensityField(model)
 
     #tracers = (S = model.tracers.S, T = model.tracers.T)
-
-   return KernelFunctionOperation{Center, Center, Center}(Oceananigans.BuoyancyModels.ρ′, model.grid, model.buoyancy.model.equation_of_state)
+    parameters = (eos = model.buoyancy.model.equation_of_state)
+   return KernelFunctionOperation{Center, Center, Center}(Oceananigans.BuoyancyModels.ρ′, model.grid, parameters)
 
 end
