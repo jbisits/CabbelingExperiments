@@ -20,16 +20,16 @@ function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
     # custom saved output
 
     # Density
-    σ = DensityField(model, density_reference_pressure)
+    σ = TLDNS.DensityField(model, density_reference_pressure)
 
     # Inferred vertical diffusivity
-    σ_anomaly_interpolated = InterpolatedDensityAnomaly(model, density_reference_pressure)
+    σ_anomaly_interpolated = TLDNS.InterpolatedDensityAnomaly(model, density_reference_pressure)
     w = model.velocities.w
     κᵥ = Integral((-w * σ_anomaly_interpolated) / σ)
 
     # Minimum in space Kolmogorov length scale
     ϵ = KineticEnergyDissipationRate(model)
-    η_space(model) = minimum(model.closure.ν ./ ϵ)
+    #η_space(model) = minimum(model.closure.ν ./ ϵ)
 
     # Dimensions and attributes for custom saved output
     dims = Dict("σ" => ("xC", "xC", "zC"), "κᵥ" => ())
@@ -62,8 +62,8 @@ function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
                                     schedule = TimeInterval(save_schedule),
                                     overwrite_existing = true)
 
-    non_dimensional_numbers!(simulation, dns)
-    predicted_maximum_density!(simulation, dns)
+    TLDNS.non_dimensional_numbers!(simulation, dns)
+    TLDNS.predicted_maximum_density!(simulation, dns)
 
     # progress reporting
     simulation.callbacks[:progress] = Callback(simulation_progress, IterationInterval(100))
