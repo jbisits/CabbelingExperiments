@@ -36,10 +36,10 @@ function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
     dims = Dict("σ" => ("xC", "xC", "zC"))
     oa = Dict(
                 "σ" => Dict("longname" => "Seawater potential density calculated using TEOS-10 at $(density_reference_pressure)dbar",
-                "units" => "kgm⁻³"),
+                "units" => "kgm⁻³"))
                 #"η_space" => Dict("longname" => "Minimum (in space) Kolmogorov length"),
-                "κᵥ" => Dict("longname" => "Inferred vertical diffusivity",
-                "units" => "m²s⁻¹"))
+                #"κᵥ" => Dict("longname" => "Inferred vertical diffusivity",
+                #"units" => "m²s⁻¹"))
 
     # outputs to be saved during the simulation
     outputs = Dict("S" => S, "T" => T, "σ" => σ)
