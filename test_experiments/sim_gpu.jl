@@ -1,3 +1,4 @@
+using Printf
 function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
                             stop_time::Number, save_schedule::Number,
                             output_writer::Symbol=:netcdf;
