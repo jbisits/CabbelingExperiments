@@ -16,15 +16,17 @@ Oceananigans.BuoyancyModels.ρ′(i, j, k, grid, eos, θ, sᴬ, pᵣ) =
 # DensityField(model) = Field(density(model))
 
 ## Computing at reference pressure (or reference geopotential height), not sure if this works on GPU
-@inline function densityᶜᶜᶜ(i, j, k, grid, b::SeawaterBuoyancy, C, pᵣ)
+@inline function densityᶜᶜᶜ(i, j, k, grid, b::SeawaterBuoyancy, C, parameters)
     T, S = get_temperature_and_salinity(b, C)
+    pᵣ = parameters.pᵣ
     return  b.equation_of_state.reference_density + ρ′(i, j, k, grid, b.equation_of_state, T, S, pᵣ)
 end
-density(model, pᵣ) = density(model.buoyancy, model.grid, model.tracers, pᵣ)
-density(b, grid, tracers, pᵣ) = KernelFunctionOperation{Center, Center, Center}(densityᶜᶜᶜ, grid, b.model, tracers, pᵣ)
-DensityField(model; pᵣ = 0) = Field(density(model, pᵣ))
+density(model, parameters) = density(model.buoyancy, model.grid, model.tracers, parameters)
+density(b, grid, tracers, parameters) = KernelFunctionOperation{Center, Center, Center}(densityᶜᶜᶜ, grid, b.model, tracers, parameters)
+DensityField(model, parameters) = Field(density(model, parameters))
 
-d_field = DensityField(dns.model)
+parameters = (pᵣ = 0,)
+d_field = DensityField(dns.model, parameters)
 compute!(d_field)
 
 ## Center velocity `Field`
