@@ -1,40 +1,41 @@
 using Printf
-using Oceananigans: BuoyancyModels.ρ′, BuoyancyModels.get_temperature_and_salinity
-# import Oceananigans.BuoyancyModels.ρ′
-# @inline ρ′(i, j, k, grid, eos, θ, sᴬ) = ρ′(θ_and_sᴬ(i, j, k, θ, sᴬ)..., 0, eos)
-"""
-    C(i, j, k, grid, C)
-Get tracer `C` values for use in other function. There may be another way to do this for
-`KernelFunctionOperation`s but I have not found it so will use this for now. **Note:** this
-return the value of the tracer with no interpolation so if the tracer `C` is at
-`(Center, Center, Center)` the value extracted will be at (Center, Center, Center)`.
-"""
-C(i, j, k, grid, C) = C[i, j, k]
-"""
-    σ(i, j, k, grid, model, reference_pressure)
-Compute potential density `σ` at `reference_pressure` from salinity and temperature tracers
-in `model`.
-"""
-σ(i, j, k, grid, tracers) = gsw_rho(C(i, j, k, grid, tracers.S),
-                                    C(i, j, k, grid, tracers.T),
-                                    0)
+using Oceananigans: BuoyancyModels.ρ′, BuoyancyModels.get_temperature_and_salinity, BuoyancyModels.θ_and_sᴬ
+using Oceananigans: BuoyancyModels.∂z_b
+using Oceananigans: Operators.ℑzᵃᵃᶠ
+import Oceananigans.BuoyancyModels.ρ′
+Oceananigans.BuoyancyModels.ρ′(i, j, k, grid, eos, θ, sᴬ, pᵣ) =
+    ρ′(θ_and_sᴬ(i, j, k, θ, sᴬ)..., pᵣ, eos)
 
-@inline function densityᶜᶜᶜ(i, j, k, grid, b::SeawaterBuoyancy, C)
-    T, S = get_temperature_and_salinity(b, C)
-    return  b.equation_of_state.reference_density + ρ′(i, j, k, grid, b.equation_of_state, T, S)
-end
-density(model) = density(model.buoyancy, model.grid, model.tracers)
-density(b, grid, tracers) = KernelFunctionOperation{Center, Center, Center}(densityᶜᶜᶜ, grid, b.model, tracers)
-DensityField(model) = Field(density(model))
-"""
-    DensityField(model, reference_pressure)
-Return an `KernelFunctionOperation` at `(Center, Center, Center)` that computes the
-potential density from the salinity and temperature tracers in `model` at `reference_pressure`.
-"""
-# function DensityField(model)
-
-#     #tracers = (S = model.tracers.S, T = model.tracers.T)
-#     parameters = (eos = model.buoyancy.model.equation_of_state)
-#     return KernelFunctionOperation{Center, Center, Center}(densityᶜᶜᶜ, model.grid, parameters)
-
+## Works on GPU.
+# @inline function densityᶜᶜᶜ(i, j, k, grid, b::SeawaterBuoyancy, C)
+#     T, S = get_temperature_and_salinity(b, C)
+#     return  b.equation_of_state.reference_density + ρ′(i, j, k, grid, b.equation_of_state, T, S)
 # end
+# density(model) = density(model.buoyancy, model.grid, model.tracers)
+# density(b, grid, tracers) = KernelFunctionOperation{Center, Center, Center}(densityᶜᶜᶜ, grid, b.model, tracers)
+# DensityField(model) = Field(density(model))
+
+## Computing at reference pressure (or reference geopotential height), not sure if this works on GPU
+@inline function densityᶜᶜᶜ(i, j, k, grid, b::SeawaterBuoyancy, C, pᵣ)
+    T, S = get_temperature_and_salinity(b, C)
+    return  b.equation_of_state.reference_density + ρ′(i, j, k, grid, b.equation_of_state, T, S, pᵣ)
+end
+density(model, pᵣ) = density(model.buoyancy, model.grid, model.tracers, pᵣ)
+density(b, grid, tracers, pᵣ) = KernelFunctionOperation{Center, Center, Center}(densityᶜᶜᶜ, grid, b.model, tracers, pᵣ)
+DensityField(model; pᵣ = 0) = Field(density(model, pᵣ))
+
+d_field = DensityField(dns.model)
+compute!(d_field)
+
+## Center velocity `Field`
+wᶜᶜᶜ(model) = KernelFunctionOperation{Center, Center, Center}(ℑzᵃᵃᶠ, model.grid, model.velocities.w)
+w_center = Field(wᶜᶜᶜ(dns.model))
+compute!(w_center)
+## Center buoyancy perturbation field
+b_field = BuoyancyField(model)
+compute!(b_field)
+## Face buoyancy gradient field
+∂b∂z(model) = KernelFunctionOperation{Center, Center, Face}(∂z_b, model.grid, model.buoyancy, model.tracers)
+b_vertical_grad = Field(∂b∂z(model))
+compute!(b_vertical_grad)
+Integral(b_field * w_center / b_vertical_grad)

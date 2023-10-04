@@ -78,7 +78,7 @@ simulation_progress(sim) = @printf("i: % 6d, sim time: % 1.3f, wall time: % 10s,
 ## A test model on the GPU
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
-DNS_resolution = (Nx = 100, Ny = 100, Nz = 1000)
+DNS_resolution = (Nx = 10, Ny = 10, Nz = 100)
 
 ## Setup the model
 @info "Model setup"
@@ -88,7 +88,7 @@ model = DNS(architecture, DOMAIN_EXTENT, DNS_resolution, diffusivities;
 ## set initial conditions
 @info "Setting initial conditions"
 T₀ᵘ = -1.5
-S₀ᵘ = 34.58
+S₀ᵘ = 34.568
 cabbeling = CabbelingUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(cabbeling)
 depth = find_depth(model, INTERFACE_LOCATION)
