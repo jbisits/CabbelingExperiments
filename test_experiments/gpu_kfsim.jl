@@ -52,7 +52,7 @@ function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
 
     # outputs to be saved during the simulation
     outputs = Dict("S" => S, "T" => T, "η_space" => η_space, "σ" => σ, "κᵥ" => κᵥ, "∫ϵ" => ∫ϵ,
-                    "w" => wᶜᶜᶜ_anomaly, "b_anomaly" => b_anomaly, "b_zgrad" => b_zgrad)
+                    "w" => wᶜᶜᶜ_anomaly, "b_anomaly" => b_anomaly, "b_zgrad" => b_zgrad, "noint" => wb_anomaly_∂z_b)
     if save_velocities
     u, v = model.velocities.u, model.velocities.v
     velocities = Dict("u" => u, "v" => v, "w" => w)
