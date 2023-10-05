@@ -33,7 +33,7 @@ function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
     # Minimum in space Kolmogorov length scale
     ϵ = KineticEnergyDissipationRate(model)
     ∫ϵ = Integral(ϵ)
-    η_space(model) = model.closure.ν / maximum(ϵ)
+    η_space(model) = (model.closure.ν^3 / maximum(ϵ))^(1/4)
 
     # Dimensions and attributes for custom saved output
     dims = Dict("η_space" => (), "σ" => ("xC", "xC", "zC"), "κᵥ" => (), "∫ϵ" => ())
