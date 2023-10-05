@@ -82,11 +82,11 @@ simulation_progress(sim) = @printf("i: % 6d, sim time: % 1.3f, wall time: % 10s,
             sim.Δt, AdvectiveCFL(sim.Δt)(sim.model),
             DiffusiveCFL(sim.Δt)(sim.model))
 
-# ## build the simulation
-# Δt = 1e-4
-# stop_time = 3 * 60
-# save_schedule = 1 # seconds
-# simulation = DNS_simulation_setup_test(dns, Δt, stop_time, save_schedule)
+## build the simulation
+Δt = 1e-4
+stop_time = 3 * 60
+save_schedule = 1 # seconds
+simulation = DNS_simulation_setup_test(dns, Δt, stop_time, save_schedule)
 
-# ## Run the simulation
-# run!(simulation)
+## Run the simulation
+run!(simulation)
