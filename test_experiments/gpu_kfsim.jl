@@ -31,7 +31,8 @@ function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
 
     wᶜᶜᶜ_anomaly = Field(wᶜᶜᶜ(dns.model))
     compute!(wᶜᶜᶜ_anomaly)
-    κᵥ = Integral((-wᶜᶜᶜ_anomaly * b_anomaly) / b_zgrad)
+    wb_anomaly = wᶜᶜᶜ_anomaly * b_anomaly
+    κᵥ = Integral((-wb_anomaly) / b_zgrad)
 
     # Minimum in space Kolmogorov length scale
     ϵ = KineticEnergyDissipationRate(model)
@@ -41,7 +42,7 @@ function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
     # Dimensions and attributes for custom saved output
     dims = Dict("η_space" => (), "σ" => ("xC", "xC", "zC"), "κᵥ" => (), "∫ϵ" => ())
     oa = Dict(
-        "σ" => Dict("longname" => "Seawater potential density calculated using TEOS-10 at $(density_reference_pressure)dbar",
+        "σ" => Dict("longname" => "Seawater potential density calculated using TEOS-10 55 term polynomial at $(density_reference_pressure)dbar",
                     "units" => "kgm⁻³"),
         "η_space" => Dict("longname" => "Minimum (in space) Kolmogorov length"),
         "κᵥ" => Dict("longname" => "Inferred vertical diffusivity",
