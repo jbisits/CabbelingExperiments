@@ -51,7 +51,8 @@ function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
         )
 
     # outputs to be saved during the simulation
-    outputs = Dict("S" => S, "T" => T, "η_space" => η_space, "σ" => σ, "κᵥ" => κᵥ, "∫ϵ" => ∫ϵ)
+    outputs = Dict("S" => S, "T" => T, "η_space" => η_space, "σ" => σ, "κᵥ" => κᵥ, "∫ϵ" => ∫ϵ,
+                    "w" => wᶜᶜᶜ_anomaly, "b_anomaly" => b_anomaly, "b_zgrad" => b_zgrad)
     if save_velocities
     u, v = model.velocities.u, model.velocities.v
     velocities = Dict("u" => u, "v" => v, "w" => w)
@@ -65,7 +66,7 @@ function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
                 schedule = TimeInterval(save_schedule),
                 overwrite_existing = true,
                 dimensions = dims,
-                output_attributes = oa
+                #output_attributes = oa
                 ) :
     JLD2OutputWriter(model, outputs,
                 filename = filename,
