@@ -25,9 +25,12 @@ function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
 
     # Inferred vertical diffusivity
     b_anomaly = BuoyancyField(model)
+    compute!(b_anomaly)
     b_zgrad = Field(∂b∂z(model))
+    compute!(b_zgrad)
 
     wᶜᶜᶜ_anomaly = Field(wᶜᶜᶜ(dns.model))
+    compute!(wᶜᶜᶜ_anomaly)
     κᵥ = Integral((-wᶜᶜᶜ_anomaly * b_anomaly) / b_zgrad)
 
     # Minimum in space Kolmogorov length scale
