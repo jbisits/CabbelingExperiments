@@ -44,7 +44,8 @@ set_two_layer_initial_conditions!(dns)
 # density(b, grid, tracers) = KernelFunctionOperation{Center, Center, Center}(densityᶜᶜᶜ, grid, b.model, tracers)
 # DensityField(model) = Field(density(model))
 
-## Computing at reference pressure (or reference geopotential height), not sure if this works on GPU
+## Computing at reference pressure (or reference geopotential height),
+# works on GPU!!!!
 @inline function densityᶜᶜᶜ(i, j, k, grid, b::SeawaterBuoyancy, C, parameters)
     T, S = get_temperature_and_salinity(b, C)
     pᵣ = parameters.pᵣ
