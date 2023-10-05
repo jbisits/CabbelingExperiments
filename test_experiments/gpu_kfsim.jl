@@ -31,8 +31,8 @@ function DNS_simulation_setup_test(dns::TwoLayerDNS, Δt::Number,
 
     wᶜᶜᶜ_anomaly = Field(wᶜᶜᶜ(dns.model))
     compute!(wᶜᶜᶜ_anomaly)
-    wb_anomaly = wᶜᶜᶜ_anomaly * b_anomaly
-    κᵥ = Integral((-wb_anomaly) / b_zgrad)
+    wb_anomaly_∂z_b = Field(wᶜᶜᶜ_anomaly * b_anomaly / b_zgrad)
+    κᵥ = Integral(wb_anomaly_∂z_b)
 
     # Minimum in space Kolmogorov length scale
     ϵ = KineticEnergyDissipationRate(model)
