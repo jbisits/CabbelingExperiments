@@ -33,7 +33,7 @@ Then I want to see if this DNS will run even though there is a discontinuity in 
 begin
 	architecture = CPU()
 	diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
-	
+	resolution = (Nx = 10, Ny = 10, Nz = 100)
 	## Setup the model
 	model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
 	            reference_density = REFERENCE_DENSITY)
@@ -143,6 +143,7 @@ begin
 	#lines(S_mix, Θ_mix)
 	ρ_mix = gsw_rho.(S_mix, Θ_mix, 0)
 	max_rho, max_rho_idx = findmax(ρ_mix)
+	S_max, Θ_max = S_mix[max_rho_idx], Θ_mix[max_rho_idx]
 	Δρ_mix = max_rho - gsw_rho(S_star, Θ_star, 0)
 	md"""
 	Find that the gain in density is $Δρ_mix with the maximum density being $max_rho.
@@ -165,8 +166,6 @@ let
 	S_grid, Θ_grid = ones(N) .* S_range', ones(N)' .* Θ_range
 	ρ = gsw_rho.(S_grid, Θ_grid, 0)
 	ρ_star = gsw_rho(S_star, Θ_star, 0)
-	α_star = gsw_alpha(S_star, Θ_star, 0)
-	β_star = gsw_beta(S_star, Θ_star, 0)
 	ρ_s = gsw_rho(S_s, Θ_s, 0)
 	find_Θ = findfirst(Θ_range .> -1.5)
 	find_S = findfirst(ρ[find_Θ, :] .> ρ_star)
@@ -174,21 +173,25 @@ let
 	gsw_rho(S_iso, Θ_iso, 0)
 
 	αₗ, βₗ = gsw_alpha(S_star, Θ_star, 0), gsw_beta(S_star, Θ_star, 0)
-	m = βₗ / αₗ
-	Θ_linear = @. Θ_star + m * (S_range - S_star)
+	m_initial = βₗ / αₗ
+	Θ_linear_initial = @. Θ_star + m_initial * (S_range - S_star)
+	αₘ, βₘ = gsw_alpha(S_max, Θ_max, 0), gsw_beta(S_max, Θ_max, 0)
+	m = βₘ / αₘ
+	Θ_linear = @. Θ_max + m * (S_range - S_max)
 	fig = Figure(size = (500, 500), fontsize = 22)
 	ax = Axis(fig[1, 1];
 			  title = "Water masses in salinity-temperature space",
 			  xlabel = "Absolute salinity (gkg⁻¹)",
 			  ylabel = "Conservative temperature (°C)",
 			  limits = (extrema(S_range), extrema(Θ_range)))
-	contour!(ax, S_range, Θ_range, ρ'; levels = [ρ_star], color = :black, linewidth = 0.4, labelsize = 18, label = "Density at deep water")
-	#lines!(ax, S_range, Θ_linear, color = :blue, linestyle = :dash)
-	scatterlines!(ax, S_profile, T_profile, color = :purple, label = "Initial profile")
-	scatter!(ax, [S_star], [Θ_star]; color = :red, label = "Lower layer")
-	lines!(ax, S_mix, Θ_mix, color = :blue, label = "mixed water")
-	scatter!(ax, S_mix[max_rho_idx], Θ_mix[max_rho_idx], color = :green, label = "maximum mixed density")
-	contour!(ax, S_range, Θ_range, ρ', levels = [max_rho], color = :green, label = "maximum density")
+	contour!(ax, S_range, Θ_range, ρ'; levels = [ρ_star], color = :red, linewidth = 0.6, labelsize = 18, linestyle = :dot)
+	lines!(ax, S_range, Θ_linear_initial, color = :red, linestyle = :dash, label = "Linear density at initial deep water", linewidth = 0.6)
+	scatter!(ax, S_profile[1], T_profile[1], color = :red, label = "Deep water")
+	scatter!(ax, S_profile[end], T_profile[end]; color = :blue, label = "Shallow water")
+	lines!(ax, S_mix, Θ_mix, color = :purple, linestyle = :dot, label = "Mixed water")
+	scatter!(ax, S_mix[max_rho_idx], Θ_mix[max_rho_idx], color = :green, label = "Maximum ρ from mixing")
+	contour!(ax, S_range, Θ_range, ρ', levels = [max_rho], color = :green, linestyle = :dot, linewidth = 0.6)
+	lines!(ax, S_range, Θ_linear, color = :green, linewidth = 0.6, linestyle = :dash, label = "Linear density at new deep water")
 	axislegend(ax, position = :lt)
 	fig
 	#save("initialTSprofiles.png", fig)
