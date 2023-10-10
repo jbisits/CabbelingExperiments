@@ -1,5 +1,11 @@
 using TwoLayerDirectNumericalShenanigans, CairoMakie, Rasters, NCDatasets
 
+## Exract data from `.nc` file
+
+pred_max_density = NCDataset(cab_noise) do ds
+    ds["Predicted maximum density"]
+end
+
 ## Animations (x-z)
 @info "Reading into T into Raster"
 T_rs = Raster(cab_noise, lazy = true, name = :T)
@@ -20,11 +26,12 @@ lowclip = cgrad(:haline)[1]
 highclip = cgrad(:haline)[end]
 animate_2D_field(S_rs, 10, 10; colormap, colorrange, highclip, lowclip)
 ## Density (x-z)
-@info "Reading into S into Raster"
+@info "Reading into σ into Raster"
 σ_rs = Raster(cab_noise, lazy = true, name = :σ)
 @info "Animating density"
 colormap = cgrad(:dense)[2:end-1]
 colorrange = extrema(σ_rs[:, :, :, 1])
 lowclip = cgrad(:dense)[1]
 highclip = cgrad(:dense)[end]
+vline = pred_max_density
 animate_2D_field(σ_rs , 10, 10; colormap, colorrange, highclip, lowclip)
