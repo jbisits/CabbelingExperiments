@@ -35,39 +35,21 @@ dns = TwoLayerDNS(model, profile_function, initial_conditions; initial_noise)
 @info "Setting two layer initial conditions"
 set_two_layer_initial_conditions!(dns)
 
-## Works on GPU.
-# @inline function densityᶜᶜᶜ(i, j, k, grid, b::SeawaterBuoyancy, C)
-#     T, S = get_temperature_and_salinity(b, C)
-#     return  b.equation_of_state.reference_density + ρ′(i, j, k, grid, b.equation_of_state, T, S)
-# end
-# density(model) = density(model.buoyancy, model.grid, model.tracers)
-# density(b, grid, tracers) = KernelFunctionOperation{Center, Center, Center}(densityᶜᶜᶜ, grid, b.model, tracers)
-# DensityField(model) = Field(density(model))
+@inline function Kᵥ(i, j, k, grid, b::SeawaterBuoyancy, C, w)
 
-## Computing at reference pressure (or reference geopotential height),
-# works on GPU!!!!
-@inline function densityᶜᶜᶜ(i, j, k, grid, b::SeawaterBuoyancy, C, parameters)
-    T, S = get_temperature_and_salinity(b, C)
-    pᵣ = parameters.pᵣ
-    return  b.equation_of_state.reference_density + ρ′(i, j, k, grid, b.equation_of_state, T, S, pᵣ)
+    if ∂z_b(i, j, k, grid, b, C) != 0
+        (-ℑzᵃᵃᶜ(i, j, k, w) * buoyancy_perturbationᶜᶜᶜ(i, j, k, grid, b, C)) / ∂z_b(i, j, k, grid, b, C)
+    else
+        0
+    end
+
 end
-density(model, parameters) = density(model.buoyancy, model.grid, model.tracers, parameters)
-density(b, grid, tracers, parameters) = KernelFunctionOperation{Center, Center, Center}(densityᶜᶜᶜ, grid, b.model, tracers, parameters)
-DensityField(model, parameters) = Field(density(model, parameters))
+function InferredVerticalDiffusivity(model)
 
-parameters = (pᵣ = 0,)
-d_field = DensityField(dns.model, parameters)
-compute!(d_field)
+    grid = model.grid
+    b = model.buoyancy.model
+    C = model.tracers
+    w = model.velocities.w
 
-## Center velocity `Field`
-wᶜᶜᶜ(model) = KernelFunctionOperation{Center, Center, Center}(ℑzᵃᵃᶠ, model.grid, model.velocities.w)
-w_center = Field(wᶜᶜᶜ(dns.model))
-compute!(w_center)
-## Center buoyancy perturbation field
-b_field = BuoyancyField(model)
-compute!(b_field)
-## Face buoyancy gradient field
-∂b∂z(model) = KernelFunctionOperation{Center, Center, Face}(∂z_b, model.grid, model.buoyancy, model.tracers)
-b_vertical_grad = Field(∂b∂z(model))
-compute!(b_vertical_grad)
-Integral(b_field * w_center / b_vertical_grad)
+    return KernelFunctionOperation{Center, Center, Center}(Kᵥ, grid, b, C, w)
+end
