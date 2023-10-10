@@ -3,7 +3,7 @@ using TwoLayerDirectNumericalShenanigans, CairoMakie, Rasters, NCDatasets
 ## Exract data from `.nc` file
 
 pred_max_density = NCDataset(cab_noise) do ds
-    ds["Predicted maximum density"]
+    ds.attrib["Predicted maximum density"]
 end
 
 ## Animations (x-z)
