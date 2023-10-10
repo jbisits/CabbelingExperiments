@@ -30,7 +30,7 @@ animate_2D_field(S_rs, 10, 10; colormap, colorrange, highclip, lowclip)
 σ_rs = Raster(cab_noise, lazy = true, name = :σ)
 @info "Animating density"
 colormap = cgrad(:dense)[2:end-1]
-colorrange = extrema(σ_rs[:, :, :, 1])
+colorrange = (minimum(σ_rs[:, :, :, 1]), pred_max_density)
 lowclip = cgrad(:dense)[1]
 highclip = cgrad(:dense)[end]
 vline = pred_max_density
