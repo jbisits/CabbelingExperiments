@@ -36,7 +36,7 @@ simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule)
 
 ## Run the simulation
 run!(simulation)
-@info "Computing density and appending to netcdf file"
-compute_density!(simulation.output_writers[:outputs].filepath)
-@info "Computing Kolmogorov and Batchelor scales and appending to netcdf"
-TLDNS.kolmogorov_and_batchelor_scale!(simulation.output_writers[:outputs].filepath)
+# @info "Computing density and appending to netcdf file"
+# compute_density!(simulation.output_writers[:outputs].filepath)
+# @info "Computing Kolmogorov and Batchelor scales and appending to netcdf"
+# TLDNS.kolmogorov_and_batchelor_scale!(simulation.output_writers[:outputs].filepath)
