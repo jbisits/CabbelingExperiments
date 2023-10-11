@@ -36,3 +36,5 @@ simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule)
 
 ## Run the simulation
 run!(simulation)
+
+include("../data/analysis/animate_raster.jl")
