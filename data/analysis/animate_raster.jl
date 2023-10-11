@@ -34,4 +34,4 @@ colorrange = (minimum(σ_rs[:, :, :, 1]), pred_max_density)
 lowclip = cgrad(:dense)[1]
 highclip = cgrad(:dense)[end]
 vline = pred_max_density
-animate_2D_field(σ_rs , 10, 10; colormap, colorrange, highclip, lowclip)
+animate_2D_field(σ_rs , 10, 10; colormap, colorrange, highclip, lowclip, vline)
