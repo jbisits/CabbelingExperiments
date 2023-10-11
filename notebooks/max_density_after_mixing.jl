@@ -32,7 +32,7 @@ Is this luck or something that could be further explored?
 
 # ╔═╡ 3e1f2eb1-45cd-44bc-8fec-85acd0abda4d
 begin
-	shallow_salinity = @bind S₀ᵘ PlutoUI.Slider(range(34.551, 34.6, step = 0.005))
+	shallow_salinity = @bind S₀ᵘ PlutoUI.Slider(range(34.551, 34.6, step = 0.001))
 	nothing
 end
 
@@ -42,7 +42,7 @@ begin
 	Θᵘ = -1.5
 	slope = (Θᵘ - Θ_star) / (S₀ᵘ - S_star)
 	S_mix = range(S₀ᵘ, S_star, step = 0.000001)
-	Θ_mix = @. Θᵘ - (slope) * (S₀ᵘ - S_mix)
+	Θ_mix = @. Θᵘ + (slope) * (S_mix - S₀ᵘ)
 	ρ_mix = gsw_rho.(S_mix, Θ_mix, 0)
 	max_rho, max_rho_idx = findmax(ρ_mix)
 	S_max, Θ_max = S_mix[max_rho_idx], Θ_mix[max_rho_idx]
@@ -80,22 +80,22 @@ begin
 	lines!(ax, S_range, Θ_linear, color = :green, linewidth = 0.8, linestyle = :dash, label = "Linear density at new deep water")
 	axislegend(ax, position = :lt)
 	fig
-	
+
 	md"""
 	Fix the deep water at ``S = `` $(S_star)gkg⁻¹ ``\Theta = `` $(Θ_star)°C.
 	We then set the shallow water at ``\Theta = `` $(Θᵘ)°C and vary ``S`` between stable to cabbeling and isohaline with the slider
-	
+
 	``S`` = $(shallow_salinity) = $(S₀ᵘ)gkg⁻¹.
-	
+
 	The maximum density after mixing is $(round(max_rho, digits = 5)) kgm⁻³ which is a gain of $(round(Δρ_mix, digits = 5))kgm⁻³.
 	The new maximum density is at salinity $(round(S_mix[max_rho_idx], digits = 3))gkg⁻¹ and temperature $(round(Θ_mix[max_rho_idx], digits = 2))°C.
-	
+
 	As we get closer to the initial shallow water being at the same density as the deep water, salinity and temperature approach the midpoint values.
 
 	$(fig)
 	"""
 
-end 
+end
 
 # ╔═╡ Cell order:
 # ╟─f6dcc214-63e5-11ee-1a87-9ff13638a4b5
