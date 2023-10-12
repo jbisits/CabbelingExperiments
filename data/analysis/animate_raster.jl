@@ -5,9 +5,9 @@ cab_noise = "data/simulations/cabbeling_stepchange_nothing_120min.nc"
 ## Exract data from `.nc` file
 
 pred_max_density, pred_Tₗ, pred_Sₗ = NCDataset(cab_noise) do ds
-                                         ds.attrib["Predicted maximum density"]
-                                         ds.attrib["Predicted equilibrium Tₗ"]
-                                         ds.attrib["Predicted equilibrium Sₗ"]
+                                         (ds.attrib["Predicted maximum density"],
+                                          ds.attrib["Predicted equilibrium Tₗ"],
+                                          ds.attrib["Predicted equilibrium Sₗ"])
                                      end
 
 ## Animations (x-z)
