@@ -90,6 +90,8 @@ begin
 	The maximum density after mixing is $(round(max_rho, digits = 5)) kgm⁻³ which is a gain of $(round(Δρ_mix, digits = 5))kgm⁻³.
 	The new maximum density is at salinity $(round(S_mix[max_rho_idx], digits = 3))gkg⁻¹ and temperature $(round(Θ_mix[max_rho_idx], digits = 2))°C.
 
+	Slope of mixing line is $(m_initial) and linearised density slope is $(m).
+
 	As we get closer to the initial shallow water being at the same density as the deep water, salinity and temperature approach the midpoint values.
 
 	$(fig)
