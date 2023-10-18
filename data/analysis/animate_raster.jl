@@ -1,6 +1,6 @@
 using TwoLayerDirectNumericalShenanigans, CairoMakie, Rasters, NCDatasets
 
-cab_noise = "data/simulations/cabbeling_stepchange_nothing_120min.nc"
+# cab_noise = "data/simulations/cabbeling_stepchange_nothing_120min.nc"
 
 ## Exract data from `.nc` file
 
