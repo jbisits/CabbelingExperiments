@@ -3,7 +3,7 @@ using TwoLayerDirectNumericalShenanigans
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
 reduced_domain = (Lx = 0.1, Ly = 0.1, Lz = 0.8)
-const interface_location = 0.3
+const interface_location = -0.3
 resolution = (Nx = 124, Ny = 124, Nz = 1100)
 
 ## Setup the dns_model
