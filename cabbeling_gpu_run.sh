@@ -8,7 +8,7 @@
 #PBS -l walltime=00:05:00
 #PBS -l storage=gdata/e14+scratch/e14
 #PBS -l wd
-#PBS -M <z5131023@unsw.edu.au>
+#PBS -M z5131023@unsw.edu.au
 
 cd /g/data/e14/jb2381/CabbelingExperiments/
 
@@ -18,4 +18,4 @@ export JULIA_NUM_THREADS=auto
 module load julia
 
 # Run the experiment
-julia --project cabbeling_gpu_salinitynoise.jl > $PBS_JOBID.log
+julia --color=yes --project cabbeling_gpu_salinitynoise.jl > $PBS_JOBID.log
