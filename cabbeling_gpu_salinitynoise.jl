@@ -2,14 +2,11 @@ using TwoLayerDirectNumericalShenanigans
 
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
-reduced_domain = (Lx = 0.1, Ly = 0.1, Lz = 0.8)
-const interface_location = -0.3
-resolution = (Nx = 124, Ny = 124, Nz = 1100)
 
 ## Setup the dns_model
 @info "Model setup"
-dns_model = DNS(architecture, reduced_domain, resolution, diffusivities;
-                reference_density = REFERENCE_DENSITY, zgrid_stretching = false)
+dns_model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
+                reference_density = REFERENCE_DENSITY)
 
 ## set initial conditions
 @info "Setting initial conditions"
@@ -33,9 +30,10 @@ set_two_layer_initial_conditions!(dns)
 
 ## build the simulation
 Δt = 1e-4
-stop_time = 3.5 * 60 * 60 # seconds
+stop_time = 20 * 60 # seconds
 save_schedule = 60  # seconds
-simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule)
+checkpointer_time_interval = 10 * 60 # seconds
+simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule; checkpointer_time_interval)
 
 ## Run the simulation
 run!(simulation)
