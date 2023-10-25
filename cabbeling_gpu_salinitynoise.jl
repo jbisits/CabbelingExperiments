@@ -30,9 +30,9 @@ set_two_layer_initial_conditions!(dns)
 
 ## build the simulation
 Δt = 1e-4
-stop_time = 20 * 60 # seconds
+stop_time = 5 * 60 # seconds
 save_schedule = 60  # seconds
-checkpointer_time_interval = 10 * 60 # seconds
+checkpointer_time_interval = 2.5 * 60 # seconds
 simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule; checkpointer_time_interval)
 
 ## Run the simulation
