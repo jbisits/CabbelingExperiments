@@ -14,11 +14,11 @@ T₀ᵘ = -1.5
 S₀ᵘ = 34.58
 cabbeling = CabbelingUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(cabbeling)
-depth = find_depth(dns_model, interface_location)
+depth = find_depth(dns_model, INTERFACE_LOCATION)
 profile_function = StepChange(depth)
 
 ## Salinity noise
-depths = find_depth(dns_model, [interface_location+ 0.02, interface_location - 0.02])
+depths = find_depth(dns_model, [INTERFACE_LOCATION+ 0.02, INTERFACE_LOCATION - 0.02])
 scales = similar(depths)
 fill!(scales, 2e-4)
 initial_noise = SalinityNoise(depths, scales)
