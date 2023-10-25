@@ -18,7 +18,7 @@ depth = find_depth(dns_model, INTERFACE_LOCATION)
 profile_function = StepChange(depth)
 
 ## Salinity noise
-depths = find_depth(dns_model, [INTERFACE_LOCATION+ 0.02, INTERFACE_LOCATION - 0.02])
+depths = find_depth(dns_model, [INTERFACE_LOCATION + 0.02, INTERFACE_LOCATION - 0.02])
 scales = similar(depths)
 fill!(scales, 2e-4)
 initial_noise = SalinityNoise(depths, scales)
@@ -33,8 +33,10 @@ set_two_layer_initial_conditions!(dns)
 stop_time = 5 * 60 # seconds
 save_schedule = 60  # seconds
 checkpointer_time_interval = 2.5 * 60 # seconds
+output_path = joinpath(@__DIR__, "outputs/")
 @info "Setting up simulation"
-simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule; checkpointer_time_interval)
+simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule;
+                                  checkpointer_time_interval, output_path)
 
 ## Run the simulation
 run!(simulation)
