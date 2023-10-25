@@ -18,4 +18,4 @@ export JULIA_NUM_THREADS=auto
 module load julia
 
 # Run the experiment
-julia --color=yes --project cabbeling_gpu_salinitynoise.jl > $PBS_JOBID.log
+julia --project cabbeling_gpu_salinitynoise.jl > $PBS_JOBID.log
