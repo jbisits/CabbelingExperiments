@@ -9,7 +9,7 @@ dns_model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
                 reference_density = REFERENCE_DENSITY)
 
 ## set initial conditions
-@info "Setting initial conditions"
+@info "Setting initial conditions in upper layer"
 T₀ᵘ = -1.5
 S₀ᵘ = 34.58
 cabbeling = CabbelingUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
