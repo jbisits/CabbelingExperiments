@@ -5,8 +5,8 @@ diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
 
 ## Setup the dns_model
 @info "Model setup"
-dns_model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
-                reference_density = REFERENCE_DENSITY)
+dns_model = DNSModel(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
+                     reference_density = REFERENCE_DENSITY)
 
 ## set initial conditions
 @info "Setting initial conditions in upper layer"
@@ -23,10 +23,10 @@ scales = similar(depths)
 fill!(scales, 2e-4)
 initial_noise = SalinityNoise(depths, scales)
 @info "Building DNS"
-dns = TwoLayerDNS(dns_model, profile_function, initial_conditions; initial_noise)
+tldns = TwoLayerDNS(dns_model, profile_function, initial_conditions; initial_noise)
 
 @info "Setting two layer initial conditions"
-set_two_layer_initial_conditions!(dns)
+set_two_layer_initial_conditions!(tldns)
 
 ## build the simulation
 Δt = 1e-4
@@ -35,8 +35,8 @@ save_schedule = 60  # seconds
 checkpointer_time_interval = 2.5 * 60 # seconds
 output_path = joinpath(@__DIR__, "outputs/")
 @info "Setting up simulation"
-simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule;
-                                  checkpointer_time_interval, output_path)
+simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule;
+                                    checkpointer_time_interval, output_path)
 
 ## Run the simulation
 run!(simulation)

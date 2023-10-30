@@ -1,6 +1,7 @@
 data/simulations
 data/animations
 animations
+archive/
 Manifest.toml
 .DS_Store
 .vscode

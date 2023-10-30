@@ -12,4 +12,4 @@ SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 TwoLayerDirectNumericalShenanigans = "40aaee9f-3595-48be-b36c-f1067009652f"
 
 [compat]
-TwoLayerDirectNumericalShenanigans = "0.4"
+TwoLayerDirectNumericalShenanigans = "0.5"
