@@ -35,7 +35,7 @@ save_schedule = 60  # seconds
 checkpointer_time_interval = 2.5 * 60 # seconds
 output_path = joinpath(@__DIR__, "outputs/")
 @info "Setting up simulation"
-simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule;
+simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule, TLDNS.save_computed_output!;
                                     checkpointer_time_interval, output_path)
 
 ## Run the simulation

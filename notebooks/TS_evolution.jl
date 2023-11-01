@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.27
+# v0.19.31
 
 using Markdown
 using InteractiveUtils
@@ -21,6 +21,7 @@ begin
 	using TwoLayerDirectNumericalShenanigans
 	using Oceananigans.Fields
 	using PlutoUI, GibbsSeaWater
+	using CairoMakie
 	using SpecialFunctions: erf
 end
 
@@ -322,7 +323,7 @@ end
 TableOfContents(title = "Analytic and numeric temperature and salinity evolution")
 
 # ╔═╡ Cell order:
-# ╟─ced5de2d-6e19-4e32-832c-1dcdcca82642
+# ╠═ced5de2d-6e19-4e32-832c-1dcdcca82642
 # ╟─3d90f332-f3f1-45f1-bfea-3fa4d1c648af
 # ╟─faa94bce-2a04-11ee-39f3-518323d8ad0f
 # ╟─894a827f-ba32-4e79-89ce-d9663288293b
