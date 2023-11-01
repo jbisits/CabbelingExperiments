@@ -1,11 +1,12 @@
 using TwoLayerDirectNumericalShenanigans
 
 architecture = GPU()
+diffusivities = (ν = 1e-5, κ = (S = 1e-8, T = 1e-6))
+eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 
-## Setup the model
+## Setup the dns_model
 @info "Model setup"
-model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, SO_DIFFUSIVITIES;
-            reference_density = REFERENCE_DENSITY, zgrid_stretching = false)
+dns_model = DNSModel(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities, eos)
 
 ## set initial conditions
 @info "Setting initial conditions"

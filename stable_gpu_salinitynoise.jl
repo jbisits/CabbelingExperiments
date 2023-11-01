@@ -11,11 +11,11 @@ eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 dns_model = DNSModel(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities, eos)
 
 ## set initial conditions
-@info "Setting initial conditions in upper layer"
+@info "Setting initial conditions"
 T₀ᵘ = -1.5
-S₀ᵘ = 34.58
-cabbeling = CabbelingUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
-initial_conditions = TwoLayerInitialConditions(cabbeling)
+S₀ᵘ = 34.551
+stable = StableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
+initial_conditions = TwoLayerInitialConditions(stable)
 depth = find_depth(dns_model, INTERFACE_LOCATION)
 profile_function = StepChange(depth)
 

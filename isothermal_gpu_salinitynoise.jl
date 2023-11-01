@@ -1,13 +1,14 @@
 using TwoLayerDirectNumericalShenanigans
 
+restart = true
+
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
+eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 
 ## Setup the dns_model
 @info "Model setup"
-dns_model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
-                reference_density = REFERENCE_DENSITY)
-
+dns_model = DNSModel(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities, eos)
 
 ## set initial conditions
 @info "Setting initial conditions"
@@ -24,16 +25,22 @@ scales = similar(depths)
 fill!(scales, 2e-4)
 initial_noise = SalinityNoise(depths, scales)
 @info "Building DNS"
-dns = TwoLayerDNS(dns_model, profile_function, initial_conditions; initial_noise)
+tldns = TwoLayerDNS(dns_model, profile_function, initial_conditions; initial_noise)
 
 @info "Setting two layer initial conditions"
-set_two_layer_initial_conditions!(dns)
+set_two_layer_initial_conditions!(tldns)
 
 ## build the simulation
 Δt = 1e-4
-stop_time = 10 * 60 # seconds (in simulation time)
-save_schedule = 5 # seconds
-simulation = DNS_simulation_setup(dns, Δt, stop_time, save_schedule)
+stop_time = 5 * 60 # seconds
+save_schedule = 60  # seconds
+checkpointer_time_interval = 2.5 * 60 # seconds
+output_path = joinpath(@__DIR__, "outputs/")
+@info "Setting up simulation"
+simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule, TLDNS.save_computed_output!;
+                                    checkpointer_time_interval, output_path,
+                                    overwrite_saved_output = restart)
 
+pickup = restart ? false : true
 ## Run the simulation
-run!(simulation)
+run!(simulation; pickup)
