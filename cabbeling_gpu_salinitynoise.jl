@@ -33,7 +33,7 @@ set_two_layer_initial_conditions!(tldns)
 
 ## build the simulation
 Δt = 1e-4
-max_Δt = 0.075
+max_Δt = 0.05
 stop_time = 20 * 60 # seconds
 save_schedule = 30  # seconds
 checkpointer_time_interval = 5 * 60 # seconds
