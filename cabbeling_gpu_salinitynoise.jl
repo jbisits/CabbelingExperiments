@@ -3,7 +3,7 @@ using TwoLayerDirectNumericalShenanigans
 restart = true
 
 architecture = GPU()
-resolution = (Nx = 50, Ny = 50, Nz = 500)
+resolution = (Nx = 32, Ny = 32, Nz = 320)
 diffusivities = (ν = 1e-5, κ = (S = 1e-6, T = 1e-6))
 eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 
