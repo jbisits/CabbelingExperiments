@@ -6,9 +6,11 @@ computed_output = joinpath(@__DIR__, "computed_output.nc")
 ## Append output if it is not present
 NCDataset(computed_output) do ds
     if "∫κᵥ" ∉ keys(ds)
-        TLDNS.inferred_vertical_diffusivity!(computed_output, :∫ₐw′T′, :∫ₐ∂T∂z)
+        @info "Appeneding inferred vertical diffusivity"
+        TLDNS.inferred_vertical_diffusivity!(joinpath(@__DIR__, "computed_output.nc"), :∫ₐw′T′, :∫ₐ∂T∂z)
     elseif "λ_B" ∉ keys(ds.attrib)
-        TLDNS.kolmogorov_and_batchelor_scale!(computed_output)
+        @info "Appending Kolmogorov and Batchelor scale"
+        TLDNS.kolmogorov_and_batchelor_scale!(joinpath(@__DIR__, "computed_output.nc"))
     end
 end
 
@@ -38,7 +40,7 @@ vline = pred_Sₗ
 animate_2D_field(S_rs, 10, 10; colormap, colorrange, highclip, lowclip, vline)
 
 ## Animate and plot computed output
-pred_max_density = NCDataset(cab_noise) do ds
+pred_max_density = NCDataset(computed_output) do ds
     ds.attrib["Predicted maximum density"]
 end
 @info "Reading into σ into Raster"
