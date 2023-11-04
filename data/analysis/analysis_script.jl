@@ -1,7 +1,7 @@
 using TwoLayerDirectNumericalShenanigans, NCDatasets, Rasters, CairoMakie
 
 tracers = joinpath(@__DIR__, "tracers.nc")
-computed_output = joinpath(@__DIR__, "computed_output")
+computed_output = joinpath(@__DIR__, "computed_output.nc")
 
 ## Append output if it is not present
 NCDataset(computed_output) do ds
