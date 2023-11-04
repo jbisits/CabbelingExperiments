@@ -1,6 +1,6 @@
 using TwoLayerDirectNumericalShenanigans
 
-restart = true
+restart = false
 
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
@@ -41,7 +41,7 @@ output_path = joinpath(@__DIR__, "outputs_equaldiffusion/")
 simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule, TLDNS.save_computed_output!;
                                     checkpointer_time_interval, output_path, max_Δt,
                                     overwrite_saved_output = restart)
-
+simulation.stop_time += 2 * 60 * 60
 pickup = restart ? false : true
 ## Run the simulation
 run!(simulation; pickup)
