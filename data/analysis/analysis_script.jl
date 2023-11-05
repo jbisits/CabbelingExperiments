@@ -9,7 +9,7 @@ if "∫κᵥ" ∉ computed_variables
     @info "Appeneding inferred vertical diffusivity"
     TLDNS.inferred_vertical_diffusivity!(computed_output, :∫ₐw′T′, :∫ₐ∂T∂z)
 end
-ds_attributes = keys(NCDataset(computed_output)ds.attrib)
+ds_attributes = keys(NCDataset(computed_output).attrib)
 if "λ_B" ∉ keys(ds_attributes)
     @info "Appending Kolmogorov and Batchelor scale"
     TLDNS.kolmogorov_and_batchelor_scale!(computed_output)
