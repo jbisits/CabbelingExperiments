@@ -4,15 +4,16 @@ tracers = joinpath(@__DIR__, "tracers.nc")
 computed_output = joinpath(@__DIR__, "computed_output.nc")
 
 ## Append output if it is not present
-# NCDataset(computed_output) do ds
-#     if "∫κᵥ" ∉ keys(ds)
-#         @info "Appeneding inferred vertical diffusivity"
-#         TLDNS.inferred_vertical_diffusivity!(computed_output, :∫ₐw′T′, :∫ₐ∂T∂z)
-#     elseif "λ_B" ∉ keys(ds.attrib)
-#         @info "Appending Kolmogorov and Batchelor scale"
-#         TLDNS.kolmogorov_and_batchelor_scale!(computed_output)
-#     end
-# end
+computed_variables = keys(NCDataset(computed_output))
+if "∫κᵥ" ∉ computed_variables
+    @info "Appeneding inferred vertical diffusivity"
+    TLDNS.inferred_vertical_diffusivity!(computed_output, :∫ₐw′T′, :∫ₐ∂T∂z)
+end
+ds_attributes = keys(NCDataset(computed_output)ds.attrib)
+if "λ_B" ∉ keys(ds_attributes)
+    @info "Appending Kolmogorov and Batchelor scale"
+    TLDNS.kolmogorov_and_batchelor_scale!(computed_output)
+end
 
 ## Animate tracers
 pred_Tₗ, pred_Sₗ = NCDataset(tracers) do ds
