@@ -14,7 +14,7 @@ dns_model = DNSModel(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities
 @info "Setting initial conditions in upper layer"
 T₀ᵘ = -1.5
 S₀ᵘ = 34.58
-const interface_location = 0.5
+const interface_location = -0.5
 cabbeling = CabbelingUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(cabbeling)
 depth = find_depth(dns_model, interface_location)
