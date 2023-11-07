@@ -5,7 +5,7 @@
 #PBS -l ngpus=1
 #PBS -l mem=96GB
 #PBS -l jobfs=50GB
-#PBS -l walltime=02:00:00
+#PBS -l walltime=05:00:00
 #PBS -l storage=gdata/e14+scratch/e14
 #PBS -l wd
 #PBS -M z5131023@unsw.edu.au
