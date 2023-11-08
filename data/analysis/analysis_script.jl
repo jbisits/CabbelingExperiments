@@ -1,4 +1,4 @@
-using TwoLayerDirectNumericalShenanigans, NCDatasets, Rasters, CairoMakie
+using TwoLayerDirectNumericalShenanigans, NCDatasets, CairoMakie
 
 tracers = joinpath(@__DIR__, "tracers.nc")
 computed_output = joinpath(@__DIR__, "computed_output.nc")
