@@ -3,13 +3,19 @@ using TwoLayerDirectNumericalShenanigans, NCDatasets, CairoMakie
 tracers = joinpath(@__DIR__, "tracers.nc")
 computed_output = joinpath(@__DIR__, "computed_output.nc")
 
-# Animate tracers
+# Tracer animations
 @info "Animating tracers"
 TLDNS.animate_tracers(tracers)
 
-# Animate density
+@info "Animating tracer distributions"
+TLDNS.animate_tracer_distributions(tracers)
+
+# Density animations
 @info "Animating density"
-TLDNS.animate_density(computed_output)
+TLDNS.animate_density(computed_output, "σ")
+
+@info "Animating density distributions"
+TLDNS.animate_density_distribution(computed_output)
 
 # Scalar diagnostics
 @info "Scalar diagnostics"
