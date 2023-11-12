@@ -23,7 +23,7 @@ profile_function = StepChange(depth)
 ## Salinity noise
 depths = find_depth(dns_model, [interface_location + 0.02, interface_location - 0.02])
 scales = similar(depths)
-fill!(scales, 2e-4)
+fill!(scales, 2e-3)
 initial_noise = SalinityNoise(depths, scales)
 @info "Building DNS"
 tldns = TwoLayerDNS(dns_model, profile_function, initial_conditions; initial_noise)
@@ -34,7 +34,7 @@ set_two_layer_initial_conditions!(tldns)
 ## build the simulation
 Δt = 1e-4
 max_Δt = 0.1
-stop_time = 7 * 60 * 60 # seconds
+stop_time = 2 * 60 * 60 # seconds
 save_schedule = 60  # seconds
 checkpointer_time_interval = 30 * 60 # seconds
 output_path = joinpath(@__DIR__, "outputs_doublediffusion/")
