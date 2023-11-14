@@ -3,7 +3,7 @@ using TwoLayerDirectNumericalShenanigans
 restart = true
 
 architecture = GPU()
-diffusivities = (ν = 1e-6, κ = (S = 1e-8, T = 1e-7))
+diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
 eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 
 ## Setup the dns_model
@@ -23,7 +23,7 @@ profile_function = StepChange(depth)
 ## Salinity noise
 depths = find_depth(dns_model, [interface_location + 0.02, interface_location - 0.02])
 scales = similar(depths)
-fill!(scales, 2e-3)
+fill!(scales, 2e-4)
 initial_noise = SalinityNoise(depths, scales)
 @info "Building DNS"
 tldns = TwoLayerDNS(dns_model, profile_function, initial_conditions; initial_noise)

@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.31
+# v0.19.32
 
 using Markdown
 using InteractiveUtils
@@ -86,7 +86,7 @@ From this analytic solution the first bulge in the density appears (as in appear
 begin
 	S_star, Θ_star = 34.7, 0.5
 	ΔΘ = -2
-	S_stable, S_cab = 34.551, 34.568
+	S_stable, S_cab = 34.551, 34.58
 	ΔSₛ = S_stable - S_star
 	ΔS_c= S_cab - S_star
 	ΔS = upper_layer == "Stable" ? ΔSₛ : ΔS_c
@@ -194,7 +194,7 @@ This may mean that instead of this we set stable density then have a salinity pe
 
 # ╔═╡ 828c6a69-a61f-4a98-ba06-e09661d8a973
 begin
-	timeDNS = @bind timeDNS PlutoUI.Slider(0.00001:10000.00001)
+	timeDNS = @bind timeDNS PlutoUI.Slider(0.00001:100000.00001)
 	κₛDNS = @bind κₛDNS PlutoUI.Slider([1e-5, 1e-6, 1e-7, 1e-8, 1e-9], show_value = true)
 	κₜDNS = @bind κₜDNS PlutoUI.Slider([1e-5, 1e-6, 1e-7, 1e-8, 1e-9], show_value = true)
 	md"""
@@ -246,6 +246,22 @@ let
 	colsize!(fig.layout, 1, Relative(3/5))
 	fig
 
+	fig2 = Figure(size = (500, 500); fontsize)
+	ax2 = Axis(fig2[1, 1], title = "S-T evolution", xlabel = "Absolute salinity (gkg⁻¹)", ylabel = "Conservative temperature (°C)")
+	N = 2000
+	S_range, Θ_range = range(minimum(S), maximum(S), length = N), range(minimum(T), maximum(T), length = N)
+	S_grid, Θ_grid = ones(N) .* S_range', ones(N)' .* Θ_range
+	ρ = gsw_rho.(S_grid, Θ_grid, 0)
+	ρ_star = gsw_rho(S_star, Θ_star, 0)
+	contour!(ax2, S_range, Θ_range, ρ'; levels = [ρ_star], color = :red, label = "Isopycnal at deep layer")
+
+	scatter!(ax2, S, T, σ₀, markersize = 6)
+
+	md"""
+	$(fig)
+	$(fig2)
+	"""
+
 end
 
 # ╔═╡ 70b786cc-81d9-4a25-a911-7adb78e8ae82
@@ -264,7 +280,7 @@ begin
 	S_ts, T_ts = FieldTimeSeries(output, "S"), FieldTimeSeries(output, "T")
 	model_times_idx = @bind mt_idx PlutoUI.Slider(eachindex(S_ts.times))
 	model_times = S_ts.times
-	z_model = znodes(S_ts[1], Center())
+	z_model = znodes(S_ts.grid, Center(), Center(), Center())
 	nothing
 end
 
@@ -323,7 +339,7 @@ end
 TableOfContents(title = "Analytic and numeric temperature and salinity evolution")
 
 # ╔═╡ Cell order:
-# ╠═ced5de2d-6e19-4e32-832c-1dcdcca82642
+# ╟─ced5de2d-6e19-4e32-832c-1dcdcca82642
 # ╟─3d90f332-f3f1-45f1-bfea-3fa4d1c648af
 # ╟─faa94bce-2a04-11ee-39f3-518323d8ad0f
 # ╟─894a827f-ba32-4e79-89ce-d9663288293b
