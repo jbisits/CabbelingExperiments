@@ -86,11 +86,7 @@ end
 """
     function dₜEb!(energy_diagnostics::AbstractString, computed_output::AbstractString)
 Compute the time evolution of the background potential energy as in equation (12)
-from Winters et al. (1995),
-```math
-\\frac{\\mathrm{d}E_{b}}{\\mathrm{d}t} = \\int_{V}gz_{*}\left(\\mathbf{x}, t\right)ρ\left(\\mathbf{x}, t\right)\\mathrm{d}V.
-```
-and save to `energy_diagnostics`.
+from Winters et al. (1995) and save to `energy_diagnostics`.
 """
 function dₜEb!(energy_diagnostics::AbstractString, computed_output::AbstractString)
 
@@ -124,11 +120,7 @@ function dₜEb!(energy_diagnostics::AbstractString, computed_output::AbstractSt
 end
 """
     function dₜEp!(energy_diagnostics::AbstractString, computed_output::AbstractString)
-Compute the time evolution of the potential energy
-```math
-\\frac{\\mathrm{d}E_{b}}{\\mathrm{d}t} = \\int_{V}gzρ\\mathrm{d}V.
-```
-and save to `energy_diagnostics`.
+Compute the time evolution of the potential energy  and save to `energy_diagnostics`.
 """
 function dₜEp!(energy_diagnostics::AbstractString, computed_output::AbstractString)
 
