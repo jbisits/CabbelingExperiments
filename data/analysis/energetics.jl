@@ -1,3 +1,5 @@
+using NCDatasets, CairoMakie, Printf
+
 """
     function animate_reference_profile(computed_output::AbstractString; σ_binwidth = 0.0001)
 Animate a pdf of the density as well as the reference profile for density
