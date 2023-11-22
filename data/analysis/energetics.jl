@@ -1,4 +1,4 @@
-using NCDatasets, CairoMakie, Printf
+using NCDatasets, CairoMakie, Printf, StatsBase
 
 """
     function animate_reference_profile(computed_output::AbstractString; σ_binwidth = 0.0001)
