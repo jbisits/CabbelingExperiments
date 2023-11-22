@@ -61,7 +61,7 @@ function ρw!(energy_diagnostics::AbstractString, computed_output::AbstractStrin
 
     NCDataset(computed_output) do ds
 
-        time = ds[:time][1:2]
+        time = ds[:time][:]
         dz = diff(ds[:zC][1:2])
         dA = diff(ds[:xC][1:2]) .* diff(ds[:yC][1:2])
 
@@ -92,7 +92,7 @@ function dₜEb!(energy_diagnostics::AbstractString, computed_output::AbstractSt
 
     NCDataset(computed_output) do ds
 
-        time = ds[:time][1:2]
+        time = ds[:time][:]
         g = -9.81
         x_length = length(ds[:xC])
         y_length = length(ds[:yC])
@@ -127,7 +127,7 @@ function dₜEp!(energy_diagnostics::AbstractString, computed_output::AbstractSt
     NCDataset(computed_output) do ds
 
         g = -9.81
-        time = ds[:time][1:2]
+        time = ds[:time][:]
         x_length = length(ds[:xC])
         y_length = length(ds[:yC])
         z_length = length(ds[:zC])
@@ -198,5 +198,5 @@ end
 
 computed_output = "computed_output.nc"
 energy_diagnostics = "energy_diagnostics.nc"
-animate_reference_profile(computed_output)
+# animate_reference_profile(computed_output)
 compute_energy_diagnostics!(energy_diagnostics, computed_output)
