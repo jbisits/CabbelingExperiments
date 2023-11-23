@@ -198,5 +198,5 @@ end
 
 computed_output = "computed_output.nc"
 energy_diagnostics = "energy_diagnostics.nc"
-# animate_reference_profile(computed_output)
+animate_reference_profile(computed_output)
 compute_energy_diagnostics!(energy_diagnostics, computed_output)
