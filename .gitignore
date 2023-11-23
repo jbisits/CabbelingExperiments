@@ -6,3 +6,7 @@ Manifest.toml
 .DS_Store
 .vscode
 *.jld2
+*.log
+*.png
+*.mp4
+*.nc
