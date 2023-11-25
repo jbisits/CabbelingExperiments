@@ -29,16 +29,16 @@ function run_OneDModel(salinity_initial_condition::Symbol;
                     Tᵤ = -1.5,
                     Tₗ = 0.5,
                     Sₗ = 34.7,
-                    Sₘ = 34.75,   # maximum salinity
-                    Nz = 500,     # number of levels
-                    Lz = 500,     # ovearll depth
+                    Sₘ = 34.705,   # maximum salinity
+                    Nz = 100,     # number of levels
+                    Lz = 1000,    # overall depth
      reference_density = 1028.18,
          convective_κz = 1.0,
-         background_κz = 1e-5,
-                     ν = 1e-4,
+         background_κz = 1e-7,
+                     ν = 1e-6,
                     Δt = 1,       # minutes
               savepath = "OneDModelOutput",
-            sim_length = 1,       # in days
+            sim_length = 10 / 24,       # in days
              save_freq = 1        # in minutes
         )
 
@@ -56,15 +56,15 @@ function run_OneDModel(salinity_initial_condition::Symbol;
     # Set temperature initial condition
     T₀ = Array{Float64}(undef, size(grid))
     # This adds a temperature gradient to avoid spurios convective mixing in the mixed layer
-    Tₗ_array = fill(Tₗ, 400)
-    Tᵤ_array = reverse(range(Tᵤ + 0.01, Tᵤ, length = 100))
+    Tₗ_array = fill(Tₗ, 50)
+    Tᵤ_array = reverse(range(Tᵤ + 0.01, Tᵤ, length = 50))
     T₀[:, :, :] = vcat(Tₗ_array, Tᵤ_array)
 
     # Set the salinity initial condition
     S₀ = Array{Float64}(undef, size(grid))
     Sᵤ = getfield(salinity_initial_conditions, salinity_initial_condition)
-    Sᵤ_array = fill(Sᵤ, 100)
-    Sₗ_array = range(Sₘ, Sₗ, length = 400)
+    Sᵤ_array = fill(Sᵤ, 50)
+    Sₗ_array = range(Sₘ, Sₗ, length = 50)
     S₀[:, :, :] = vcat(Sₗ_array, Sᵤ_array)
 
     savefile = savepath*"_"*string(salinity_initial_condition)*".jld2"
@@ -96,7 +96,7 @@ end
 Salinity initial conditions for upper layer temperature of `Tᵤ = -1.5°C`.
 """
 const salinity_initial_conditions = (stable = 34.551, cabbeling = 34.568, unstable = 34.59,
-                                     isohaline = 34.7)
+                                     isohaline = 34.7, isothermal = 34.69431424)
 """
     save_∂z_b(model)
 Save the buoyancy gradient that is calculated during the simulations.

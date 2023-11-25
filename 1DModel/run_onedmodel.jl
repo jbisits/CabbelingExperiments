@@ -1,13 +1,14 @@
 include("onedmodel.jl")
 using .OneDModel
 
-run_OneDModel(:cabbeling)
+run_OneDModel(:isothermal)
 
 ##
 using TwoLayerDirectNumericalShenanigans, CairoMakie
 
 ## Output
 output = joinpath(@__DIR__, "OneDModelOutput_cabbeling.jld2")
+output = joinpath(@__DIR__, "OneDModelOutput_isothermal.jld2")
 # compute_density!(output)
 S_ts, T_ts = FieldTimeSeries(output, "S"), FieldTimeSeries(output, "T")
 σ₀_ts =  FieldTimeSeries(output, "σ")
