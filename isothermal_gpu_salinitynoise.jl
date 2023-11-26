@@ -9,7 +9,7 @@ eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 ## Setup the dns_model
 @info "Model setup"
 isothermal_resolution = (Nx = 100, Ny = 100, Nz = 1000)
-dns_model = DNSModel(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities, eos)
+dns_model = DNSModel(architecture, DOMAIN_EXTENT, isothermal_resolution, diffusivities, eos)
 
 ## set initial conditions
 @info "Setting initial conditions"
@@ -42,7 +42,8 @@ output_path = joinpath(@__DIR__, "outputs_doublediffusion/")
 @info "Setting up simulation"
 simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule, TLDNS.save_computed_output!;
                                     checkpointer_time_interval, output_path, max_Δt,
-                                    overwrite_saved_output = restart)
+                                    overwrite_saved_output = restart,
+                                    save_velocities = true)
 
 pickup = restart ? false : true
 ## Run the simulation
