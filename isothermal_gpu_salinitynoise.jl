@@ -3,7 +3,7 @@ using TwoLayerDirectNumericalShenanigans
 restart = true
 
 architecture = GPU()
-diffusivities = (ν = 1e-6, κ = (S = 1e-9, T = 1e-7))
+diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
 eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 
 ## Setup the dns_model
