@@ -196,7 +196,7 @@ function makefile(filename::AbstractString, computed_output::AbstractString)
 end
 
 computed_output = "computed_output.nc"
-TLDNS.animate_density(computed_output)
+TLDNS.animate_density(computed_output, "σ")
 TLDNS.animate_tracers(computed_output)
 animate_reference_profile(computed_output)
 energy_diagnostics = "energy_diagnostics.nc"
