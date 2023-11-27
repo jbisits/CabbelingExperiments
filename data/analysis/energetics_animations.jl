@@ -197,7 +197,8 @@ end
 
 computed_output = "computed_output.nc"
 TLDNS.animate_density(computed_output, "σ")
-TLDNS.animate_tracers(computed_output)
+tracers = "tracers.nc"
+TLDNS.animate_tracers(tracers)
 animate_reference_profile(computed_output)
 energy_diagnostics = "energy_diagnostics.nc"
 compute_energy_diagnostics!(energy_diagnostics, computed_output)
