@@ -1,4 +1,4 @@
-using NCDatasets, CairoMakie, Printf, StatsBase
+using NCDatasets, CairoMakie, Printf, StatsBase, TwoLayerDirectNumericalShenanigans
 
 """
     function animate_reference_profile(computed_output::AbstractString; σ_binwidth = 0.0001)
@@ -62,20 +62,19 @@ function ρw!(energy_diagnostics::AbstractString, computed_output::AbstractStrin
     NCDataset(computed_output) do ds
 
         time = ds[:time][:]
-        dz = diff(ds[:zC][1:2])
-        dA = diff(ds[:xC][1:2]) .* diff(ds[:yC][1:2])
+        dV = diff(ds[:xC][1:2]) .* diff(ds[:yC][1:2]) .* diff(ds[:zC][1:2])
 
         ρw = similar(time)
         for t ∈ eachindex(time)
-            σ = sum(ds[:σ][:, :, 350:1050, t] * dz[1], dims = 3) # sum over density range [-0.75, -0.25].
-            ρw[t] = sum(σ * dA[1])
+            σ = ds[:σ][:, :, :, t]
+            w = ds[:w][:, :, :, t]
+            ρw[t] = sum(σ.* w * dV[1])
         end
-        ρw = ρw .- ρw[1]
 
         NCDataset(energy_diagnostics, "a") do ds2
 
             defVar(ds2, "ρw", ρw, tuple("time"),
-                   attrib = Dict("longname" => "Vertical buoyancy flux integrated from z = [-1, -0.25]."))
+                   attrib = Dict("longname" => "Volume integrated buoyancy flux g∫ᵥρwdV."))
 
         end
 
@@ -197,6 +196,8 @@ function makefile(filename::AbstractString, computed_output::AbstractString)
 end
 
 computed_output = "computed_output.nc"
-energy_diagnostics = "energy_diagnostics.nc"
+TLDNS.animate_density(computed_output)
+TLDNS.animate_tracers(computed_output)
 animate_reference_profile(computed_output)
+energy_diagnostics = "energy_diagnostics.nc"
 compute_energy_diagnostics!(energy_diagnostics, computed_output)
