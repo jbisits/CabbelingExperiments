@@ -55,7 +55,8 @@ function animate_reference_profile(computed_output::AbstractString; σ_binwidth 
 
 end
 """
-
+   function ρw!(energy_diagnostics::AbstractString, computed_output::AbstractString)
+Volume integrated buoyancy flux
 """
 function ρw!(energy_diagnostics::AbstractString, computed_output::AbstractString)
 
@@ -102,7 +103,7 @@ function dₜEb!(energy_diagnostics::AbstractString, computed_output::AbstractSt
         for t ∈ eachindex(time)
             σ = reshape(ds[:σ][:, :, :, t], :)
             p = sortperm(σ)
-            ∫Eb[t] = g * sum(σ[p] .* z[p] * dV[1])
+            ∫Eb[t] = g * sum(σ .* z[p] * dV[1])
         end
 
         NCDataset(energy_diagnostics, "a") do ds2
