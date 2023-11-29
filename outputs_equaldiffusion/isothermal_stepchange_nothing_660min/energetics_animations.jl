@@ -55,6 +55,59 @@ function animate_reference_profile(computed_output::AbstractString; σ_binwidth 
 
 end
 """
+    function animate_reference_and_horizontal_average_profile(computed_output::AbstractString)
+Animate the reference (sorted) density profile and the horizontally average profile.
+"""
+function animate_reference_and_horizontal_average_profile(computed_output::AbstractString)
+
+    NCDataset(computed_output) do ds
+
+        t = ds["time"][:]
+        z_model = ds["zC"][:]
+
+        pred_σₗ = ds.attrib["Predicted maximum density"]
+
+        n = Observable(1)
+        σₕ = @lift reshape(mean(ds["σ"][:, :, :, $n], dims = (1, 2)), :)
+        time_title = @lift @sprintf("t=%1.2f minutes", t[$n] / 60)
+
+        fig = Figure(size = (800, 400))
+        ax = Axis(fig[1, 1], title = time_title)
+
+        lines!(ax, σₕ, z_model, color = :steelblue)
+        ax.subtitle = "Horizontally averaged profile"
+        ax.xlabel = "σ₀ (kgm⁻³)"
+        ax.ylabel = "z (m)"
+        vlines!(ax, pred_σₗ, color = :red, linestyle = :dash)
+
+        ax2 = Axis(fig[1, 2], title = "Density reference profile",
+                   xlabel = "σ₀ (kgm⁻³)", ylabel = "z* (m)")
+        ax2.xticklabelrotation = π / 4
+        σ_initial_reference_profile = sort(reshape(ds["σ"][:, :, :, 1], :), rev = true)
+        z = range(-1, 0, length(σ_initial_reference_profile))
+        lines!(ax2, σ_initial_reference_profile, z, color = :red, linestyle = :dot,
+                label = "Initial reference profile")
+        σ_reference_profile = @lift sort(reshape(ds["σ"][:, :, :, $n], :), rev = true)
+        lines!(ax2, σ_reference_profile, z)
+        vlines!(ax2, pred_σₗ, color = :red, linestyle = :dash, label = "Predicted σₗ")
+        linkyaxes!(ax, ax2)
+        hideydecorations!(ax2, grid = false)
+        axislegend(ax2, position = :lb)
+
+        frames = eachindex(t)
+        record(fig, joinpath(pwd(), "reference_and_horizontal_average_profile.mp4"),
+            frames, framerate=8) do i
+            msg = string("Plotting frame ", i, " of ", frames[end])
+            print(msg * " \r")
+            n[] = i
+        end
+
+    end
+
+    return nothing
+
+end
+"""
 
 """
 function ρw!(energy_diagnostics::AbstractString, computed_output::AbstractString)
@@ -62,13 +115,14 @@ function ρw!(energy_diagnostics::AbstractString, computed_output::AbstractStrin
     NCDataset(computed_output) do ds
 
         time = ds[:time][:]
+        g = -9.81
         dV = diff(ds[:xC][1:2]) .* diff(ds[:yC][1:2]) .* diff(ds[:zC][1:2])
 
         ρw = similar(time)
         for t ∈ eachindex(time)
             σ = ds[:σ][:, :, :, t]
             w = ds[:w][:, :, :, t]
-            ρw[t] = sum(σ.* w * dV[1])
+            ρw[t] = g * sum(σ .* w * dV[1])
         end
 
         NCDataset(energy_diagnostics, "a") do ds2
@@ -102,7 +156,7 @@ function dₜEb!(energy_diagnostics::AbstractString, computed_output::AbstractSt
         for t ∈ eachindex(time)
             σ = reshape(ds[:σ][:, :, :, t], :)
             p = sortperm(σ)
-            ∫Eb[t] = g * sum(σ[p] .* z[p] * dV[1])
+            ∫Eb[t] = g * sum(σ .* z[p] * dV[1])
         end
 
         NCDataset(energy_diagnostics, "a") do ds2
@@ -202,3 +256,4 @@ TLDNS.animate_density(computed_output, "σ")
 animate_reference_profile(computed_output)
 energy_diagnostics = "energy_diagnostics.nc"
 compute_energy_diagnostics!(energy_diagnostics, computed_output)
+animate_reference_and_horizontal_average_profile(computed_output)
