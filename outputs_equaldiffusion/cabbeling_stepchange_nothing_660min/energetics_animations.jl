@@ -78,6 +78,7 @@ function animate_reference_and_horizontal_average_profile(computed_output::Abstr
         ax.subtitle = "Horizontally averaged profile"
         ax.xlabel = "σ₀ (kgm⁻³)"
         ax.ylabel = "z (m)"
+        ax.xticklabelrotation = π / 4
         vlines!(ax, pred_σₗ, color = :red, linestyle = :dash)
 
         ax2 = Axis(fig[1, 2], title = "Density reference profile",
@@ -108,31 +109,37 @@ function animate_reference_and_horizontal_average_profile(computed_output::Abstr
 
 end
 """
-   function ρw!(energy_diagnostics::AbstractString, computed_output::AbstractString)
-Volume integrated buoyancy flux
+   function ρw!(energy_diagnostics::AbstractString, computed_output::AbstractString, velocities::AbstractString)
+Volume integrated buoyancy flux.
 """
-function ρw!(energy_diagnostics::AbstractString, computed_output::AbstractString)
+function ρw!(energy_diagnostics::AbstractString, computed_output::AbstractString, velocities::AbstractString)
 
     NCDataset(computed_output) do ds
 
-        time = ds[:time][:]
-        g = -9.81
-        dV = diff(ds[:xC][1:2]) .* diff(ds[:yC][1:2]) .* diff(ds[:zC][1:2])
+        var_key = "ρw"
+        if !check_key(ds, var_key)
 
-        ρw = similar(time)
-        for t ∈ eachindex(time)
-            σ = ds[:σ][:, :, :, t]
-            w = ds[:w][:, :, :, t]
-            ρw[t] = g * sum(σ .* w * dV[1])
+            time = ds[:time][:]
+            g = -9.81
+            dV = diff(ds[:xC][1:2]) .* diff(ds[:yC][1:2]) .* diff(ds[:zC][1:2])
+
+            ρw = similar(time)
+            ds_velocities = NCDataset(velocities)
+            for t ∈ eachindex(time)
+                σ = ds[:σ][:, :, :, t]
+                w = ds_velocities[:w][:, :, :, t]
+                ρw[t] = g * sum(σ .* w * dV[1])
+            end
+
+            NCDataset(energy_diagnostics, "a") do ds2
+
+                defVar(ds2, var_key, ρw, tuple("time"),
+                    attrib = Dict("longname" => "Volume integrated buoyancy flux g∫ᵥρwdV."))
+
+            end
+
+            close(ds_velocities)
         end
-
-        NCDataset(energy_diagnostics, "a") do ds2
-
-            defVar(ds2, "ρw", ρw, tuple("time"),
-                   attrib = Dict("longname" => "Volume integrated buoyancy flux g∫ᵥρwdV."))
-
-        end
-
     end
 
     return nothing
@@ -146,27 +153,31 @@ function dₜEb!(energy_diagnostics::AbstractString, computed_output::AbstractSt
 
     NCDataset(computed_output) do ds
 
-        time = ds[:time][:]
-        g = -9.81
-        x_length = length(ds[:xC])
-        y_length = length(ds[:yC])
-        z = repeat(ds[:zC][:], inner= x_length * y_length)
-        dV = diff(ds[:xC][1:2]) .* diff(ds[:yC][1:2]) .* diff(ds[:zC][1:2])
+        var_key = "∫Eb"
+        if !check_key(ds, var_key)
 
-        ∫Eb = similar(time)
-        for t ∈ eachindex(time)
-            σ = reshape(ds[:σ][:, :, :, t], :)
-            p = sortperm(σ)
-            ∫Eb[t] = g * sum(σ .* z[p] * dV[1])
+            time = ds[:time][:]
+            g = -9.81
+            x_length = length(ds[:xC])
+            y_length = length(ds[:yC])
+            z = repeat(ds[:zC][:], inner= x_length * y_length)
+            dV = diff(ds[:xC][1:2]) .* diff(ds[:yC][1:2]) .* diff(ds[:zC][1:2])
+
+            ∫Eb = similar(time)
+            for t ∈ eachindex(time)
+                σ = reshape(ds[:σ][:, :, :, t], :)
+                p = sortperm(σ)
+                ∫Eb[t] = g * sum(σ .* z[p] * dV[1])
+            end
+
+            NCDataset(energy_diagnostics, "a") do ds2
+
+                defVar(ds2, var_key, ∫Eb, tuple("time"),
+                    attrib = Dict("longname" => "Volume integrated background potential energy (∫ᵥgρz*dV)."))
+
+            end
+
         end
-
-        NCDataset(energy_diagnostics, "a") do ds2
-
-            defVar(ds2, "∫Eb", ∫Eb, tuple("time"),
-                   attrib = Dict("longname" => "Volume integrated background potential energy (∫ᵥgρz*dV)."))
-
-        end
-
     end
 
     return nothing
@@ -180,24 +191,29 @@ function dₜEp!(energy_diagnostics::AbstractString, computed_output::AbstractSt
 
     NCDataset(computed_output) do ds
 
-        g = -9.81
-        time = ds[:time][:]
-        x_length = length(ds[:xC])
-        y_length = length(ds[:yC])
-        z_length = length(ds[:zC])
-        z_grid = reshape(repeat(ds[:zC][:], inner= x_length * y_length),
-                        (x_length, y_length, z_length))
-        dV = diff(ds[:xC][1:2]) .* diff(ds[:yC][1:2]) .* diff(ds[:zC][1:2])
-        ∫Ep = similar(time)
+        var_key = "∫Ep"
+        if !check_key(ds, var_key)
 
-        for t ∈ eachindex(time)
-            ∫Ep[t] = g * sum(ds[:σ][:, :, :, t] .* z_grid * dV[1])
-        end
+            g = -9.81
+            time = ds[:time][:]
+            x_length = length(ds[:xC])
+            y_length = length(ds[:yC])
+            z_length = length(ds[:zC])
+            z_grid = reshape(repeat(ds[:zC][:], inner= x_length * y_length),
+                            (x_length, y_length, z_length))
+            dV = diff(ds[:xC][1:2]) .* diff(ds[:yC][1:2]) .* diff(ds[:zC][1:2])
+            ∫Ep = similar(time)
 
-        NCDataset(energy_diagnostics, "a") do ds2
+            for t ∈ eachindex(time)
+                ∫Ep[t] = g * sum(ds[:σ][:, :, :, t] .* z_grid * dV[1])
+            end
 
-            defVar(ds2, "∫Ep", ∫Ep, tuple("time"),
-                   attrib = Dict("longname" => "Volume integrated potential energy (∫ᵥgρzdV)."))
+            NCDataset(energy_diagnostics, "a") do ds2
+
+                defVar(ds2, var_key, ∫Ep, tuple("time"),
+                    attrib = Dict("longname" => "Volume integrated potential energy (∫ᵥgρzdV)."))
+
+            end
 
         end
 
@@ -212,13 +228,14 @@ end
 Save energy diagnostics to the file (must be a `.nc` file) `energy_diagnostics`.
 """
 function compute_energy_diagnostics!(energy_diagnostics::AbstractString,
-                                     computed_output::AbstractString)
+                                     computed_output::AbstractString,
+                                     velocities::AbstractString)
 
     isfile(energy_diagnostics) ? nothing : makefile(energy_diagnostics, computed_output)
 
     dₜEb!(energy_diagnostics, computed_output)
     dₜEp!(energy_diagnostics, computed_output)
-    # ρw!(energy_diagnostics, computed_output) need to add velocities data for this
+    ρw!(energy_diagnostics, computed_output, velocities)
 
     return nothing
 
@@ -249,12 +266,24 @@ function makefile(filename::AbstractString, computed_output::AbstractString)
     return nothing
 
 end
+"""
+    function check_key(ds, key::AbstractString)
+Check if `key` is in dataset `ds`.
+"""
+function check_key(ds, key::AbstractString)
 
+    key_in_ds = key ∈ keys(ds) ? true : false
+
+    return key_in_ds
+
+end
+
+velocities = "velocities.nc"
 computed_output = "computed_output.nc"
 # TLDNS.animate_density(computed_output, "σ")
 # tracers = "tracers.nc"
 # TLDNS.animate_tracers(tracers)
 # animate_reference_profile(computed_output)
 energy_diagnostics = "energy_diagnostics.nc"
-compute_energy_diagnostics!(energy_diagnostics, computed_output)
+compute_energy_diagnostics!(energy_diagnostics, computed_output, velocities)
 animate_reference_and_horizontal_average_profile(computed_output)
