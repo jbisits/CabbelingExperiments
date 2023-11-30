@@ -218,7 +218,7 @@ function compute_energy_diagnostics!(energy_diagnostics::AbstractString,
 
     dₜEb!(energy_diagnostics, computed_output)
     dₜEp!(energy_diagnostics, computed_output)
-    ρw!(energy_diagnostics, computed_output)
+    # ρw!(energy_diagnostics, computed_output) need to add velocities data for this
 
     return nothing
 
