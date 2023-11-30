@@ -278,12 +278,12 @@ function check_key(ds, key::AbstractString)
 
 end
 
-velocities = "velocities.nc"
+# velocities = "velocities.nc"
 computed_output = "computed_output.nc"
 # TLDNS.animate_density(computed_output, "σ")
 # tracers = "tracers.nc"
 # TLDNS.animate_tracers(tracers)
 # animate_reference_profile(computed_output)
-energy_diagnostics = "energy_diagnostics.nc"
-compute_energy_diagnostics!(energy_diagnostics, computed_output, velocities)
+# energy_diagnostics = "energy_diagnostics.nc"
+# compute_energy_diagnostics!(energy_diagnostics, computed_output, velocities)
 animate_reference_and_horizontal_average_profile(computed_output)
