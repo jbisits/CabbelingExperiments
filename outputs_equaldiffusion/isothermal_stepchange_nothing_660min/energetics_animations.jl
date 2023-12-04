@@ -115,10 +115,11 @@ Volume integrated buoyancy flux.
 function ∫ρw!(energy_diagnostics::AbstractString, computed_output::AbstractString,
               velocities::AbstractString)
 
-    NCDataset(computed_output) do ds
+    var_key = "∫ρw"
+    energetics_ds = NCDataset(energy_diagnostics, "a")
+    if !haskey(energetics_ds, var_key)
 
-        var_key = "∫ρw"
-        if !haskey(ds, var_key)
+        NCDataset(computed_output) do ds
 
             time = ds[:time][:]
             g = -9.81
@@ -132,16 +133,15 @@ function ∫ρw!(energy_diagnostics::AbstractString, computed_output::AbstractSt
                 ∫ρw[t] = g * sum(σ .* wᶜᶜᶜ * dV[1])
             end
 
-            NCDataset(energy_diagnostics, "a") do ds2
-
-                defVar(ds2, var_key, ∫ρw, tuple("time"),
+            defVar(energetics_ds, var_key, ∫ρw, tuple("time"),
                     attrib = Dict("longname" => "Volume integrated buoyancy flux g∫ᵥρwdV."))
 
-            end
-
             close(ds_velocities)
+
         end
+
     end
+    close(energetics_ds)
 
     return nothing
 end
@@ -152,10 +152,11 @@ from Winters et al. (1995) and save to `energy_diagnostics`.
 """
 function dₜEb!(energy_diagnostics::AbstractString, computed_output::AbstractString)
 
-    NCDataset(computed_output) do ds
+    var_key = "∫Eb"
+    energetics_ds = NCDataset(energy_diagnostics, "a")
+    if !haskey(energetics_ds, var_key)
 
-        var_key = "∫Eb"
-        if !haskey(ds, var_key)
+        NCDataset(computed_output) do ds
 
             time = ds[:time][:]
             g = -9.81
@@ -171,15 +172,13 @@ function dₜEb!(energy_diagnostics::AbstractString, computed_output::AbstractSt
                 ∫Eb[t] = g * sum(σ .* z[p] * dV[1])
             end
 
-            NCDataset(energy_diagnostics, "a") do ds2
-
-                defVar(ds2, var_key, ∫Eb, tuple("time"),
+            defVar(energetics_ds, var_key, ∫Eb, tuple("time"),
                     attrib = Dict("longname" => "Volume integrated background potential energy (∫ᵥgρz*dV)."))
 
-            end
-
         end
+
     end
+    close(energetics_ds)
 
     return nothing
 
@@ -190,10 +189,11 @@ Compute the time evolution of the potential energy  and save to `energy_diagnost
 """
 function dₜEp!(energy_diagnostics::AbstractString, computed_output::AbstractString)
 
-    NCDataset(computed_output) do ds
+    var_key = "∫Ep"
+    energetics_ds = NCDataset(energy_diagnostics, "a")
+    if !haskey(energetics_ds, var_key)
 
-        var_key = "∫Ep"
-        if !haskey(ds, var_key)
+        NCDataset(computed_output) do ds
 
             g = -9.81
             time = ds[:time][:]
@@ -209,16 +209,13 @@ function dₜEp!(energy_diagnostics::AbstractString, computed_output::AbstractSt
                 ∫Ep[t] = g * sum(ds[:σ][:, :, :, t] .* z_grid * dV[1])
             end
 
-            NCDataset(energy_diagnostics, "a") do ds2
-
-                defVar(ds2, var_key, ∫Ep, tuple("time"),
+            defVar(energetics_ds, var_key, ∫Ep, tuple("time"),
                     attrib = Dict("longname" => "Volume integrated potential energy (∫ᵥgρzdV)."))
-
-            end
 
         end
 
     end
+    close(energetics_ds)
 
     return nothing
 
@@ -229,10 +226,11 @@ Compute the rate of conversion of internal energy to potential energy (Winters e
 """
 function Φᵢ!(energy_diagnostics::AbstractString, computed_output::AbstractString)
 
-    NCDataset(computed_output) do ds
+    var_key = "Φᵢ"
+    energetics_ds = NCDataset(energy_diagnostics, "a")
+    if !haskey(energetics_ds, var_key)
 
-        var_key = "Φᵢ"
-        if !haskey(ds, var_key)
+        NCDataset(computed_output) do ds
 
             time = ds["time"][:]
             g = -9.81
@@ -246,16 +244,13 @@ function Φᵢ!(energy_diagnostics::AbstractString, computed_output::AbstractStr
                 Φᵢ[t] = κ * g * A * (mean(σ[:, :, end, t]) -  mean(σ[:, :, 1, t]))
             end
 
-            NCDataset(energy_diagnostics, "a") do ds2
-
-                defVar(ds2, var_key, Φᵢ, tuple("time"),
+            defVar(energetics_ds, var_key, Φᵢ, tuple("time"),
                     attrib = Dict("longname" => "Rate of conversion of internal energy to potential energy."))
-
-            end
 
         end
 
     end
+    close(energetics_ds)
 
     return nothing
 
