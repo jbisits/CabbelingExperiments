@@ -109,31 +109,32 @@ function animate_reference_and_horizontal_average_profile(computed_output::Abstr
 
 end
 """
-   function ρw!(energy_diagnostics::AbstractString, computed_output::AbstractString, velocities::AbstractString)
+   function ∫ρw!(energy_diagnostics::AbstractString, computed_output::AbstractString, velocities::AbstractString)
 Volume integrated buoyancy flux.
 """
-function ρw!(energy_diagnostics::AbstractString, computed_output::AbstractString, velocities::AbstractString)
+function ∫ρw!(energy_diagnostics::AbstractString, computed_output::AbstractString,
+              velocities::AbstractString)
 
     NCDataset(computed_output) do ds
 
-        var_key = "ρw"
-        if !check_key(ds, var_key)
+        var_key = "∫ρw"
+        if !haskey(ds, var_key)
 
             time = ds[:time][:]
             g = -9.81
             dV = diff(ds[:xC][1:2]) .* diff(ds[:yC][1:2]) .* diff(ds[:zC][1:2])
 
-            ρw = similar(time)
+            ∫ρw = similar(time)
             ds_velocities = NCDataset(velocities)
             for t ∈ eachindex(time)
                 σ = ds[:σ][:, :, :, t]
                 w = ds_velocities[:w][:, :, :, t]
-                ρw[t] = g * sum(σ .* w * dV[1])
+                ∫ρw[t] = g * sum(σ .* w * dV[1])
             end
 
             NCDataset(energy_diagnostics, "a") do ds2
 
-                defVar(ds2, var_key, ρw, tuple("time"),
+                defVar(ds2, var_key, ∫ρw, tuple("time"),
                     attrib = Dict("longname" => "Volume integrated buoyancy flux g∫ᵥρwdV."))
 
             end
@@ -154,7 +155,7 @@ function dₜEb!(energy_diagnostics::AbstractString, computed_output::AbstractSt
     NCDataset(computed_output) do ds
 
         var_key = "∫Eb"
-        if !check_key(ds, var_key)
+        if !haskey(ds, var_key)
 
             time = ds[:time][:]
             g = -9.81
@@ -192,7 +193,7 @@ function dₜEp!(energy_diagnostics::AbstractString, computed_output::AbstractSt
     NCDataset(computed_output) do ds
 
         var_key = "∫Ep"
-        if !check_key(ds, var_key)
+        if !haskey(ds, var_key)
 
             g = -9.81
             time = ds[:time][:]
@@ -223,6 +224,43 @@ function dₜEp!(energy_diagnostics::AbstractString, computed_output::AbstractSt
 
 end
 """
+    function Φᵢ!(energy_diagnostics::AbstractString, computed_output::AbstractString)
+Compute the rate of conversion of internal energy to potential energy (Winters et al. (1995))
+"""
+function Φᵢ!(energy_diagnostics::AbstractString, computed_output::AbstractString)
+
+    NCDataset(computed_output) do ds
+
+        var_key = "Φᵢ"
+        if !haskey(ds, var_key)
+
+            time = ds["time"][:]
+            g = -9.81
+            Δx = diff(ds["xC"][1:2])[1]
+            Δy = diff(ds["yC"][1:2])[1]
+            A = Δx * Δy * length(ds["xC"][:])^2
+            σ = ds["σ"]
+            κ = parse(Float64, ds.attrib["κₜ"][1:findfirst(' ', ds.attrib["κₜ"])])
+            Φᵢ = similar(time)
+            for t ∈ eachindex(time)
+                Φᵢ[t] = κ * g * A * (mean(σ[:, :, end, t]) -  mean(σ[:, :, 1, t]))
+            end
+
+            NCDataset(energy_diagnostics, "a") do ds2
+
+                defVar(ds2, var_key, Φᵢ, tuple("time"),
+                    attrib = Dict("longname" => "Rate of conversion of internal energy to potential energy."))
+
+            end
+
+        end
+
+    end
+
+    return nothing
+
+end
+"""
     function compute_energy_diagnostics!(energy_diagnostics::AbstractString,
                                          computed_output::AbstractString)
 Save energy diagnostics to the file (must be a `.nc` file) `energy_diagnostics`.
@@ -235,7 +273,8 @@ function compute_energy_diagnostics!(energy_diagnostics::AbstractString,
 
     dₜEb!(energy_diagnostics, computed_output)
     dₜEp!(energy_diagnostics, computed_output)
-    ρw!(energy_diagnostics, computed_output, velocities)
+    ∫ρw!(energy_diagnostics, computed_output, velocities)
+    Φᵢ!(energy_diagnostics, computed_output)
 
     return nothing
 
@@ -266,24 +305,11 @@ function makefile(filename::AbstractString, computed_output::AbstractString)
     return nothing
 
 end
-"""
-    function check_key(ds, key::AbstractString)
-Check if `key` is in dataset `ds`.
-"""
-function check_key(ds, key::AbstractString)
-
-    key_in_ds = key ∈ keys(ds) ? true : false
-
-    return key_in_ds
-
-end
 
 velocities = "velocities.nc"
 computed_output = "computed_output.nc"
-TLDNS.animate_density(computed_output, "σ")
-#tracers = "tracers.nc"
-#TLDNS.animate_tracers(tracers)
-animate_reference_profile(computed_output)
+# TLDNS.animate_density(computed_output, "σ")
+# animate_reference_profile(computed_output)
 energy_diagnostics = "energy_diagnostics.nc"
 compute_energy_diagnostics!(energy_diagnostics, computed_output, velocities)
-animate_reference_and_horizontal_average_profile(computed_output)
+# animate_reference_and_horizontal_average_profile(computed_output)
