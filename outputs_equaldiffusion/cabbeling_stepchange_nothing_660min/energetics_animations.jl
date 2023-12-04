@@ -127,8 +127,8 @@ function ∫ρw!(energy_diagnostics::AbstractString, computed_output::AbstractSt
             ds_velocities = NCDataset(velocities)
             for t ∈ eachindex(time)
                 σ = ds[:σ][:, :, :, t]
-                w = (ds_velocities[:w][:, :, 1:end-1, t] .+ ds_velocities[:w][:, :, 2:end, t]) / 2
-                ∫ρw[t] = g * sum(σ .* w * dV[1])
+                wᶜᶜᶜ = (ds_velocities[:w][:, :, 1:end-1, t] .+ ds_velocities[:w][:, :, 2:end, t]) / 2
+                ∫ρw[t] = g * sum(σ .* wᶜᶜᶜ * dV[1])
             end
 
             NCDataset(energy_diagnostics, "a") do ds2
