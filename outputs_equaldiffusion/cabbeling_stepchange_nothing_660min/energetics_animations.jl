@@ -311,6 +311,6 @@ computed_output = "computed_output.nc"
 # tracers = "tracers.nc"
 # TLDNS.animate_tracers(tracers)
 # animate_reference_profile(computed_output)
-# energy_diagnostics = "energy_diagnostics.nc"
+energy_diagnostics = "energy_diagnostics.nc"
 compute_energy_diagnostics!(energy_diagnostics, computed_output, velocities)
 # animate_reference_and_horizontal_average_profile(computed_output)
