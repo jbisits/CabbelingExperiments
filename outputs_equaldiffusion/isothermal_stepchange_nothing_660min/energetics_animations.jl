@@ -279,28 +279,6 @@ function Φᵢ!(energy_diagnostics::AbstractString, computed_output::AbstractStr
 
 end
 """
-    function Φz!(energy_diagnostics::AbstractString)
-Compute the vertical buoyancy flux as the sum between the volume integrated kinetic energy
-and the energy dissiaption.
-"""
-function Φz!(energy_diagnostics::AbstractString)
-
-    var_key = "Φz"
-    energetics_ds = NCDataset(energy_diagnostics, "a")
-    if !haskey(energetics_ds, var_key)
-
-        Φz = energetics_ds["∫Eₖ"][:] .+ energetics_ds["∫ϵ"][:]
-
-        defVar(energetics_ds, var_key, Φz, tuple("time"),
-                attrib = Dict("longname" => "Buoyancy flux computed as ∫Eₖ + ∫ϵ"))
-
-    end
-
-    close(energetics_ds)
-
-    return nothing
-end
-"""
     function Φᵢ_alternate!(energy_diagnostics::AbstractString)
 Alternate computation of `Φᵢ`, the internal energy, by Φᵢ = ∫Ep - Φz.
 """
@@ -321,8 +299,28 @@ function Φᵢ_alternate!(energy_diagnostics::AbstractString)
 
     return nothing
 
-    return nothing
+end
+"""
+    function Φz!(energy_diagnostics::AbstractString)
+Compute the vertical buoyancy flux as the sum between the volume integrated kinetic energy
+and the energy dissiaption.
+"""
+function Φz!(energy_diagnostics::AbstractString)
 
+    var_key = "Φz"
+    energetics_ds = NCDataset(energy_diagnostics, "a")
+    if !haskey(energetics_ds, var_key)
+
+        Φz = energetics_ds["∫Eₖ"][:] .+ energetics_ds["∫ϵ"][:]
+
+        defVar(energetics_ds, var_key, Φz, tuple("time"),
+                attrib = Dict("longname" => "Buoyancy flux computed as ∫Eₖ + ∫ϵ"))
+
+    end
+
+    close(energetics_ds)
+
+    return nothing
 end
 """
     function compute_energy_diagnostics!(energy_diagnostics::AbstractString,
