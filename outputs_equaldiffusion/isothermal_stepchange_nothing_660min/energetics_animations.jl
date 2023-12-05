@@ -221,6 +221,29 @@ function dₜEp!(energy_diagnostics::AbstractString, computed_output::AbstractSt
 
 end
 """
+    function dₜEa!(energy_diagnostics::AbstractString)
+Compute the available potential energy from the potential energy and the background potential
+energy using `Ea = Ep - Eb`.
+"""
+function dₜEa!(energy_diagnostics::AbstractString)
+
+    var_key = "∫Ea"
+    energetics_ds = NCDataset(energy_diagnostics, "a")
+    if !haskey(energetics_ds, var_key)
+
+        ∫Ea = energetics_ds["∫Ep"][:] .- energetics_ds["∫Eb"][:]
+
+        defVar(energetics_ds, var_key, ∫Ea, tuple("time"),
+                attrib = Dict("longname" => "Volume integrated available potential energy (∫Ep - ∫Eb)."))
+
+    end
+
+    close(energetics_ds)
+
+    return nothing
+
+end
+"""
     function Φᵢ!(energy_diagnostics::AbstractString, computed_output::AbstractString)
 Compute the rate of conversion of internal energy to potential energy (Winters et al. (1995))
 """
@@ -256,6 +279,52 @@ function Φᵢ!(energy_diagnostics::AbstractString, computed_output::AbstractStr
 
 end
 """
+    function Φz!(energy_diagnostics::AbstractString)
+Compute the vertical buoyancy flux as the sum between the volume integrated kinetic energy
+and the energy dissiaption.
+"""
+function Φz!(energy_diagnostics::AbstractString)
+
+    var_key = "Φz"
+    energetics_ds = NCDataset(energy_diagnostics, "a")
+    if !haskey(energetics_ds, var_key)
+
+        Φz = energetics_ds["∫Eₖ"][:] .+ energetics_ds["∫ϵ"][:]
+
+        defVar(energetics_ds, var_key, Φz, tuple("time"),
+                attrib = Dict("longname" => "Buoyancy flux computed as ∫Eₖ + ∫ϵ"))
+
+    end
+
+    close(energetics_ds)
+
+    return nothing
+end
+"""
+    function Φᵢ_alternate!(energy_diagnostics::AbstractString)
+Alternate computation of `Φᵢ`, the internal energy, by Φᵢ = ∫Ep - Φz.
+"""
+function Φᵢ_alternate!(energy_diagnostics::AbstractString)
+
+    var_key = "Φᵢ_alternate"
+    energetics_ds = NCDataset(energy_diagnostics, "a")
+    if !haskey(energetics_ds, var_key)
+
+        Φᵢ_alt = energetics_ds["∫Ep"][:] .- energetics_ds["Φz"][:]
+
+        defVar(energetics_ds, var_key, Φᵢ_alt, tuple("time"),
+                attrib = Dict("longname" => "Alternate internal energy conversion calculation using Φᵢ = ∫Ep - Φz."))
+
+    end
+
+    close(energetics_ds)
+
+    return nothing
+
+    return nothing
+
+end
+"""
     function compute_energy_diagnostics!(energy_diagnostics::AbstractString,
                                          computed_output::AbstractString)
 Save energy diagnostics to the file (must be a `.nc` file) `energy_diagnostics`.
@@ -268,8 +337,11 @@ function compute_energy_diagnostics!(energy_diagnostics::AbstractString,
 
     dₜEb!(energy_diagnostics, computed_output)
     dₜEp!(energy_diagnostics, computed_output)
+    dₜEa!(energy_diagnostics)
     ∫ρw!(energy_diagnostics, computed_output, velocities)
     Φᵢ!(energy_diagnostics, computed_output)
+    Φz!(energy_diagnostics)
+    Φᵢ_alternate!(energy_diagnostics)
 
     return nothing
 
@@ -294,6 +366,8 @@ function makefile(filename::AbstractString, computed_output::AbstractString)
         end
 
         defVar(ds, co["∫ϵ"])
+        defVar(ds, co["∫Eₖ"])
+
     end
     close(co)
 
