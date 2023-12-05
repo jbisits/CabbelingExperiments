@@ -332,13 +332,13 @@ function compute_energy_diagnostics!(energy_diagnostics::AbstractString,
 
     isfile(energy_diagnostics) ? nothing : makefile(energy_diagnostics, computed_output)
 
-    dₜEb!(energy_diagnostics, computed_output)
-    dₜEp!(energy_diagnostics, computed_output)
-    dₜEa!(energy_diagnostics)
+    # dₜEb!(energy_diagnostics, computed_output)
+    # dₜEp!(energy_diagnostics, computed_output)
+    # dₜEa!(energy_diagnostics)
     ∫ρw!(energy_diagnostics, computed_output, velocities)
-    Φᵢ!(energy_diagnostics, computed_output)
-    Φz!(energy_diagnostics)
-    Φᵢ_alternate!(energy_diagnostics)
+    # Φᵢ!(energy_diagnostics, computed_output)
+    # Φz!(energy_diagnostics)
+    # Φᵢ_alternate!(energy_diagnostics)
 
     return nothing
 
