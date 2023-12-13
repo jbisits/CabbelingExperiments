@@ -109,7 +109,7 @@ function animate_reference_and_horizontal_average_profile(computed_output::Abstr
 
 end
 """
-   function ∫ρw!(energy_diagnostics::AbstractString, computed_output::AbstractString, velocities::AbstractString)
+    function ∫ρw!(energy_diagnostics::AbstractString, computed_output::AbstractString, velocities::AbstractString)
 Volume integrated buoyancy flux.
 """
 function ∫ρw!(energy_diagnostics::AbstractString, computed_output::AbstractString,

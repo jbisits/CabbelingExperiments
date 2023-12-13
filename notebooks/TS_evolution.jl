@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.32
+# v0.19.35
 
 using Markdown
 using InteractiveUtils
@@ -194,7 +194,7 @@ This may mean that instead of this we set stable density then have a salinity pe
 
 # ╔═╡ 828c6a69-a61f-4a98-ba06-e09661d8a973
 begin
-	timeDNS = @bind timeDNS PlutoUI.Slider(0.00001:100000.00001)
+	timeDNS = @bind timeDNS PlutoUI.Slider(0.00001:2000.00001)
 	κₛDNS = @bind κₛDNS PlutoUI.Slider([1e-5, 1e-6, 1e-7, 1e-8, 1e-9], show_value = true)
 	κₜDNS = @bind κₜDNS PlutoUI.Slider([1e-5, 1e-6, 1e-7, 1e-8, 1e-9], show_value = true)
 	md"""
@@ -212,7 +212,7 @@ end
 let
 
 	z = range(-1, 0, length = 500)
-    interface_location = -0.375
+    interface_location = -0.5
 	S = TwoLayerDirectNumericalShenanigans.erf_tracer_solution.(z, S_star, ΔS, κₛDNS, timeDNS, interface_location)
 	T = TwoLayerDirectNumericalShenanigans.erf_tracer_solution.(z, Θ_star, ΔΘ, κₜDNS, timeDNS, interface_location)
 	σ₀ = gsw_rho.(S, T, 0)
@@ -255,8 +255,22 @@ let
 	ρ_star = gsw_rho(S_star, Θ_star, 0)
 	contour!(ax2, S_range, Θ_range, ρ'; levels = [ρ_star], color = :red, label = "Isopycnal at deep layer")
 
-	scatter!(ax2, S, T, σ₀, markersize = 6)
+	scatter!(ax2, S, T, σ₀, markersize = 6, label = "S-T profile")
+	σ₀_max, max_idx = findmax(σ₀)
+	σ₀_min, min_idx = findmin(σ₀)
 
+	S_minmax = [S[min_idx], S[max_idx]]
+	T_minmax = [T[min_idx], T[max_idx]]
+
+	scatter!(ax2, S_minmax[1], T_minmax[1], label = "Minimum density", color = :orange)
+	scatter!(ax2, S_minmax[2], T_minmax[2], label = "Maximum density", color = :magenta)
+
+	lines!(ax2, [S[1], S[end]], [T[1], T[end]], linestyle = :dash, label = "Mechanical mixing", color = :purple)
+	axislegend(ax2, position = :lt)
+
+	scatter!(ax[2], σ₀_min, z[min_idx], label = "Minimum density", color = :orange)
+	scatter!(ax[2], σ₀_max, z[max_idx], label = "Maximum density", color = :magenta)
+	
 	md"""
 	$(fig)
 	$(fig2)
