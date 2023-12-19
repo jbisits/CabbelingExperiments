@@ -3,7 +3,7 @@ using TwoLayerDirectNumericalShenanigans
 restart = true
 
 architecture = GPU()
-diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
+diffusivities = (ν = 1e-6, κ = (S = 1e-9, T = 1e-7))
 eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 
 ## Setup the dns_model
@@ -32,9 +32,9 @@ set_two_layer_initial_conditions!(tldns)
 
 ## build the simulation
 Δt = 1e-4
-max_Δt = 0.075
-stop_time = 20 * 60 # seconds
-save_schedule = 30  # seconds
+max_Δt = 0.1
+stop_time = 60 * 60 # seconds
+save_schedule = 60  # seconds
 checkpointer_time_interval = 30 * 60 # seconds
 output_path = joinpath(@__DIR__, "outputs_doublediffusion/")
 @info "Setting up simulation"
