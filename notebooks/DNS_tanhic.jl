@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.27
+# v0.19.36
 
 using Markdown
 using InteractiveUtils
@@ -21,6 +21,7 @@ begin
 	using TwoLayerDirectNumericalShenanigans
     using CairoMakie
 	using PlutoUI
+	using SpecialFunctions: erf
 end
 
 # ╔═╡ 764fee0a-31bb-11ee-1ec7-8b7bc121a8ed
@@ -37,11 +38,10 @@ The main questions that also remain are seeding initial random noise or not and 
 # ╔═╡ 691a96e7-7818-4cd4-8caf-1f70b24e915c
 begin
 	architecture = CPU()
-	diffusivities = (ν = 1e-4, κ = (S = 1e-5, T = 1e-5))
-
+	diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
+	eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 	## Setup the model
-	model = DNS(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities;
-	            reference_density = REFERENCE_DENSITY)
+	model = DNSModel(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities, eos)
 end
 
 # ╔═╡ 86cdf29f-4ca0-4ac2-a673-34d4b8447eec
@@ -116,6 +116,76 @@ end
 # ╔═╡ f27bf1d8-407d-44a1-8834-15c868d08b60
 visualise_initial_density(dns, 1, 1, 0)
 
+# ╔═╡ 83ca46ae-27c2-491c-a09f-f79059bcb8ae
+md"""
+# Initial error function initial condition
+
+I know from 1D model that `S` and `T` will evolve according to error functions (see other notebooks or wherever I have this).
+
+In the double diffusive case to get a *stable* initial profile I need to use an error function as the two uniform (but different) initial layers will be **unstable to double diffusion.**
+This test will be important because I want to at least be able to say that double diffusion tests could be run where cabbeling instability dominates.
+"""
+
+# ╔═╡ ea3c2de1-13a3-4098-be8d-eebeddee118a
+time = @bind t PlutoUI.Slider(0.000000000001:0.01:100.001)
+
+# ╔═╡ e8c43849-094d-410d-a95e-302e642c226b
+let
+	z = cf == :Center ? znodes(model.grid, Center(), Center(), Center()) :
+					    znodes(model.grid, Face(), Face(), Face())
+	κₜ = 1e-7
+	κₛ = 1e-9
+	tz = @. 0.5 + (-2 / 2) * (1 + erf((z + 0.5) / (sqrt(4*κₜ*t))))
+	fig, ax = scatterlines(tz, z; label = "z nodes", markersize = 8)
+	#sz = @. 34.7 + ((34.58 - 34.7) / 2) * (1 + erf((z + 0.5) / (sqrt(4*κₛ*t))))
+	#scatterlines!(ax, sz, z; label = "S - z nodes", markersize = 8)
+	ax.title = "Location of znodes at $cf for `Erf` initial condition at $(round(t)) seconds"
+	ax.xlabel = "Θ (°C)"
+	ax.ylabel = "z (m)"
+	if isequal(zoomint, "Interface")
+		ylims!(ax, -0.425, -0.325)
+	end
+	axislegend(ax)
+	fig
+end
+
+# ╔═╡ 779d33dc-82b0-47c0-9f66-b183d3bfb89d
+begin
+	dd_diffusivities = (ν = 1e-6, κ = (S = 1e-9, T = 1e-7))
+	## Setup the model
+	dd_model = DNSModel(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, dd_diffusivities, eos)
+end
+
+# ╔═╡ df501374-4002-4916-bcfd-437d5ce4f1b9
+begin
+	S₀ᵘ_cab = 34.58
+	cabbeling = CabbelingUpperLayerInitialConditions(S₀ᵘ_cab, T₀ᵘ)
+	cab_initial_conditions = TwoLayerInitialConditions(cabbeling)
+	depth = find_depth(dd_model, -0.5)
+	erf_profile_function = Erf(depth, t)
+	depths = find_depth(dd_model, [-0.5 + 0.1, -0.5 - 0.1])
+	scales = similar(depths)
+	fill!(scales, 2e-3)
+	initial_noise = SalinityNoise(depths, scales)
+	dd_dns = TwoLayerDNS(dd_model, erf_profile_function, cab_initial_conditions; initial_noise)
+	set_two_layer_initial_conditions!(dd_dns)
+	dd_fig = visualise_initial_conditions(dd_dns, 1, 1)
+end
+
+# ╔═╡ b2f65a17-98b9-4494-81c7-ccbd767aebad
+let
+	S = interior(dd_dns.model.tracers.S, 1, 1, :)
+	T = interior(dd_dns.model.tracers.T, 1, 1, :)
+	fig, ax = scatter(S, T)
+	ax.title = "S-T profile at $(round(t)) seconds"
+	ax.xlabel = "S (gkg⁻¹)"
+	ax.ylabel = "Θ (°C)"
+	fig
+end
+
+# ╔═╡ 0ce0b15c-05c4-4140-8cd1-32608e3b3f9c
+visualise_initial_density(dd_dns, 1, 1, 0)
+
 # ╔═╡ 10c2f596-2285-41f9-b5d4-4d3dc9d78df6
 md"""
 # Saved data size
@@ -147,6 +217,13 @@ TableOfContents(title = "Initial conditions")
 # ╟─a8cbdf00-42d4-4ab2-8e3d-3d1430cc4887
 # ╟─67ac5731-a756-4e5e-9233-eaa9dc36055f
 # ╟─f27bf1d8-407d-44a1-8834-15c868d08b60
+# ╟─83ca46ae-27c2-491c-a09f-f79059bcb8ae
+# ╟─ea3c2de1-13a3-4098-be8d-eebeddee118a
+# ╟─e8c43849-094d-410d-a95e-302e642c226b
+# ╟─779d33dc-82b0-47c0-9f66-b183d3bfb89d
+# ╠═df501374-4002-4916-bcfd-437d5ce4f1b9
+# ╟─b2f65a17-98b9-4494-81c7-ccbd767aebad
+# ╠═0ce0b15c-05c4-4140-8cd1-32608e3b3f9c
 # ╟─10c2f596-2285-41f9-b5d4-4d3dc9d78df6
 # ╟─6afda154-5286-47c3-860a-ed920bd4abbc
 # ╟─1533101a-47b0-473c-8504-3357404dcca8
