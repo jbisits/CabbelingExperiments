@@ -221,7 +221,7 @@ TableOfContents(title = "Initial conditions")
 # ╟─ea3c2de1-13a3-4098-be8d-eebeddee118a
 # ╟─e8c43849-094d-410d-a95e-302e642c226b
 # ╟─779d33dc-82b0-47c0-9f66-b183d3bfb89d
-# ╠═df501374-4002-4916-bcfd-437d5ce4f1b9
+# ╟─df501374-4002-4916-bcfd-437d5ce4f1b9
 # ╟─b2f65a17-98b9-4494-81c7-ccbd767aebad
 # ╠═0ce0b15c-05c4-4140-8cd1-32608e3b3f9c
 # ╟─10c2f596-2285-41f9-b5d4-4d3dc9d78df6

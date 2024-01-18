@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.35
+# v0.19.36
 
 using Markdown
 using InteractiveUtils
@@ -75,6 +75,7 @@ let
 	scatter!(ax, [S₀ᵘ], [Θᵘ], color = :blue, label = "Shallow water")
 	lines!(ax, S_mix, Θ_mix, color = :purple, linestyle = :dash, label = "Mixed water")
 	axislegend(ax, position = :lt)
+	#save("STfig.png", TSfig)
 	md"""
 	# Cabbeling
 	
@@ -425,7 +426,7 @@ TableOfContents(title = "Slides")
 # ╟─8d54f303-4b14-490d-bdb3-aa88c3ccf7bd
 # ╟─b1f2293e-9a64-4f27-a07b-f2b1f6ab6611
 # ╟─57bf32e9-c9fc-444b-8ef9-d5fdd8ecf4e4
-# ╟─5987f662-879f-4394-aac9-a45634bf8ab3
+# ╠═5987f662-879f-4394-aac9-a45634bf8ab3
 # ╟─5bc2dbc2-f295-4389-be7a-b172cfbe6702
 # ╟─1b10d122-b550-47b8-aa78-1c073d14167c
 # ╟─39ba4eb8-4040-480a-9ea5-08d538f1f2ea
