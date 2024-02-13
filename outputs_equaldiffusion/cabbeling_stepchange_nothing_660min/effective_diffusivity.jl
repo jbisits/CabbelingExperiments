@@ -38,7 +38,7 @@ function compute_diffusivity(saved_output::AbstractString, tracer::Symbol)
 
     ds = NCDataset(saved_output)
 
-    time = ds[:time][1:4]
+    time = ds[:time][:]
     C = ds[tracer]
 
     Δt = diff(time)
