@@ -3,7 +3,7 @@
 #PBS -P e14
 #PBS -l ncpus=1
 #PBS -l mem=96GB
-#PBS -l walltime=06:00:00
+#PBS -l walltime=04:00:00
 #PBS -l storage=gdata/e14+scratch/e14
 #PBS -l wd
 #PBS -M z5131023@unsw.edu.au
