@@ -40,6 +40,8 @@ function compute_diffusivity(saved_output::AbstractString, tracer::Symbol)
 
     time = ds[:time][:]
     C = ds[tracer]
+    C_size = size(C)
+    C_length = prod(C_size[1:3])
 
     Δt = diff(time)
     Δx = diff(ds[:xC][1:2])[1]
@@ -48,69 +50,54 @@ function compute_diffusivity(saved_output::AbstractString, tracer::Symbol)
 
     ΔV = Δx * Δy * abs(Δz)
 
-    # Sorting
-    Csorted = Array{Float64}(undef, length(reshape(C[:, :, :, 1], :)), length(time))
-    ∫CdV = similar(Csorted)
-    ∂z_Csorted = Array{Float64}(undef, length(reshape(C[:, :, :, 1], :))-1, length(time))
-
-    for t ∈ eachindex(time)
-
-        Csorted[:, t] = sort(reshape(C[:, :, :, t], :))
-        ∫CdV[:, t] = cumsum(Csorted[:, t] * ΔV)
-        ∂z_Csorted[:, t] = diff(Csorted[:, t]) / Δz
-
-    end
-
-    ∂z_Csorted_mean = mean(∂z_Csorted, dims = 2)
-
-    # Tracer flux
-    dₜ∫CdV = Array{Float64}(undef, length(reshape(C[:, :, :, 1], :)), length(time)-1)
-
-    for t ∈ 1:length(time)-1
-
-        dₜ∫CdV[:, t] = vec(diff(∫CdV[:, t:t+1], dims = 2)) / Δt[t]
-
-    end
-
-    κ_forward = Array{Float64}(undef, length(reshape(C[:, :, :, 1], :))-1, length(time)-1)
-    κ_mean = Array{Float64}(undef, length(reshape(C[:, :, :, 1], :))-1, length(time)-1)
-
-    κ_forward = dₜ∫CdV[2:end, :] ./ ∂z_Csorted[:, 2:end]
-    for t ∈ 1:length(time)-1
-
-        κ_mean[:, t] = dₜ∫CdV[2:end, t] ./ ∂z_Csorted_mean
-
-    end
-
-    V = eachindex(Csorted[:, 1]) * ΔV
+    V = (1:C_length) * ΔV
     SA = 0.1 * 0.1 # Surface area, would be better if not hard coded
     equivalent_z = -V / SA
 
+    NCDataset(filename, "a") do ds_diff
+
+        defDim(ds_diff, "cumulative_volume", length(V))
+        defDim(ds_diff, "cumulative_volume_derivative", length(V)-1)
+        defDim(ds_diff, "time", length(time))
+        defDim(ds_diff, "time_derivative", length(Δt))
+        defVar(ds_diff, "volume", V, tuple("cumulative_volume"))
+        defVar(ds_diff, "equivalent_z", equivalent_z, tuple("cumulative_volume"))
+        defVar(ds_diff, "time", time, tuple("time"))
+        defVar(ds_diff, "time_derivative", cumsum(Δt), tuple("time_derivative"))
+        defVar(ds_diff, string.(tracer) * "sorted", Float64, ("cumulative_volume", "time"),
+               attrib = Dict("longname" => "Sorted (smallest to largest) tracer field " * string.(tracer)))
+        defVar(ds_diff, "∫" * string.(tracer) * "dV", Float64, ("cumulative_volume", "time"),
+               attrib = Dict("longname" => "Vertical flux for " * string.(tracer)))
+        defVar(ds_diff, "∂z_" * string.(tracer) * "sorted", Float64, ("cumulative_volume_derivative", "time"),
+               attrib = Dict("longname" => "Vertical derivative of sorted tracer field " * string.(tracer)))
+
+        for t ∈ eachindex(time)
+
+            C_sorted = sort(reshape(C[:, :, :, t], :))
+            ds_diff[string.(tracer) * "sorted"][:, t] = C_sorted
+            ds_diff["∫" * string.(tracer) * "dV"][:, t] = cumsum(C_sorted * ΔV)
+            ds_diff["∂z_" * string.(tracer) * "sorted"][:, t] = diff(C_sorted) / Δz
+
+        end
+
+    end
+
     close(ds)
 
-    NCDataset(filename, "a") do ds
+    NCDataset(filename, "a") do ds_diff
 
-        defDim(ds, "cumulative_volume", length(V))
-        defDim(ds, "cumulative_volume_derivative", length(V)-1)
-        defDim(ds, "time", length(time))
-        defDim(ds, "time_derivative", length(Δt))
-        defVar(ds, "volume", V, tuple("cumulative_volume"))
-        defVar(ds, "equivalent_z", equivalent_z, tuple("cumulative_volume"))
-        defVar(ds, "time", time, tuple("time"))
-        defVar(ds, "time_derivative", cumsum(Δt), tuple("time_derivative"))
-        defVar(ds, string.(tracer) * "sorted", Csorted, ("cumulative_volume", "time"),
-               attrib = Dict("longname" => "Sorted (smallest to largest) tracer field " * string.(tracer)))
-        defVar(ds, "∂z_" * string.(tracer) * "sorted", ∂z_Csorted, ("cumulative_volume_derivative", "time"),
-               attrib = Dict("longname" => "Vertical derivative of sorted tracer field " * string.(tracer)))
-        defVar(ds, "∂z_" * string.(tracer) * "sorted_mean", ∂z_Csorted_mean, tuple("cumulative_volume_derivative"),
-               attrib = Dict("longname" => "Time mean of vertical derivative of sorted tracer field " * string.(tracer)))
-        defVar(ds, "dₜ∫" * string.(tracer) * "dV", dₜ∫CdV, tuple("cumulative_volume", "time_derivative"),
+        defVar(ds_diff, "dₜ∫" * string.(tracer) * "dV", Float64, tuple("cumulative_volume", "time_derivative"),
                attrib = Dict("longname" => "Vertical flux of " * string.(tracer) * " into a fixed volume (i.e. a level)"))
-        defVar(ds, "κ_effective" * string.(tracer), κ_forward, tuple("cumulative_volume_derivative", "time_derivative"),
+        defVar(ds_diff, "κ_effective" * string.(tracer), Float64, tuple("cumulative_volume_derivative", "time_derivative"),
                attrib = Dict("longname" => "Effective vertical diffusivity for " * string.(tracer)))
-        defVar(ds, "κ_effective_timemean" * string.(tracer), κ_mean, tuple("cumulative_volume_derivative", "time_derivative"),
-               attrib = Dict("longname" => "Effective vertical diffusivity for " * string.(tracer) * "using a time mean of the vertical derivative"))
 
+        for t ∈ 1:length(time)-1
+
+            flux = vec(diff(ds_diff["∫" * string.(tracer) * "dV"][:, t:t+1], dims = 2)) / Δt[t]
+            ds_diff["dₜ∫" * string.(tracer) * "dV"][:, t] = flux
+            ds_diff["κ_effective" * string.(tracer)][:, t] = flux[2:end] ./ ds_diff["∂z_" * string.(tracer) * "sorted"][:, t+1]
+
+        end
 
     end
 
