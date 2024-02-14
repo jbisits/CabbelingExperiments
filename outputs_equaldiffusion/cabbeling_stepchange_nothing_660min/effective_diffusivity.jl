@@ -105,5 +105,5 @@ function compute_diffusivity(saved_output::AbstractString, tracer::Symbol)
 end
 
 tracers = "tracers.nc"
-compute_diffusivity(tracers, :T)
+# compute_diffusivity(tracers, :T)
 compute_diffusivity(tracers, :S)
