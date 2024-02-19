@@ -94,7 +94,7 @@ md"""
 ```math
 \Delta\rho > \rho\left(S^{*} + \frac{\alpha^{*}}{\beta^{*}}\Delta\Theta, \Theta^{*} + \Delta\Theta, \overline{p} \right) - \rho\left(S^{*}, \Theta^{*}, \overline{p}\right).
 ```
-$(LocalResource("../../../Papers/PhD-paper1-CabbelingInstability/Plots_v4/fig6_ECCOpdfs.png"))
+$(LocalResource("../../../Papers/PhD-paper1-CabbelingInstability/fig6_ECCOpdfs.png"))
 """
 
 # ╔═╡ 5987f662-879f-4394-aac9-a45634bf8ab3
@@ -248,6 +248,7 @@ let
 	- **Isothermal:** Fresh shallow layer, ``S_{\mathrm{shallow}} = 34.694`` gkg⁻¹
 	$(TSfig)
 	"""
+	#save("DNS_ICS.png", TSfig)
 end
 
 # ╔═╡ e26daadf-0134-463a-a182-2a63e5c73276
@@ -370,25 +371,30 @@ $(LocalResource("../data/animations/cabbeling_600min/S_and_T_distributions.mp4")
 
 # ╔═╡ e02371e2-64ce-4f90-bcaa-b0565366d14b
 md"""
-# Diagnostics
+# Effective diffusivity
 
-- So far have been considering inferred turbulent temperature diffusivity
+- Using the tracer percentile method (Sohail et al. (2020), Holmes et al. (2020)) we can estimate the effective vertical diffusivity as
 ```math
-\kappa_{\Theta} = -\overline{Θ'w'} / (∂Θ/∂z)
+\kappa_{\mathrm{eff}} = \frac{\frac{\mathrm{d}}{\mathrm{d}t}\int_{V < V^{*}}\Theta(V, t) dV}{\frac{\partial \Theta}{\partial V}}.
 ```
-$(LocalResource("../data/animations/cabbeling_600min/hovmoller_∫ₐκᵥ.png"))
+- Figures below show that the effective diffusivity for the salinity tracer in the isothermal experiment are a good approximation to the parameterised value of ``\kappa_{S} = 1 \times 10^{-7}``.
+$(LocalResource("iso_flux_diff.png"))
+- The magnitude of the diffusivity in cabbeling case need further investigation.
+$(LocalResource("flux_diff.png"))
 """
 
 # ╔═╡ 27a2339e-300c-4e4e-a041-bc5251539c2a
 md"""
-# Diagnostics
-$(LocalResource("../data/animations/cabbeling_600min/TKE_and_inferredK.png"))
-"""
+# Energetics
 
-# ╔═╡ 7a92ad09-a2c1-4166-b90c-295cef8dce6a
-md"""
-# Next steps
-- Look at the mixing through an energetics framework similar to Winters et al. (1995) and Hughes et al. (2009) with a focus on potential energy, available potential energy, and the background energy state in the presence/absence of cabbeling.
+- Following Winters et al. (1995) we can close the energy budget.
+- In doing so we see that the conversion of APE to BPE is no longer irreversible in the cabbeling case.
+$(LocalResource("irreversible_component.png"))
+## Energy budget isothermal
+$(LocalResource("iso_energies.png"))
+
+## Energy budget cabbeling
+$(LocalResource("cab_energies.png"))
 """
 
 # ╔═╡ 0a303e91-42e1-4f44-99d7-38021f9f8ba6
@@ -402,20 +408,29 @@ md"""
 """
 
 # ╔═╡ f941fdfb-d70a-473a-95ba-56f3aa53b477
+# ╠═╡ disabled = true
+#=╠═╡
 md"""
 # Effects of double diffusion
 $(LocalResource("../data/animations/cabbeling_DD_600min_densityratio100/density.mp4"))
 """
+  ╠═╡ =#
 
 # ╔═╡ 25d49087-ab61-4b66-8981-21337448466f
+# ╠═╡ disabled = true
+#=╠═╡
 md"""
 $(LocalResource("../data/animations/cabbeling_DD_600min_densityratio100/tracers.mp4"))
 """
+  ╠═╡ =#
 
 # ╔═╡ bb1a2091-1087-4fb1-8904-145f8fd84fd2
+# ╠═╡ disabled = true
+#=╠═╡
 md"""
 $(LocalResource("../data/animations/cabbeling_DD_600min_densityratio100/hovmoller_∫ₐκᵥ.png"))
 """
+  ╠═╡ =#
 
 # ╔═╡ 9feac837-c922-41b3-9e14-ba704aa2386b
 TableOfContents(title = "Slides")
@@ -426,7 +441,7 @@ TableOfContents(title = "Slides")
 # ╟─8d54f303-4b14-490d-bdb3-aa88c3ccf7bd
 # ╟─b1f2293e-9a64-4f27-a07b-f2b1f6ab6611
 # ╟─57bf32e9-c9fc-444b-8ef9-d5fdd8ecf4e4
-# ╠═5987f662-879f-4394-aac9-a45634bf8ab3
+# ╟─5987f662-879f-4394-aac9-a45634bf8ab3
 # ╟─5bc2dbc2-f295-4389-be7a-b172cfbe6702
 # ╟─1b10d122-b550-47b8-aa78-1c073d14167c
 # ╟─39ba4eb8-4040-480a-9ea5-08d538f1f2ea
@@ -443,7 +458,6 @@ TableOfContents(title = "Slides")
 # ╟─39d9cd82-8dfb-48b0-827f-18dc187eda85
 # ╟─e02371e2-64ce-4f90-bcaa-b0565366d14b
 # ╟─27a2339e-300c-4e4e-a041-bc5251539c2a
-# ╟─7a92ad09-a2c1-4166-b90c-295cef8dce6a
 # ╟─0a303e91-42e1-4f44-99d7-38021f9f8ba6
 # ╟─f941fdfb-d70a-473a-95ba-56f3aa53b477
 # ╟─25d49087-ab61-4b66-8981-21337448466f
