@@ -6,21 +6,20 @@ using NCDatasets, CairoMakie, StatsBase
 ## Temperatre
 T_diff = "T_effective_diffusivity.nc"
 
+dsT = NCDataset(T_diff, "a")
+
+diffusivity = dsT[:κ_effectiveT][:, :]
+replace!(diffusivity, Inf => NaN)
+replace!(diffusivity, -Inf => NaN)
+t = dsT[:time_derivative][:]
+ez = dsT[:equivalent_z][:]
+
 # fig = Figure(size = (500, 500))
 # axT = Axis(fig[1, 1], xlabel = "time (s)", ylabel = "Equivalent z (m)",
 #            title = "Effective temperature diffusivity")
-
-# dsT = NCDataset(T_diff, "a")
-
-# diffusivity = dsT[:κ_effectiveT][:, :]
-# replace!(diffusivity, Inf => NaN)
-# replace!(diffusivity, -Inf => NaN)
-# t = dsT[:time_derivative][:]
-# ez = dsT[:equivalent_z][:]
 # hm = heatmap!(axT, ez, t, log10.(diffusivity), colormap = :balance)
 # Colorbar(fig[1, 2], hm, label = "Diffusivity (m²s⁻¹)")
 # hidexdecorations!(axT, grid = false)
-
 # @info "Saving figure"
 # save("Tdiffusivity_hov.png", fig)
 
