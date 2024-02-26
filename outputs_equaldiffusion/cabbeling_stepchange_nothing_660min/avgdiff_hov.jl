@@ -14,9 +14,10 @@ dsT = NCDataset(T_diff, "a")
 
 diffusivity = dsT[:κ_effectiveT][:, :]
 replace!(diffusivity, Inf => NaN)
+replace!(diffusivity, -Inf => NaN)
 t = dsT[:time_derivative][:]
 ez = dsT[:equivalent_z][:]
-hm = heatmap!(axT, ez, t, diffusivity, colormap = :balance, colorscale = log10,)
+hm = heatmap!(axT, ez, t, log10.(diffusivity), colormap = :balance)
 Colorbar(fig[1, 2], hm, label = "Diffusivity (m²s⁻¹)")
 hidexdecorations!(axT, grid = false)
 
@@ -52,7 +53,8 @@ close(dsT)
 
 # diffusivity = dsS[:κ_effectiveS][:, :]
 # replace!(diffusivity, Inf => NaN)
-# hm = heatmap!(axS, ez, t, diffusivity, colormap = :balance, colorscale = log10)
+# replace!(diffusivity, -Inf => NaN)
+# hm = heatmap!(axS, ez, t, log10.(diffusivity), colormap = :balance)
 # Colorbar(fig[1, 2], hm, label = "Diffusivity (m²s⁻¹)")
 
 # save("Sdiffusivity_hov.png", fig)
