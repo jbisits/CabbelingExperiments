@@ -51,14 +51,14 @@ replace!(diffusivity, -Inf => NaN)
 t = dsS[:time_derivative][:]
 ez = dsS[:equivalent_z][:]
 
-fig = Figure(size = (500, 500))
-axS = Axis(fig[1, 1], xlabel = "time (s)", ylabel = "Equivalent z (m)",
-           title = "Effective Salinity diffusivity")
+# fig = Figure(size = (500, 500))
+# axS = Axis(fig[1, 1], xlabel = "time (s)", ylabel = "Equivalent z (m)",
+#            title = "Effective Salinity diffusivity")
 
-hm = heatmap!(axS, ez, t, diffusivity, colormap = :balance)
-Colorbar(fig[1, 2], hm, label = "Diffusivity (m²s⁻¹)")
+# hm = heatmap!(axS, ez, t, diffusivity, colormap = :balance)
+# Colorbar(fig[1, 2], hm, label = "Diffusivity (m²s⁻¹)")
 
-save("Sdiffusivity_hov.png", fig)
+# save("Sdiffusivity_hov.png", fig)
 
 mean_diff = "κ_effectiveS_mean"
 
