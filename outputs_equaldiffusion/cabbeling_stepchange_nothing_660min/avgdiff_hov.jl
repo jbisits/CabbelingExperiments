@@ -10,7 +10,7 @@ fig = Figure(size = (800, 1000))
 axT = Axis(fig[1, 1], xlabel = "time (s)", ylabel = "Equivalent z (m)",
            title = "Effective temperature diffusivity")
 
-dsT = NCDataset(T_diff)
+dsT = NCDataset(T_diff, "a")
 
 diffusivity = dsT[:κ_effectiveT][:, :]
 replace!(diffusivity, Inf => NaN)
@@ -43,7 +43,7 @@ S_diff = "S_effective_diffusivity.nc"
 axS = Axis(fig[2, 1], xlabel = "time (s)", ylabel = "Equivalent z (m)",
            title = "Effective Salinity diffusivity")
 
-dsS = NCDataset(S_diff)
+dsS = NCDataset(S_diff, "a")
 
 diffusivity = dsS[:κ_effectiveS][:, :]
 replace!(diffusivity, Inf => NaN)
