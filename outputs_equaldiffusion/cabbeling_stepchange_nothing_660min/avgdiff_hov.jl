@@ -48,6 +48,8 @@ dsS = NCDataset(S_diff, "a")
 diffusivity = dsS[:κ_effectiveS][:, :]
 replace!(diffusivity, Inf => NaN)
 replace!(diffusivity, -Inf => NaN)
+t = dsS[:time_derivative][:]
+ez = dsS[:equivalent_z][:]
 
 fig = Figure(size = (500, 500))
 axS = Axis(fig[1, 1], xlabel = "time (s)", ylabel = "Equivalent z (m)",
