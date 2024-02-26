@@ -25,7 +25,7 @@ ez = dsT[:equivalent_z][:]
 
 mean_diff = "κ_effectiveT_mean"
 
-if meand_diff ∉ keys(dsT)
+if mean_diff ∉ keys(dsT)
 
     @info "Computing mean"
     defVar(dsT, "κ_effectiveT_mean", Float64, tuple("time_derivative"),
