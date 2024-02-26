@@ -6,7 +6,7 @@ using NCDatasets, CairoMakie, StatsBase
 ## Temperatre
 T_diff = "T_effective_diffusivity.nc"
 
-fig = Figure(size = (800, 1000))
+fig = Figure(size = (500, 500))
 axT = Axis(fig[1, 1], xlabel = "time (s)", ylabel = "Equivalent z (m)",
            title = "Effective temperature diffusivity")
 
@@ -20,10 +20,14 @@ hm = heatmap!(axT, ez, t, diffusivity, colormap = :balance)
 Colorbar(fig[1, 2], hm, colorscale = :log10, label = "Diffusivity (m²s⁻¹)")
 hidexdecorations!(axT, grid = false)
 
+@info "Saving figure"
+save("Tdiffusivity_hov.png", fig)
+
 mean_diff = "κ_effectiveT_mean"
 
 if meand_diff ∉ keys(dsT)
 
+    @info "Computing mean"
     defVar(dsT, "κ_effectiveT_mean", Float64, tuple("time_derivative"),
             attrib = Dict("long_name" => "Vertically averaged effective diffusivity"))
 
@@ -38,33 +42,34 @@ end
 close(dsT)
 
 ## Salintiy
-S_diff = "S_effective_diffusivity.nc"
+# S_diff = "S_effective_diffusivity.nc"
 
-axS = Axis(fig[2, 1], xlabel = "time (s)", ylabel = "Equivalent z (m)",
-           title = "Effective Salinity diffusivity")
+# fig = Figure(size = (500, 500))
+# axS = Axis(fig[1, 1], xlabel = "time (s)", ylabel = "Equivalent z (m)",
+#            title = "Effective Salinity diffusivity")
 
-dsS = NCDataset(S_diff, "a")
+# dsS = NCDataset(S_diff, "a")
 
-diffusivity = dsS[:κ_effectiveS][:, :]
-replace!(diffusivity, Inf => NaN)
-hm = heatmap!(axS, ez, t, diffusivity, colormap = :balance)
-Colorbar(fig[2, 2], hm, colorscale = :log10, label = "Diffusivity (m²s⁻¹)")
+# diffusivity = dsS[:κ_effectiveS][:, :]
+# replace!(diffusivity, Inf => NaN)
+# hm = heatmap!(axS, ez, t, diffusivity, colormap = :balance)
+# Colorbar(fig[1, 2], hm, colorscale = :log10, label = "Diffusivity (m²s⁻¹)")
 
-save("diffusivity_hov.png", fig)
+# save("Sdiffusivity_hov.png", fig)
 
-mean_diff = "κ_effectiveS_mean"
+# mean_diff = "κ_effectiveS_mean"
 
-if meand_diff ∉ keys(dsS)
+# if meand_diff ∉ keys(dsS)
 
-    defVar(dsS, "κ_effectiveS_mean", Float64, tuple("time_derivative"),
-            attrib = Dict("long_name" => "Vertically averaged effective diffusivity"))
+#     defVar(dsS, "κ_effectiveS_mean", Float64, tuple("time_derivative"),
+#             attrib = Dict("long_name" => "Vertically averaged effective diffusivity"))
 
-    for (i, c) ∈ enumerate(eachcol(diffusivity))
+#     for (i, c) ∈ enumerate(eachcol(diffusivity))
 
-        dsS[mean_diff][i] = mean(c[.!isnan.(c)])
+#         dsS[mean_diff][i] = mean(c[.!isnan.(c)])
 
-    end
+#     end
 
-end
+# end
 
-close(dsS)
+# close(dsS)
