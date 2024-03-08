@@ -43,7 +43,7 @@ function compute_buoyancy_flux!(bflux_file::AbstractString, T_output::AbstractSt
     ΔV = diff(ds_T[:volume][1:2])[1]
     cₚ = 4000 # specific heat capacity
     g = 9.81
-    ds_bflux = NCDatasets(bflux_file, "a")
+    ds_bflux = NCDataset(bflux_file, "a")
     defVar(ds_bflux, "J_b", Float64, tuple("cumulative_volume", "time_derivative"),
             attrib = Dict("longname" => "Bouyancy flux, J = -g(αFₜ/Cₚ - βFₛ), computed from T and S fluxes."))
     defVar(ds_bflux, "∫J_b", Float64, tuple("time_derivative"),
