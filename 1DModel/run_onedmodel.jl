@@ -4,7 +4,7 @@ using .OneDModel
 run_OneDModel(:cabbeling)
 
 ##
-using TwoLayerDirectNumericalShenanigans, CairoMakie, JLD2
+using TwoLayerDirectNumericalShenanigans, CairoMakie, JLD2, GibbsSeaWater
 
 ## Load output, cd = convective diffusivity value
 output = joinpath(@__DIR__, "OneDModelOutput_cabbeling_cd1.jld2")
@@ -41,6 +41,11 @@ fig
 save(joinpath(@__DIR__, "oned_diffusivity_hov_cd1.png"), fig)
 
 ## Fluxes
+"""
+    function tracer_flux(C_ts::FieldTimeSeries)
+Calculate the `tracer_flux` from a `FieldTimeSeries`. The flux is calculated as the change
+in tracer content within a fixed volume over time.
+"""
 function tracer_flux(C_ts::FieldTimeSeries)
 
     Δz = C_ts.grid.Δzᵃᵃᶜ
@@ -57,12 +62,32 @@ function tracer_flux(C_ts::FieldTimeSeries)
 
     flux = Array{Float64}(undef, length(z), length(time)-1)
 
-    for t ∈ 1:leanght(time)-1
-        flux[:, t] = diff(C_content[:, t:t+1]) / Δt
+    for t ∈ 1:length(time)-1
+        flux[:, t] = diff(C_content[:, t:t+1], dims = 2) / Δt[1]
     end
 
-    return flux
+    return reverse(flux, dims = 1)
 
 end
 
 Fₛ = tracer_flux(S_ts)
+replace!(Fₛ, 0 => NaN)
+fig, ax, hm = heatmap(time[2:end], z, Fₛ', colormap = :haline)
+Colorbar(fig[1, 2], hm, label = "Salt flux ")
+fig
+
+Fₜ = tracer_flux(T_ts)
+replace!(Fₜ, 0 => NaN)
+fig, ax, hm = heatmap(time[2:end], z, Fₜ', colormap = :thermal)
+Colorbar(fig[1, 2], hm, label = "Heat flux (Wm⁻²)")
+fig
+
+g = 9.81
+α = gsw_alpha(34.6, -0.5, 0)
+cₚ = 4000
+β = gsw_beta(34.6, -0.5, 0)
+J_b = @. -g * (α * Fₜ / cₚ - β * Fₛ)
+
+fig, ax, hm = heatmap(time[2:end], z, J_b', colormap = :dense)
+Colorbar(fig[1, 2], hm, label = "Buoyancy flux")
+fig
