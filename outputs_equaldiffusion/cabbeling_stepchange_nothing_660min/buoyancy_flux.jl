@@ -19,8 +19,6 @@ function makefile(filename::AbstractString, saved_output::AbstractString)
     copy_vars = ("volume", "equivalent_z", "time", "time_derivative")
     NCDataset(filename, "a") do ds
 
-        defDim(ds, "cumulative_olume", length(co["volume"][:]))
-        defDim(ds, "time_derivative", length(co["time_derivative"][:]))
         for v ∈ copy_vars
             defVar(ds, co[v])
         end
