@@ -10,6 +10,7 @@ export run_OneDModel, hovmoller_plot, TShovmoller_plot
 using Oceananigans, SeawaterPolynomials.TEOS10, GibbsSeaWater, CairoMakie
 using Oceananigans.Units: seconds, minutes, hours, days
 using Oceananigans: ∂z_b
+using Oceananigans: Models.seawater_density
 
 """
     function run_OneDModel(salinity_initial_condition::Symbol; params)
@@ -29,21 +30,22 @@ function run_OneDModel(salinity_initial_condition::Symbol;
                     Tᵤ = -1.5,
                     Tₗ = 0.5,
                     Sₗ = 34.7,
-                    Sₘ = 34.705,   # maximum salinity
-                    Nz = 100,     # number of levels
-                    Lz = 1000,    # overall depth
-     reference_density = 1028.18,
-         convective_κz = 1.0,
+                    Sₘ = 34.7,   # maximum salinity
+                    Nz = 1400,     # number of levels
+                    Lz = -1000,    # overall depth
+     reference_density = gsw_rho(Sₗ, Tₗ, 0),
+         convective_κz = 10.0,
          background_κz = 1e-7,
                      ν = 1e-6,
+   reference_gp_height = 0,
                     Δt = 1,       # minutes
               savepath = "OneDModelOutput",
-            sim_length = 10 / 24,       # in days
+            sim_length = 11 / 24,       # in days
              save_freq = 1        # in minutes
         )
 
     # Grid
-    grid = RectilinearGrid(size = Nz, z = (-Lz, 0), topology=(Flat, Flat, Bounded))
+    grid = RectilinearGrid(size = Nz, z = (Lz, 0), topology=(Flat, Flat, Bounded))
 
     # Buoyancy, using TEOS10
     EOS = TEOS10EquationOfState(; reference_density)
@@ -56,15 +58,15 @@ function run_OneDModel(salinity_initial_condition::Symbol;
     # Set temperature initial condition
     T₀ = Array{Float64}(undef, size(grid))
     # This adds a temperature gradient to avoid spurios convective mixing in the mixed layer
-    Tₗ_array = fill(Tₗ, 50)
-    Tᵤ_array = reverse(range(Tᵤ + 0.01, Tᵤ, length = 50))
+    Tₗ_array = fill(Tₗ, Int(Nz / 2))
+    Tᵤ_array = reverse(range(Tᵤ, Tᵤ, length = Int(Nz / 2)))
     T₀[:, :, :] = vcat(Tₗ_array, Tᵤ_array)
 
     # Set the salinity initial condition
     S₀ = Array{Float64}(undef, size(grid))
     Sᵤ = getfield(salinity_initial_conditions, salinity_initial_condition)
-    Sᵤ_array = fill(Sᵤ, 50)
-    Sₗ_array = range(Sₘ, Sₗ, length = 50)
+    Sᵤ_array = fill(Sᵤ, Int(Nz / 2))
+    Sₗ_array = range(Sₘ, Sₗ, length = Int(Nz / 2))
     S₀[:, :, :] = vcat(Sₗ_array, Sᵤ_array)
 
     savefile = savepath*"_"*string(salinity_initial_condition)*".jld2"
@@ -75,12 +77,13 @@ function run_OneDModel(salinity_initial_condition::Symbol;
                                 buoyancy = buoyancy,
                                 closure = closure)
 
+    σ = seawater_density(model, geopotential_height = reference_gp_height)
     set!(model, T = T₀, S = S₀)
 
     simulation = Simulation(model, Δt = Δt * minutes, stop_time = sim_length * days)
 
     outputs = (T = model.tracers.T, S = model.tracers.S,
-               κ = save_diffusivity)
+               κ = save_diffusivity, σ = σ)
 
     simulation.output_writers[:outputs] = JLD2OutputWriter(model, outputs,
                                             filename = savefile,
@@ -95,7 +98,7 @@ end
     const salinity_initial_conditions
 Salinity initial conditions for upper layer temperature of `Tᵤ = -1.5°C`.
 """
-const salinity_initial_conditions = (stable = 34.551, cabbeling = 34.568, unstable = 34.59,
+const salinity_initial_conditions = (stable = 34.551, cabbeling = 34.58, unstable = 34.59,
                                      isohaline = 34.7, isothermal = 34.69431424)
 """
     save_∂z_b(model)

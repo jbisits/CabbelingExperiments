@@ -70,16 +70,16 @@ let
 			  xlabel = "Absolute salinity (gkg⁻¹)",
 			  ylabel = "Conservative temperature (°C)",
 			  limits = (extrema(S_range), extrema(Θ_range)))
-	contour!(ax, S_range, Θ_range, ρ'; levels = [ρ_star], color = :black, linewidth = 0.8, labelsize = 18, linestyle = :dot, label = "Isopycnal")
-	scatter!(ax, [S_star], [Θ_star], color = :red, label = "Deep water")
-	scatter!(ax, [S₀ᵘ], [Θᵘ], color = :blue, label = "Shallow water")
+	contour!(ax, S_range, Θ_range, ρ'; levels = [ρ_star], color = :red, linewidth = 0.8, labelsize = 18, linestyle = :dot, label = "Isopycnal at deep water parcel")
+	scatter!(ax, [S_star], [Θ_star], color = :red, label = "Deep water parcel")
+	scatter!(ax, [S₀ᵘ], [Θᵘ], color = :blue, label = "Shallow water parcel")
 	lines!(ax, S_mix, Θ_mix, color = :purple, linestyle = :dash, label = "Mixed water")
 	axislegend(ax, position = :lt)
 	#save("STfig.png", TSfig)
 	md"""
 	# Cabbeling
 	
-	- The dominant non-linear process in the upper ocean (to around ``z = 1000~m``) is *cabbeling*.
+	- The dominant non-linear process in the upper ocean (to a depth of approximately ``1000~m``) is *cabbeling*.
 	- Cabbeling is the gain in density that occurs when water parcels of differing temperature and salinity mix to form *denser water*.
 
 	$(TSfig)
@@ -90,49 +90,22 @@ end
 md"""
 # Cabbeling
 
-- In my first project we developed a method to diagnose when a profile will be unstable to cabbeling,
+- In my first project we developed a method to diagnose when a temperature inverted profile will be unstable to cabbeling,
 ```math
 \Delta\rho > \rho\left(S^{*} + \frac{\alpha^{*}}{\beta^{*}}\Delta\Theta, \Theta^{*} + \Delta\Theta, \overline{p} \right) - \rho\left(S^{*}, \Theta^{*}, \overline{p}\right).
 ```
 $(LocalResource("../../../Papers/PhD-paper1-CabbelingInstability/fig6_ECCOpdfs.png"))
 """
 
-# ╔═╡ 5987f662-879f-4394-aac9-a45634bf8ab3
-let
-	data = [vcat(fill(0, 5), fill(1, 5)) vcat(fill(0, 5), fill(1, 5))]
-	fig = Figure(size = (500, 500), fontsize = 22)
-	ax = Axis(fig[1, 1],
-			  aspect = 1/3,
-	          ylabel = "← z",
-        	  yticksvisible = false,
-        	  yticklabelsvisible = false,
-        	  ygridvisible = false)
-	hidexdecorations!(ax)
-	hidespines!(ax)
-	hm = heatmap!(ax, 1:2, 1:10, data'; colormap = [:red, :blue])
-	text!(ax, 1.3, 7.5,  text = L"ρ^{-}", fontsize = 34)
-	text!(ax, 1.3, 2.5,  text = L"ρ^{+}", fontsize = 34)
-	ax2 = Axis(fig[1, 2],
-			  aspect = 1/3,
-	          ylabel = "← z",
-        	  yticksvisible = false,
-        	  yticklabelsvisible = false,
-        	  ygridvisible = false)
-	hidexdecorations!(ax2)
-	hideydecorations!(ax2)
-	hidespines!(ax2)
-	data2 = [vcat(fill(0, 4), 1, fill(2, 4)) vcat(fill(0, 4), 1, fill(2, 4))]
-	hm = heatmap!(ax2, 1:2, 1:10, data2'; colormap = [:red, :purple, :blue])
-	text!(ax2, 1.3, 7.5,  text = L"ρ^{-}", fontsize = 34)
-	text!(ax2, 1.3, 2.5,  text = L"ρ^{+}", fontsize = 34)
-	text!(ax2, 1.1, 5.35,  text = L"ρ_{\mathrm{mixed}}", fontsize = 34)
-	fig
+# ╔═╡ fc7263ff-971d-45dc-971b-f8db80cdcedd
+let 
 	md"""
 	# Cabbeling
 	
-	- This work provided evidence that cabbeling is influencing *how unstable temperature inverted profiles can become prior to an instability forming*... but
-	- we still could not say anything about the mixing that was taking place at all scales and if cabbeling is driving any convective mixing.
-	$(fig)
+	- This work provided evidence that cabbeling is influencing *how unstable temperature inverted profiles can become prior to an instability forming*...
+	- but we still could not say anything about the mixing that was taking place at all scales and if cabbeling is driving any convective mixing.
+	$(LocalResource("STfig.png"))
+
 	"""
 end
 
@@ -178,7 +151,7 @@ md"""
 # Our simulation setup
 - Using [Oceananigans.jl](https://clima.github.io/OceananigansDocumentation/dev/) we setup a Non-hydrostatic model that solves the incompressible Navier Stokes equations under the Boussinesq approximation.
 - **Domain:** ``0.1m\times 0.1m\times 1m``.
-- **Boundary conditions:** horizontally periodic, "zero-flux" vertically.
+- **Boundary conditions:** horizontally periodic, zero-flux vertically, no external sources or sinks of temperature and salinity.
 - **Kinematic viscosity:** ``1\times 10^{-6}m^{2}s^{-1}``.
 - **Isotropic (molecular) diffusivity values:** ``\kappa_{S} = \kappa_{\Theta} = 1\times 10^{-7}m^{2}s^{-1}.``
 - **Equation of State:** 55 term polynomial approximation to full EOS appropriate for Boussinesq models.
@@ -198,6 +171,7 @@ let
 	S_isothermal = 34.69431424
 	S₀ᵘ = 34.58
 	Θᵘ = -1.5
+	Δρ = gsw_sigma0(S₀ᵘ, Θᵘ) - gsw_sigma0(S_star, Θ_star)
 	slope = (Θᵘ - Θ_star) / (S₀ᵘ - S_star)
 	S_mix = range(S₀ᵘ, S_star, step = 0.000001)
 	Θ_mix = @. Θᵘ + (slope) * (S_mix - S₀ᵘ)
@@ -240,12 +214,12 @@ let
 	axislegend(ax, position = :lt)
 	md"""
 	# Initial conditions
-	- Two layer system that is statically stable.
+	- Cold/fresh water overlying warm/salty water, statically stable: ``\Delta\sigma_{0} = \sigma(S_{\mathrm{shallow}}, \Theta_{\mathrm{shallow}}) - \sigma(S_{\mathrm{deep}}, \Theta_{\mathrm{deep}}) < 0.``
 	- Deeper layer constant across all experiments at ``S = 34.7`` gkg⁻¹, ``\Theta = 0.5`` °C
 	- Small (order ``2\times 10^{-4}``) amount of random noise added about the interface of the two layer in salinity field to kick off mixing.
-	- Test the case of two tracers vs one tracer mixing
+	- Single tracer (salinity) mixing ``\implies`` no non-linear effects vs mixing both temperature and salinity where non-linear effects are present.
 	- **Cabbeling:** Cold/fresh shallow layer, ``S = 34.58`` gkg⁻¹, ``\Theta = -1.5`` °C
-	- **Isothermal:** Fresh shallow layer, ``S_{\mathrm{shallow}} = 34.694`` gkg⁻¹
+	- **Isothermal:** Fresh shallow layer, ``S = 34.694`` gkg⁻¹
 	$(TSfig)
 	"""
 	#save("DNS_ICS.png", TSfig)
@@ -316,14 +290,14 @@ let
 
 	md"""
 	# Maximum density from mixing
-	- Set the shallow water at ``\Theta = `` $(Θᵘ)°C and vary ``S`` between stable to cabbeling and isohaline with the slider
+	- Set the shallow water at ``\Theta = `` $(Θᵘ)°C and vary ``S``:
 
 	``S`` = $(shallow_salinity) = $(S₀ᵘ)gkg⁻¹.
 
 	- The *maximum density after mixing* is $(round(max_rho, digits = 5)) kgm⁻³ which is a gain of $(round(Δρ_mix, digits = 5))kgm⁻³.
 	- The new maximum density is at salinity $(round(S_mix[max_rho_idx], digits = 3))gkg⁻¹ and temperature $(round(Θ_mix[max_rho_idx], digits = 2))°C.
 
-	- Slope of mixing line is $(slope) and linearised density slope is $(m).
+	- Slope of mixing line is $(slope) and linearised maximum density slope is $(m).
 
 	$(fig)
 	"""
@@ -335,16 +309,16 @@ end
 md"""
 # New stable state
 
-- Provided there is enough shallow water to bring all the deep water to the maximum density a new stable state will be reached where the cabbeling instability has been mixed away.
+- Provided there is enough shallow water to bring all the deep water to the maximum density a new stable state will be reached where the cabbeling instability has been mixed away. Otherwise convective mixing will continue.
 - The relative amounts of shallow and deep water needed to achieve a new stable to cabbeling state can be found by solving the linear system
 ```math
-\begin{aligned}
-a\begin{pmatrix}S_\mathrm{shallow} \\ \Theta_{\mathrm{shallow}} \end{pmatrix} + b\begin{pmatrix} S_\mathrm{deep} \\ \Theta_{\mathrm{deep}} \end{pmatrix} &= \begin{pmatrix} S_{\mathrm{mix}} \\ \Theta_{\mathrm{mix}} \end{pmatrix} \\
-\begin{pmatrix}S_\mathrm{shallow} & S_{\mathrm{deep}} \\ \Theta_{\mathrm{shallow}} & \Theta_{\mathrm{deep}} \end{pmatrix} \begin{pmatrix} a \\ b \end{pmatrix} &= 
+\begin{equation}
+\begin{pmatrix}S_\mathrm{shallow} & S_{\mathrm{deep}} \\ \Theta_{\mathrm{shallow}} & \Theta_{\mathrm{deep}} \end{pmatrix} \begin{pmatrix} a \\ b \end{pmatrix} = 
 \begin{pmatrix} S_{\mathrm{mix}} \\ \Theta_{\mathrm{mix}} \end{pmatrix}.
-\end{aligned}
+\end{equation}
 ```
-- If there is not enough shallow water to bring all the deep water to the maximum density, the convective mixing will continue until there is no shallow water left.
+$(LocalResource("new_state_fig.png"))
+
 """
 
 # ╔═╡ f82ebb94-c94d-42cc-bd16-92b123ba6498
@@ -352,35 +326,52 @@ md"""
 # Longer experiments
 - We test these hypotheses by running a longer experiment with an equal amount of shallow and deep water to see if the predicted maximum density is what the deeper water is transformed to and if the new stable to cabbeling state is reached.
 
-$(LocalResource("../data/animations/cabbeling_600min/density.mp4"))
+$(LocalResource("../outputs_equaldiffusion/cabbeling_stepchange_nothing_660min/density.mp4"))
 """
 
 # ╔═╡ bafe1643-5d0e-4d16-87ca-5edffef41c8c
 md"""
 # Tracers
 
-$(LocalResource("../data/animations/cabbeling_600min/tracers_600min.mp4"))
+$(LocalResource("../outputs_equaldiffusion/cabbeling_stepchange_nothing_660min/tracers.mp4"))
 """
 
 # ╔═╡ 39d9cd82-8dfb-48b0-827f-18dc187eda85
 md"""
-# Tracer distributions
+# Density distributions
 
-$(LocalResource("../data/animations/cabbeling_600min/S_and_T_distributions.mp4"))
+$(LocalResource("../outputs_equaldiffusion/cabbeling_stepchange_nothing_660min/reference_density.mp4"))
 """
 
 # ╔═╡ e02371e2-64ce-4f90-bcaa-b0565366d14b
 md"""
-# Effective diffusivity
+# Effective diffusivity and buoyancy flux
 
-- Using the tracer percentile method (Sohail et al. (2020), Holmes et al. (2020)) we can estimate the effective vertical diffusivity as
+- Using the tracer percentile method (Sohail et al. (2021), Holmes et al. (2021)) we can estimate the effective vertical diffusivity as
 ```math
 \kappa_{\mathrm{eff}} = \frac{\frac{\mathrm{d}}{\mathrm{d}t}\int_{V < V^{*}}\Theta(V, t) dV}{\frac{\partial \Theta}{\partial V}}.
 ```
-- Figures below show that the effective diffusivity for the salinity tracer in the isothermal experiment are a good approximation to the parameterised value of ``\kappa_{S} = 1 \times 10^{-7}``.
+- We compute the salinity and temperature flux into some fixed volume $V^{*}$ for estimates of the salinity and temperature diffusivity. These fluxes can be used to estimate the buoyancy flux
+
+```math
+J_{b} = -g\left(\alpha F_{\Theta} - \beta F_{S}\right).
+```
+
+# Isothermal experiment
+
+- Figure below show that the effective diffusivity at the model interface for the salinity tracer in the isothermal experiment ais a good approximation to the parameterised value of ``\kappa_{S} = 1 \times 10^{-7}m^{2}s^{-1}``.
 $(LocalResource("iso_flux_diff.png"))
-- The magnitude of the diffusivity in cabbeling case need further investigation.
+
+# Isothermal experiment
+$(LocalResource("bflux_isothermal.png"))
+
+# Cabbeling experiment
+- The effective diffusivity at the interface for both salintiy and temperature hovers around ``\kappa_{\Theta} = \kappa_{S} = 1m^{2}s^{-1}``.
 $(LocalResource("flux_diff.png"))
+
+# Cabbeling experiment
+
+$(LocalResource("bflux_cabbeling.png"))
 """
 
 # ╔═╡ 27a2339e-300c-4e4e-a041-bc5251539c2a
@@ -405,6 +396,8 @@ md"""
 - Fabien Roquet et al. “Unique thermal expansion properties of water key to the formation of sea ice on Earth”. In: Science Advances 8.46 (2022), p. 793. issn: 23752548. doi: 10.1126/ sciadv.abq0793.
 - Winters, Kraig B., et al. "Available potential energy and mixing in density-stratified fluids." Journal of Fluid Mechanics 289 (1995): 115-128.
 - Hughes, Graham O., Andrew Mc C. Hogg, and Ross W. Griffiths. "Available potential energy and irreversible mixing in the meridional overturning circulation." Journal of Physical Oceanography 39.12 (2009): 3130-3146.
+- Sohail, T., Irving, D. B., Zika, J. D., Holmes, R. M., & Church, J. A. (2021). Fifty year trends in global ocean heat content traced to surface heat fluxes in the sub‐polar ocean. Geophysical Research Letters, 48(8), e2020GL091439.
+- Inoue, R., Yamazaki, H., Wolk, F., Kono, T., & Yoshida, J. (2007). An estimation of buoyancy flux for a mixture of turbulence and double diffusion. Journal of Physical Oceanography, 37(3), 611-624
 """
 
 # ╔═╡ f941fdfb-d70a-473a-95ba-56f3aa53b477
@@ -433,7 +426,7 @@ $(LocalResource("../data/animations/cabbeling_DD_600min_densityratio100/hovmolle
   ╠═╡ =#
 
 # ╔═╡ 9feac837-c922-41b3-9e14-ba704aa2386b
-TableOfContents(title = "Slides")
+#TableOfContents(title = "Slides")
 
 # ╔═╡ Cell order:
 # ╟─46063034-7f6c-11ee-18e4-7bb553b5bb66
@@ -441,7 +434,7 @@ TableOfContents(title = "Slides")
 # ╟─8d54f303-4b14-490d-bdb3-aa88c3ccf7bd
 # ╟─b1f2293e-9a64-4f27-a07b-f2b1f6ab6611
 # ╟─57bf32e9-c9fc-444b-8ef9-d5fdd8ecf4e4
-# ╟─5987f662-879f-4394-aac9-a45634bf8ab3
+# ╟─fc7263ff-971d-45dc-971b-f8db80cdcedd
 # ╟─5bc2dbc2-f295-4389-be7a-b172cfbe6702
 # ╟─1b10d122-b550-47b8-aa78-1c073d14167c
 # ╟─39ba4eb8-4040-480a-9ea5-08d538f1f2ea

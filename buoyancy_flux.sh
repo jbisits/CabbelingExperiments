@@ -16,4 +16,4 @@ export JULIA_NUM_THREADS=auto
 module load julia
 
 # Run the experiment
-julia --project avgdiff_hov.jl > $PBS_JOBID.log
+julia --project buoyancy_flux.jl > $PBS_JOBID.log
