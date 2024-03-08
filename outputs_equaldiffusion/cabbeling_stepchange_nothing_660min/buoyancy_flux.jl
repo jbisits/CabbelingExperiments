@@ -54,8 +54,8 @@ function compute_buoyancy_flux!(bflux_file::AbstractString, T_output::AbstractSt
         S_sorted, T_sorted = ds_S[:Ssorted][:, t], ds_T[:Tsorted][:, t]
         α, β = gsw_alpha.(S_sorted, T_sorted, 0), gsw_beta.(S_sorted, T_sorted, 0)
         Fₛ, Fₜ = ds_S[:dₜ∫SdV][:, t], ds_T[:dₜ∫TdV][:, t]
-        ds_bflux[:, t] = @. -g * ((α * Fₜ) / cₚ - β * Fₛ)
-        ds_∫bflux[t] = sum(ds_bflux[:, t]) * ΔV
+        ds_bflux["J_b"][:, t] = @. -g * ((α * Fₜ) / cₚ - β * Fₛ)
+        ds_bflux["∫J_b"][t] = sum(ds_bflux[:, t]) * ΔV
 
     end
 
