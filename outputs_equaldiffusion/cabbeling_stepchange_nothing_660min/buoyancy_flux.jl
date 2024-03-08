@@ -19,6 +19,8 @@ function makefile(filename::AbstractString, saved_output::AbstractString)
     copy_vars = ("volume", "equivalent_z", "time", "time_derivative")
     NCDataset(filename, "a") do ds
 
+        defDim(ds, "cumulative_olume", length(co["volume"][:]))
+        defDim(ds, "time_derivative", length(co["time_derivative"][:]))
         for v ∈ copy_vars
             defVar(ds, co[v])
         end
@@ -46,7 +48,7 @@ function compute_buoyancy_flux!(bflux_file::AbstractString, T_output::AbstractSt
     ds_bflux = NCDatasets(bflux_file, "a")
     defVar(ds_bflux, "J_b", Float64, tuple("cumulative_volume", "time_derivative"),
             attrib = Dict("longname" => "Bouyancy flux, J = -g(αFₜ/Cₚ - βFₛ), computed from T and S fluxes."))
-    defVar(ds_∫bflux, "∫J_b", Float64, tuple("time_derivative"),
+    defVar(ds_bflux, "∫J_b", Float64, tuple("time_derivative"),
             attrib = Dict("longname" => "Volume integrated bouyancy flux, ∫JdV = -g∫(αFₜ/Cₚ - βFₛ)dV, computed from T and S fluxes."))
 
     for t ∈ eachindex(time_derivative)
