@@ -34,14 +34,14 @@ function run_OneDModel(salinity_initial_condition::Symbol;
                     Nz = 1400,     # number of levels
                     Lz = -1000,    # overall depth
      reference_density = gsw_rho(Sₗ, Tₗ, 0),
-         convective_κz = 10.0,
+         convective_κz = 1.0,
          background_κz = 1e-7,
                      ν = 1e-6,
    reference_gp_height = 0,
-                    Δt = 1,       # minutes
+                    Δt = 0.1,       # seconds
               savepath = "OneDModelOutput",
             sim_length = 11 / 24,       # in days
-             save_freq = 1        # in minutes
+             save_freq = 45        # seconds
         )
 
     # Grid
@@ -80,14 +80,14 @@ function run_OneDModel(salinity_initial_condition::Symbol;
     σ = seawater_density(model, geopotential_height = reference_gp_height)
     set!(model, T = T₀, S = S₀)
 
-    simulation = Simulation(model, Δt = Δt * minutes, stop_time = sim_length * days)
+    simulation = Simulation(model, Δt = Δt, stop_time = sim_length * days)
 
     outputs = (T = model.tracers.T, S = model.tracers.S,
                κ = save_diffusivity, σ = σ)
 
     simulation.output_writers[:outputs] = JLD2OutputWriter(model, outputs,
                                             filename = savefile,
-                                            schedule = TimeInterval(save_freq * minutes))
+                                            schedule = TimeInterval(save_freq))
 
     run!(simulation)
 
