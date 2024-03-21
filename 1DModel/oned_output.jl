@@ -1,4 +1,6 @@
 ##
+include("onedmodel.jl")
+using .OneDModel
 using TwoLayerDirectNumericalShenanigans, CairoMakie, JLD2, GibbsSeaWater
 
 ## Load output, cd = convective diffusivity value
@@ -22,11 +24,11 @@ visualise_snapshot(S_ts, "S (gkg⁻ꜝ)", 1, 1, 1; colormap = :haline)
 
 ## Hovmoller plots
 hplot = TShovmoller_plot(S_ts, T_ts)
-save(joinpath(@__DIR__, "oned_TS_hovs_cd1.png"), hplot)
+save(joinpath(@__DIR__, "oned_TS_hovs_cd10.png"), hplot)
 
 ## Density
 hplot_density = hovmoller_plot(σ₀_ts, "σ₀ (kgm⁻³)"; colormap = :dense)
-save(joinpath(@__DIR__, "oned_density_hov_cd1.png"), hplot_density)
+save(joinpath(@__DIR__, "oned_density_hov_cd10.png"), hplot_density)
 σ₀_max = maximum(σ₀_ts.data) # 1027.7103539732836, our predicted max density
 
 ## Diffusivity
