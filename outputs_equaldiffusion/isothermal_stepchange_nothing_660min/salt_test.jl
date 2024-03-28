@@ -67,6 +67,6 @@ function salt_checks!(file::AbstractString, tracers::AbstractString)
     return nothing
 end
 
-tracers = "tracers.n"
+tracers = "tracers.nc"
 file = "salt_checks.nc"
 salt_checks!(file, tracers)
