@@ -57,7 +57,7 @@ function salt_checks!(file::AbstractString, tracers::AbstractString)
         for t ∈ 1:length(time)-1
             new_ds[:dₜ∫SdV][:, t] = vec(diff(new_ds[:∫SdV][:, t:t+1], dims = 2)) / Δt[t]
             new_ds[:∫dₜ∫SdVdV][t] = sum(new_ds[:dₜ∫SdV][:, t] * ΔV)
-            new_ds[:dₜ∫Sz✶dV][t] = diff(new_ds[:dₜ∫SdV][t:t+1])[1] / Δt[t]
+            new_ds[:dₜ∫Sz✶dV][t] = diff(new_ds[:∫Sz✶dV][t:t+1])[1] / Δt[t]
         end
 
     end
