@@ -38,9 +38,9 @@ function salt_checks!(file::AbstractString, tracers::AbstractString)
         defVar(new_ds, "equivalent_z", equivalent_z, tuple("cumulative_volume"))
         defVar(new_ds, "∫Sz✶dV", Float64, tuple("time"),
                 attrib = Dict("longname" => "Background salinity potential energy (∫Sz✶dV)."))
-        defVar(new_ds, "∫SdV", Float64, tuple("volume", "time"),
+        defVar(new_ds, "∫SdV", Float64, tuple("cumulative_volume", "time"),
                 attrib = Dict("longname" => "Cumulative salt content ∫SdV"))
-        defVar(new_ds, "dₜ∫SdV", Float64, tuple("volume", "time_derivative"),
+        defVar(new_ds, "dₜ∫SdV", Float64, tuple("cumulative_volume", "time_derivative"),
                 attrib = Dict("longname" => "Salt flux at each level (dₜ∫SdV)"))
         defVar(new_ds, "∫dₜ∫SdVdV", Float64, tuple("time_derivative"),
                 attrib = Dict("longname" => "Volume integrated salt flux (∫dₜ∫SdVdV)"))
