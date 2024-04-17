@@ -30,7 +30,7 @@ This isothermal run of the 1D model has the same setup as the full DNS experimen
 
 # ╔═╡ d2a1ec90-16ef-47b2-9adb-8829681ad5d9
 begin
-	iso_data = "../1DModel/OneDModelOutput_isothermal.jld2"
+	iso_data = "../1DModel/OneDModelOutput_cabbeling_cd10.jld2"
 	S = FieldTimeSeries(iso_data, "S")
 	T = FieldTimeSeries(iso_data, "T")
 	σ₀ = FieldTimeSeries(iso_data, "σ")
@@ -38,42 +38,62 @@ begin
 	Δt = diff(t)
 	z = znodes(S)
 	Δz = S.grid.Δzᵃᵃᶜ
+	
+	#Computations to check
+
+	# Potential energy for salt
+	∫Szdz = sum(interior(S, 1, 1, :, :) .* z * Δz, dims = 1)
+	dₜ∫Szdz = vec(diff(∫Szdz, dims = 2)) #./ Δt
+
+	# Salt sorted, content and flux
+	S_sorted = similar(S.data[1, 1, :, :])
+	S_content = similar(S.data[1, 1, :, :])
+	for i ∈ eachindex(t)
+		S_sorted[:, i] = sort(interior(S, 1, 1, :, i), rev = true)	
+		S_content[:, i] = cumsum(S_sorted[:, i] .* -Δz) # negative to sign match above
+	end
+
+	S_flux = diff(S_content, dims = 2) #./ Δt
+	S_flux_int = vec(sum(S_flux * Δz, dims = 1))
+	
+	# Background potential energy
+	∫S✶zdz = sum(S_sorted .* z * Δz, dims = 1)
+	dₜ∫S✶zdz = vec(diff(∫S✶zdz, dims = 2)) #./ Δt
+	
 	nothing
 end
 
-# ╔═╡ a873d6b3-e6c6-4ed1-ab11-ffaeccb2c4d5
-begin
-	∫Szdz = sum(interior(S, 1, 1, :, :) .* z * Δz, dims = 1)
-	dₜ∫Szdz = vec(diff(∫Szdz, dims = 2))
-	fig, ax = lines(t[2:end], dₜ∫Szdz)
-	ax.title = "Potential (salt) energy (dₜ∫Szdz)"
+# ╔═╡ cc7d7952-eb79-47df-bd0a-9ba22963766a
+S_sorted
+
+# ╔═╡ 38d0188e-d6d0-4d44-bb75-638f28f63aaf
+interior(S, 1, 1, :, :)
+
+# ╔═╡ 0efe7042-82d9-44aa-be55-eb3634425bd5
+let
+	fig, ax, hm = heatmap(t, z, interior(σ₀, 1, 1, :, :)', colormap = :dense)
+	ax.title = "Density hovmoller"
 	ax.xlabel = "time (s)"
+	ax.ylabel = "z (m)"
+	Colorbar(fig[1, 2], hm, label = "σ₀ (kg/m3 )")
 	fig
 end
 
-# ╔═╡ 0efe7042-82d9-44aa-be55-eb3634425bd5
-begin
-	S_sorted = similar(S.data[1, 1, :, :])
-	S_content = similar(S.data[1, 1, :, :])
-	S_flux = similar(S.data[1, 1, :, 2:end])
-	for i ∈ eachindex(t)
-		S_sorted[:, i] = sort(interior(S, 1, 1, :, i))	
-		S_content[:, i] = cumsum(S_sorted[:, i] * Δz)
-	end
-	for i ∈ 1:length(t)-1
-		S_flux[:, i] = diff(S_content[:, i:i+1], dims = 2) / Δt[i]
-	end
-end
+# ╔═╡ ebff4d86-8013-4473-ae43-0fc2b4fe2015
+md"""
+## Energetics
 
-# ╔═╡ 4a41cc07-e6d2-4aed-b47e-f72e4e03df71
-begin
-	∫S✶zdz = sum(S_sorted .* z * Δz, dims = 1)
-	dₜ∫S✶zdz = vec(diff(∫S✶zdz, dims = 2))
-	fig1, ax1 = lines(t[2:end], dₜ∫S✶zdz)
-	ax1.title = "Background potential (salt) energy (dₜ∫Szdz)"
-	ax1.xlabel = "time (s)"
-	fig1
-end
+Plot of potential, background potential and available potential energies using only salt tracer.
+The quantities (without gravity) are calculated as
+```math
+\begin{aligned}
+\frac{\mathrm{d}}{\mathrm{d}t}E_{p} &= \frac{\mathrm{d}}{\mathrm{d}t}\int S z dz \\
+\frac{\mathrm{d}}{\mathrm{d}t}E_{b} &= \frac{\mathrm{d}}{\mathrm{d}t}\int S^{*} z dz \\
+\frac{\mathrm{d}}{\mathrm{d}t}E_{a} &= \frac{\mathrm{d}}{\mathrm{d}t}E_{p} - \frac{\mathrm{d}}{\mathrm{d}t}E_{b}
+\end{aligned}
+```
+where ``S^{*}`` is the sorted salinity profile.
+"""
 
 # ╔═╡ 944526a6-5154-44ac-af06-c7dba206007c
 begin
@@ -85,9 +105,36 @@ begin
 	fig2
 end
 
+# ╔═╡ 3e3eb9fd-8208-4f99-8cbb-730e4a501772
+md"""
+## Background state and diffusive salt flux
+
+Changes to the background potential energy can **only occur due to vertical diffusive flux** so we should have equality between
+```math
+\frac{\mathrm{d}}{\mathrm{d}t}E_{b} \quad \mathrm{and} \quad \frac{\mathrm{d}}{\mathrm{d}t}\iint S^{*} dz dz
+```
+"""
+
+# ╔═╡ ab6e5cd8-9a90-4cc2-8e83-330aa7ae8b30
+let
+	fig, ax = lines(t[2:end], dₜ∫S✶zdz, label = "BPE")
+	lines!(ax, t[2:end], S_flux_int, label = "Salt flux")
+	ax.title = "Salt flux and BPE"
+	axislegend(ax, position = :rb)
+	fig
+end
+
+# ╔═╡ e14dbf9d-3a92-4051-b99f-8a7c9eb7de5f
+abs.(S_flux_int - dₜ∫S✶zdz)
+
+# ╔═╡ 8d029027-9e35-40cc-a7c7-dbbb94878724
+md"""
+## Other things
+"""
+
 # ╔═╡ df8c87bc-ba1d-402d-8d40-089ba0f7447f
 let
-	fig, ax, hm = heatmap(Matrix(S_flux[699:701, :])')
+	fig, ax, hm = heatmap(Matrix(S_flux[:, :])')
 	Colorbar(fig[1, 2], hm)
 	fig
 end
@@ -104,18 +151,23 @@ let
 	# fig, ax, hm = heatmap(Matrix(S_diff[695:715, :])')
 	# Colorbar(fig[1, 2], hm)
 	# fig
-	lines(log10.(vec(S_diff[699, :])))
+	lines(vec(S_diff[49, :]))
 end
 
 # ╔═╡ Cell order:
 # ╟─a290de4c-f791-11ee-0e04-11e4e34b7428
 # ╟─ac639feb-9ee4-43f4-acd9-466fe3478d40
 # ╟─edd033e9-55ca-4b68-bf03-330baaa35e67
-# ╟─d2a1ec90-16ef-47b2-9adb-8829681ad5d9
-# ╟─a873d6b3-e6c6-4ed1-ab11-ffaeccb2c4d5
+# ╠═d2a1ec90-16ef-47b2-9adb-8829681ad5d9
+# ╠═cc7d7952-eb79-47df-bd0a-9ba22963766a
+# ╠═38d0188e-d6d0-4d44-bb75-638f28f63aaf
 # ╟─0efe7042-82d9-44aa-be55-eb3634425bd5
-# ╟─4a41cc07-e6d2-4aed-b47e-f72e4e03df71
+# ╟─ebff4d86-8013-4473-ae43-0fc2b4fe2015
 # ╟─944526a6-5154-44ac-af06-c7dba206007c
-# ╠═df8c87bc-ba1d-402d-8d40-089ba0f7447f
+# ╟─3e3eb9fd-8208-4f99-8cbb-730e4a501772
+# ╠═ab6e5cd8-9a90-4cc2-8e83-330aa7ae8b30
+# ╠═e14dbf9d-3a92-4051-b99f-8a7c9eb7de5f
+# ╟─8d029027-9e35-40cc-a7c7-dbbb94878724
+# ╟─df8c87bc-ba1d-402d-8d40-089ba0f7447f
 # ╠═42f95fcf-be3c-4c8d-8226-5dd33bf73b7a
 # ╠═c5b279df-1031-433f-acf4-9c32c07fcfcb
