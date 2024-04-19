@@ -38,9 +38,14 @@ I have three model runs I am comparing:
 2. cabbeling with convective diffusivity ``\kappa_{c} = 1\mathrm{m}^{2}\mathrm{s}^{-1}``
 2. cabbeling with convective diffusivity ``\kappa_{c} = 10\mathrm{m}^{2}\mathrm{s}^{-1}``
 
-In the isothermal case, the background state should be equal to the profile so the BPE and the PE should be equal (or very close to equal) throughout the length of the because the mixed water at the interface will not be denser/lighter than the lower/upper layers.
+In all cases the salinity profile and the background profile *should be the same* as there are no sources and sinks of salinity.
+We see this in the output below.
 
-In the cabbeling case, the background state and profile should start roughly equal but after the mixing has created some denser water the PE and the BPE should separate until when/if lower layer has all been transformed to the maximum density.
+In the isothermal case, the background state (for density) should be equal to the profile so the BPE and the PE should be equal (or very close to equal) throughout the length of the because the mixed water at the interface will not be denser/lighter than the lower/upper layers.
+This means that there is no available potential energy in the system.
+
+In the cabbeling case, the background state (for density) and profile should start roughly equal but after the mixing has created some denser water the PE and the BPE should separate until when/if lower layer has all been transformed to the maximum density.
+This means that there is available potential energy in the system which is dissipated as the simulation runs
 """
 
 # ╔═╡ edd033e9-55ca-4b68-bf03-330baaa35e67
@@ -76,10 +81,10 @@ begin
 		S_content[:, i] = -cumsum(S_sorted[:, i] * Δz) # negative to sign match above
 	end
 
-	# S_flux = diff(S_content, dims = 2)
-	# S_flux_int = vec(sum(S_flux * Δz, dims = 1)) #./ Δt
-	S_flux = vec(sum(S_content * Δz, dims = 1))
-	S_flux_int = diff(S_flux) ./ Δt
+	S_flux = diff(S_content, dims = 2)
+	S_flux_int = vec(sum(S_flux * Δz, dims = 1)) ./ Δt
+	# S_flux = vec(sum(S_content * Δz, dims = 1))
+	# S_flux_int = diff(S_flux) ./ Δt
 	
 	# Background potential energy
 	∫S✶zdz = sum(S_sorted .* z * Δz, dims = 1)
@@ -238,7 +243,7 @@ end
 let
 	fig2, ax2 = lines(t[2:end], dₜ∫σzdz, label = "PE")
 	lines!(ax2, t[2:end], dₜ∫σ✶zdz, label = "BPE", linestyle = :dash)
-	#lines!(ax2, t[2:end], dₜ∫σzdz .- dₜ∫σ✶zdz, label = "APE", linestyle = :dot)
+	lines!(ax2, t[2:end], dₜ∫σzdz .- dₜ∫σ✶zdz, label = "APE", linestyle = :dot)
 	ax2.title = "Potential energies"
 	axislegend(ax2, position = :rb)
 	ax2.xlabel = "time (s)"
@@ -266,6 +271,39 @@ let
 	fig
 end
 
+# ╔═╡ 0121a899-a1bf-4fc8-9aa2-ce5c801753ec
+md"""
+## Diffusivity
+
+### Salt (or temperature)
+
+We calculate the diffusivity from the tracers using
+```math
+\kappa_{S} = \frac{\mathrm{d}_{t}\int S^{*} \mathrm{d}z}{\mathrm{d}S^{*} / \mathrm{d}z}
+```
+
+As this model has the diffusivity values parameterised we should recover the background diffusivity ``\kappa_{back} = 1\times 10^{-4}m^{2}s^{-1}`` in the isothermal case and something that looks like the convective adjustment schemes used above.
+
+**Need to check this and finish off the calculation.**
+"""
+
+# ╔═╡ 2f07bd23-6b22-4523-933e-f1ae04655f34
+begin
+	dsdz = diff(S_sorted, dims = 1) / Δz
+	replace!(dsdz, 0 => NaN)
+	κₛ = S_flux[2:end, :] ./ dsdz[:, 2:end]
+	# replace!(κₛ, Inf => NaN)
+	# replace!(κₛ, -Inf => NaN)
+end
+
+# ╔═╡ ad2e9fe2-fed5-4167-838e-4078f31ec6fe
+let
+	# fig, ax, hm = heatmap(κₛ'[700:701, :])
+	# Colorbar(fig[1, 2], hm)
+	# fig
+	lines(t[2:end], κₛ[699, :])
+end
+
 # ╔═╡ 666c8467-6460-4ae9-adca-27c241ef3fdd
 TableOfContents()
 
@@ -291,4 +329,7 @@ TableOfContents()
 # ╟─3217dc82-a988-448f-9bd4-ef5f62b75630
 # ╟─1a9eee8b-545f-4da3-a931-49d447521e3c
 # ╟─725627af-aafc-42de-9462-67577e01de98
+# ╟─0121a899-a1bf-4fc8-9aa2-ce5c801753ec
+# ╠═2f07bd23-6b22-4523-933e-f1ae04655f34
+# ╠═ad2e9fe2-fed5-4167-838e-4078f31ec6fe
 # ╟─666c8467-6460-4ae9-adca-27c241ef3fdd
