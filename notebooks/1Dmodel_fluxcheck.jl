@@ -32,7 +32,7 @@ The main two experiments I will compare are the isothermal experiment and the ca
 
 ## Model runs
 
-I have three model runs I am comparing:
+I have three model runs with background diffusivity ``\kappa_{back} = 1\times 10^{-2}\mathrm{m}^{2}\mathrm{s}^{-1}``:
 
 1. isothermal, uniform ``T = 0.5^{\circ}C`` (there is also a lower resolution one of these experiments)
 2. cabbeling with convective diffusivity ``\kappa_{c} = 1\mathrm{m}^{2}\mathrm{s}^{-1}``
@@ -187,7 +187,7 @@ As the salinity is looking ok I would like to look at density and see if I can m
 # ╔═╡ b3fc213d-03c1-4fb5-9c13-f3f6e5f1f648
 begin
 	# Potential energy no gravity
-	g = 1 #9.81
+	g = 1 # 9.81
 	∫σzdz = g * sum(interior(σ₀, 1, 1, :, :) .* z * Δz, dims = 1)
 	dₜ∫σzdz = vec(diff(∫σzdz, dims = 2)) ./ Δt
 
@@ -298,10 +298,10 @@ end
 
 # ╔═╡ ad2e9fe2-fed5-4167-838e-4078f31ec6fe
 let
-	# fig, ax, hm = heatmap(κₛ'[700:701, :])
-	# Colorbar(fig[1, 2], hm)
-	# fig
-	lines(t[2:end], κₛ[699, :])
+	fig, ax, hm = heatmap(t, z, κₛ[690:710, :]')
+	Colorbar(fig[1, 2], hm)
+	fig
+	# lines(t[2:end], κₛ[699, :])
 end
 
 # ╔═╡ 666c8467-6460-4ae9-adca-27c241ef3fdd
