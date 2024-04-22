@@ -64,7 +64,7 @@ begin
 	σ₀ = FieldTimeSeries(iso_data, "σ")
 	t = S.times
 	Δt = diff(t)
-	z = znodes(S)
+	z = reverse(abs.(znodes(S)))
 	Δz = S.grid.Δzᵃᵃᶜ
 	
 	#Computations to check
@@ -78,13 +78,11 @@ begin
 	S_content = similar(S.data[1, 1, :, :])
 	for i ∈ eachindex(t)
 		S_sorted[:, i] = sort(interior(S, 1, 1, :, i), rev = true)	
-		S_content[:, i] = -cumsum(S_sorted[:, i] * Δz) # negative to sign match above
+		S_content[:, i] = cumsum(reverse(S_sorted[:, i]) * Δz)
 	end
 
 	S_flux = diff(S_content, dims = 2)
 	S_flux_int = vec(sum(S_flux * Δz, dims = 1)) ./ Δt
-	# S_flux = vec(sum(S_content * Δz, dims = 1))
-	# S_flux_int = diff(S_flux) ./ Δt
 	
 	# Background potential energy
 	∫S✶zdz = sum(S_sorted .* z * Δz, dims = 1)
@@ -141,9 +139,19 @@ where ``S^{*}`` is the sorted salinity profile.
 
 # ╔═╡ 944526a6-5154-44ac-af06-c7dba206007c
 begin
-	fig2, ax2 = lines(t[2:end], dₜ∫Szdz, label = "PE")
-	lines!(ax2, t[2:end], dₜ∫S✶zdz, label = "BPE", linestyle = :dash)
-	lines!(ax2, t[2:end], dₜ∫Szdz .- dₜ∫S✶zdz, label = "APE", linestyle = :dot)
+	fig2, ax2 = lines(t[2:end], dₜ∫Szdz, label = "dₜPE")
+	lines!(ax2, t[2:end], dₜ∫S✶zdz, label = "dₜBPE", linestyle = :dash)
+	lines!(ax2, t[2:end], dₜ∫Szdz .- dₜ∫S✶zdz, label = "dₜAPE", linestyle = :dot)
+	ax2.title = "Potential energies"
+	axislegend(ax2, position = :rb)
+	fig2
+end
+
+# ╔═╡ f8da3bdd-c912-4764-9f65-afc25414a049
+let
+	fig2, ax2 = lines(t, vec(∫Szdz), label = "PE")
+	lines!(ax2, t, vec(∫S✶zdz), label = "BPE", linestyle = :dash)
+	#lines!(ax2, t, vec(∫Szdz) .- vec(∫S✶zdz), label = "APE", linestyle = :dot)
 	ax2.title = "Potential energies"
 	axislegend(ax2, position = :rb)
 	fig2
@@ -196,7 +204,7 @@ begin
 	σ_content = similar(σ₀.data[1, 1, :, :])
 	for i ∈ eachindex(t)
 		σ_sorted[:, i] = sort(interior(σ₀, 1, 1, :, i), rev = true)	
-		σ_content[:, i] = cumsum(σ_sorted[:, i] * -Δz) # negative to sign match above
+		σ_content[:, i] = cumsum(reverse(σ_sorted[:, i]) * Δz)
 	end
 
 	σ_flux = diff(σ_content, dims = 2) 
@@ -241,9 +249,21 @@ end
 
 # ╔═╡ 3217dc82-a988-448f-9bd4-ef5f62b75630
 let
-	fig2, ax2 = lines(t[2:end], dₜ∫σzdz, label = "PE")
-	lines!(ax2, t[2:end], dₜ∫σ✶zdz, label = "BPE", linestyle = :dash)
-	lines!(ax2, t[2:end], dₜ∫σzdz .- dₜ∫σ✶zdz, label = "APE", linestyle = :dot)
+	fig2, ax2 = lines(t[2:end], dₜ∫σzdz, label = "dₜPE")
+	lines!(ax2, t[2:end], dₜ∫σ✶zdz, label = "dₜBPE", linestyle = :dash)
+	lines!(ax2, t[2:end], dₜ∫σzdz .- dₜ∫σ✶zdz, label = "dₜAPE", linestyle = :dot)
+	ax2.title = "Potential energies"
+	axislegend(ax2, position = :rb)
+	ax2.xlabel = "time (s)"
+	ax2.ylabel = "pseudo-Watts"
+	fig2
+end
+
+# ╔═╡ 71181476-bbf2-4855-8973-89c0b8814cde
+let
+	fig2, ax2 = lines(t, vec(∫σzdz), label = "PE")
+	lines!(ax2, t, vec(∫σ✶zdz), label = "BPE", linestyle = :dash)
+	#lines!(ax2, t, vec(∫σzdz) .- vec(∫σ✶zdz), label = "APE", linestyle = :dot)
 	ax2.title = "Potential energies"
 	axislegend(ax2, position = :rb)
 	ax2.xlabel = "time (s)"
@@ -282,27 +302,10 @@ We calculate the diffusivity from the tracers using
 \kappa_{S} = \frac{\mathrm{d}_{t}\int S^{*} \mathrm{d}z}{\mathrm{d}S^{*} / \mathrm{d}z}
 ```
 
-As this model has the diffusivity values parameterised we should recover the background diffusivity ``\kappa_{back} = 1\times 10^{-4}m^{2}s^{-1}`` in the isothermal case and something that looks like the convective adjustment schemes used above.
+As this model has the diffusivity values parameterised we should recover the background diffusivity ``\kappa_{back} = 1\times 10^{-2}m^{2}s^{-1}`` in the isothermal case and something that looks like the convective adjustment schemes used above.
 
 **Need to check this and finish off the calculation.**
 """
-
-# ╔═╡ 2f07bd23-6b22-4523-933e-f1ae04655f34
-begin
-	dsdz = diff(S_sorted, dims = 1) / Δz
-	replace!(dsdz, 0 => NaN)
-	κₛ = S_flux[2:end, :] ./ dsdz[:, 2:end]
-	# replace!(κₛ, Inf => NaN)
-	# replace!(κₛ, -Inf => NaN)
-end
-
-# ╔═╡ ad2e9fe2-fed5-4167-838e-4078f31ec6fe
-let
-	fig, ax, hm = heatmap(t, z, κₛ[690:710, :]')
-	Colorbar(fig[1, 2], hm)
-	fig
-	# lines(t[2:end], κₛ[699, :])
-end
 
 # ╔═╡ 666c8467-6460-4ae9-adca-27c241ef3fdd
 TableOfContents()
@@ -312,24 +315,24 @@ TableOfContents()
 # ╟─ac639feb-9ee4-43f4-acd9-466fe3478d40
 # ╟─edd033e9-55ca-4b68-bf03-330baaa35e67
 # ╟─0f390348-56c2-46ee-98c3-0cd7fc09b1d3
-# ╟─d2a1ec90-16ef-47b2-9adb-8829681ad5d9
+# ╠═d2a1ec90-16ef-47b2-9adb-8829681ad5d9
 # ╟─0efe7042-82d9-44aa-be55-eb3634425bd5
 # ╟─06bd6b0a-8d01-43c1-8560-f3c20972fe9e
 # ╟─08a90e73-8312-4cd2-9c5d-8ff9829962bc
 # ╟─ebff4d86-8013-4473-ae43-0fc2b4fe2015
 # ╟─944526a6-5154-44ac-af06-c7dba206007c
+# ╟─f8da3bdd-c912-4764-9f65-afc25414a049
 # ╟─3e3eb9fd-8208-4f99-8cbb-730e4a501772
 # ╟─ab6e5cd8-9a90-4cc2-8e83-330aa7ae8b30
 # ╟─e14dbf9d-3a92-4051-b99f-8a7c9eb7de5f
 # ╟─16562398-cd61-4697-b94a-931a5d44a2f3
-# ╟─b3fc213d-03c1-4fb5-9c13-f3f6e5f1f648
+# ╠═b3fc213d-03c1-4fb5-9c13-f3f6e5f1f648
 # ╟─2a164d51-759d-4341-811d-d1fd406c0c3d
 # ╟─6cce82f4-b6a8-4be4-8e15-e93908d72eee
 # ╟─febc3ebe-8d07-4c7d-aaec-fd04bb7378a2
 # ╟─3217dc82-a988-448f-9bd4-ef5f62b75630
+# ╟─71181476-bbf2-4855-8973-89c0b8814cde
 # ╟─1a9eee8b-545f-4da3-a931-49d447521e3c
 # ╟─725627af-aafc-42de-9462-67577e01de98
 # ╟─0121a899-a1bf-4fc8-9aa2-ce5c801753ec
-# ╠═2f07bd23-6b22-4523-933e-f1ae04655f34
-# ╠═ad2e9fe2-fed5-4167-838e-4078f31ec6fe
 # ╟─666c8467-6460-4ae9-adca-27c241ef3fdd
