@@ -91,18 +91,18 @@ function run_OneDModel(salinity_initial_condition::Symbol;
     σ = seawater_density(model, geopotential_height = reference_gp_height)
     set!(model, T = T₀, S = S₀)
 
-    # simulation = Simulation(model, Δt = Δt, stop_time = sim_length * days)
+    simulation = Simulation(model, Δt = Δt, stop_time = sim_length * days)
 
-    # outputs = (T = model.tracers.T, S = model.tracers.S,
-    #            κ = save_diffusivity, σ = σ)
+    outputs = (T = model.tracers.T, S = model.tracers.S,
+               κ = save_diffusivity, σ = σ)
 
-    # simulation.output_writers[:outputs] = JLD2OutputWriter(model, outputs,
-    #                                         filename = savefile,
-    #                                         schedule = TimeInterval(save_freq))
+    simulation.output_writers[:outputs] = JLD2OutputWriter(model, outputs,
+                                            filename = savefile,
+                                            schedule = TimeInterval(save_freq))
 
-    # run!(simulation)
+    run!(simulation)
 
-    return model#nothing
+    return nothing
 
 end
 """
