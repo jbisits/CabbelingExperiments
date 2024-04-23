@@ -41,7 +41,8 @@ function run_OneDModel(salinity_initial_condition::Symbol;
                     Δt = 0.1,       # seconds
               savepath = "OneDModelOutput",
             sim_length = 11 / 24,       # in days
-             save_freq = 45        # seconds
+             save_freq = 45,        # seconds
+        salinity_noise = false
         )
 
     # Grid
@@ -69,7 +70,17 @@ function run_OneDModel(salinity_initial_condition::Symbol;
     Sₗ_array = range(Sₘ, Sₗ, length = Int(Nz / 2))
     S₀[:, :, :] = vcat(Sₗ_array, Sᵤ_array)
 
-    savefile = savepath*"_"*string(salinity_initial_condition)*".jld2"
+    if salinity_noise
+        z = znodes(grid, Center(), Center(), Center())
+        depths = findall(-500 - 10 .≤ z .≤ -500 + 10)
+        for i ∈ eachindex(z)
+            if i ∈ depths
+                S₀[:, :, i] .+= randn() * 2e-4
+            end
+        end
+    end
+
+    # savefile = savepath*"_"*string(salinity_initial_condition)*".jld2"
 
     @info "Setting up model and building simulation."
     model = NonhydrostaticModel(grid = grid,
@@ -80,18 +91,18 @@ function run_OneDModel(salinity_initial_condition::Symbol;
     σ = seawater_density(model, geopotential_height = reference_gp_height)
     set!(model, T = T₀, S = S₀)
 
-    simulation = Simulation(model, Δt = Δt, stop_time = sim_length * days)
+    # simulation = Simulation(model, Δt = Δt, stop_time = sim_length * days)
 
-    outputs = (T = model.tracers.T, S = model.tracers.S,
-               κ = save_diffusivity, σ = σ)
+    # outputs = (T = model.tracers.T, S = model.tracers.S,
+    #            κ = save_diffusivity, σ = σ)
 
-    simulation.output_writers[:outputs] = JLD2OutputWriter(model, outputs,
-                                            filename = savefile,
-                                            schedule = TimeInterval(save_freq))
+    # simulation.output_writers[:outputs] = JLD2OutputWriter(model, outputs,
+    #                                         filename = savefile,
+    #                                         schedule = TimeInterval(save_freq))
 
-    run!(simulation)
+    # run!(simulation)
 
-    return nothing
+    return model#nothing
 
 end
 """
@@ -137,6 +148,21 @@ function save_diffusivity(model)
     end
 
     return diffusivities
+end
+"""
+    function find_depth(model::Oceananigans.AbstractModel, depth::AbstractVector)
+Find the range of depths which satisfy `depth[1] .≤ z .≤ depth[2]`.
+"""
+function find_depth(model::Oceananigans.AbstractModel, depth::AbstractVector)
+
+    sort!(depth)
+    found_depth = begin
+                    z = znodes(model.grid, Center(), Center(), Center())
+                    depth_idx = findall(depth[1] .≤ z .≤ depth[2])
+                    z[depth_idx]
+                  end
+
+    return found_depth
 end
 """
     function hovmoller_plot(field::FieldTimeSeries, fieldname::AbstractString;

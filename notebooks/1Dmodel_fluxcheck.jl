@@ -66,7 +66,7 @@ begin
 	Δt = diff(t)
 	z = reverse(abs.(znodes(S)))
 	Δz = S.grid.Δzᵃᵃᶜ
-	
+
 	#Computations to check
 
 	# Potential energy for salt
@@ -74,22 +74,27 @@ begin
 	dₜ∫Szdz = vec(diff(∫Szdz, dims = 2)) ./ Δt
 
 	# Salt sorted, content and flux
-	S_sorted = similar(S.data[1, 1, :, :])
-	S_content = similar(S.data[1, 1, :, :])
+	S✶ = similar(S.data[1, 1, :, :])
+	∫Sdz = similar(S.data[1, 1, :, :])
 	for i ∈ eachindex(t)
-		S_sorted[:, i] = sort(interior(S, 1, 1, :, i), rev = true)	
-		S_content[:, i] = cumsum(reverse(S_sorted[:, i]) * Δz)
+		S✶[:, i] = sort(interior(S, 1, 1, :, i), rev = true)
+		∫Sdz[:, i] = cumsum(reverse(S✶[:, i]) * Δz)
 	end
 
-	S_flux = diff(S_content, dims = 2)
-	S_flux_int = vec(sum(S_flux * Δz, dims = 1)) ./ Δt
-	
+	dₜ∫Sdz = diff(∫Sdz, dims = 2)./ Δt'
+	∫dₜ∫Sdzdz = vec(sum(dₜ∫Sdz * Δz, dims = 1))
+
 	# Background potential energy
-	∫S✶zdz = sum(S_sorted .* z * Δz, dims = 1)
+	∫S✶zdz = sum(S✶ .* z * Δz, dims = 1)
 	dₜ∫S✶zdz = vec(diff(∫S✶zdz, dims = 2)) ./ Δt
-	
+
 	nothing
 end
+
+# ╔═╡ daf8bad7-444b-4da7-968b-32f29f1b7eba
+md"""
+### Time evolution
+"""
 
 # ╔═╡ 0efe7042-82d9-44aa-be55-eb3634425bd5
 let
@@ -112,8 +117,8 @@ end
 
 # ╔═╡ 08a90e73-8312-4cd2-9c5d-8ff9829962bc
 let
-	fig, ax = lines(interior(S, 1, 1, :, timestep), z, label = "Initial profile")
-	lines!(ax, S_sorted[:, timestep], z, label = "Sorted profile", linestyle = :dash)
+	fig, ax = lines(interior(S, 1, 1, :, timestep), z, label = "Profile")
+	lines!(ax, S✶[:, timestep], z, label = "Sorted profile", linestyle = :dash)
 	ax.title = "Salinity profiles t = $(t[timestep] / 60) minutes"
 	ax.xlabel = "Salinity (g/kg)"
 	ax.ylabel = "z (m)"
@@ -123,7 +128,7 @@ end
 
 # ╔═╡ ebff4d86-8013-4473-ae43-0fc2b4fe2015
 md"""
-### Energetics using salinity only
+### "Energetics" (salinity only)
 
 Plot of potential, background potential and available potential energies using only salt tracer (so not really energetic quantities...).
 The quantities (without gravity) are calculated as
@@ -137,29 +142,36 @@ The quantities (without gravity) are calculated as
 where ``S^{*}`` is the sorted salinity profile.
 """
 
-# ╔═╡ 944526a6-5154-44ac-af06-c7dba206007c
-begin
-	fig2, ax2 = lines(t[2:end], dₜ∫Szdz, label = "dₜPE")
-	lines!(ax2, t[2:end], dₜ∫S✶zdz, label = "dₜBPE", linestyle = :dash)
-	lines!(ax2, t[2:end], dₜ∫Szdz .- dₜ∫S✶zdz, label = "dₜAPE", linestyle = :dot)
-	ax2.title = "Potential energies"
-	axislegend(ax2, position = :rb)
+# ╔═╡ 1b7fba62-557e-4c53-8f67-b45b16548e1f
+let
+	fig2 = Figure(size = (500, 1000))
+	ax1 = Axis(fig2[1, 1], title = "Salinity potential energies")
+	ylims!(ax1, maximum(∫Szdz) .+ [-5, 10])
+	lines!(ax1, t, vec(∫Szdz), label = "PE")
+	lines!(ax1, t, vec(∫S✶zdz), label = "BPE", linestyle = :dash)
+	axislegend(ax1, position = :rb)
+	ax2 = Axis(fig2[2, 1], title = "Available potential energy")
+	lines!(ax2, t, vec(∫Szdz) .- vec(∫S✶zdz), label = "APE")
+	axislegend(ax2, position = :rt)
 	fig2
 end
 
-# ╔═╡ f8da3bdd-c912-4764-9f65-afc25414a049
-let
-	fig2, ax2 = lines(t, vec(∫Szdz), label = "PE")
-	lines!(ax2, t, vec(∫S✶zdz), label = "BPE", linestyle = :dash)
-	#lines!(ax2, t, vec(∫Szdz) .- vec(∫S✶zdz), label = "APE", linestyle = :dot)
-	ax2.title = "Potential energies"
-	axislegend(ax2, position = :rb)
+# ╔═╡ 944526a6-5154-44ac-af06-c7dba206007c
+begin
+	fig2 = Figure(size = (500, 1000))
+	ax1 = Axis(fig2[1, 1], title = "Time change salinity potential energies")
+	lines!(ax1, t[2:end], dₜ∫Szdz, label = "dₜPE")
+	lines!(ax1, t[2:end], dₜ∫S✶zdz, label = "dₜBPE", linestyle = :dash)
+	axislegend(ax1, position = :rb)
+	ax2 = Axis(fig2[2, 1], title = "Time change available potential energy")
+	lines!(ax2, t[2:end], dₜ∫Szdz .- dₜ∫S✶zdz, label = "dₜAPE", color = :red)
+	axislegend(ax2, position = :rt)
 	fig2
 end
 
 # ╔═╡ 3e3eb9fd-8208-4f99-8cbb-730e4a501772
 md"""
-### Background salinity state and diffusive salt flux
+### Flux and BPE
 
 Changes to the background potential energy can **only occur due to vertical diffusive flux** so we should have equality between
 ```math
@@ -169,19 +181,16 @@ Changes to the background potential energy can **only occur due to vertical diff
 
 # ╔═╡ ab6e5cd8-9a90-4cc2-8e83-330aa7ae8b30
 let
-	fig, ax = lines(t[2:end], dₜ∫S✶zdz, label = "Salt BPE")
-	lines!(ax, t[2:end], S_flux_int, label = "Salt flux", linestyle = :dash)
-	ax.title = "Salt flux and BPE"
+	fig = Figure(size = (500, 1000))
+	ax = Axis(fig[1, 1], title = "Salt flux and BPE")
+	lines!(ax, t[2:end], dₜ∫S✶zdz, label = "dₜ∫S✶zdz")
+	lines!(ax, t[2:end], ∫dₜ∫Sdzdz, label = "∫dₜ∫Sdzdz", linestyle = :dash)
 	axislegend(ax, position = :rb)
-	fig
-end
-
-# ╔═╡ e14dbf9d-3a92-4051-b99f-8a7c9eb7de5f
-let
-	fig, ax = lines(t[2:end], abs.(S_flux_int - dₜ∫S✶zdz))
-	ax.xlabel = "time (s)"
-	ax.ylabel = "Absolute error"
-	ax.title = "Absolute error between salinity flux and background salt energy"
+	ax2 = Axis(fig[2, 1],
+				title = "Absolute error between salinity flux and background salt energy",
+				xlabel = "time (s)",
+				ylabel = "Absolute error")
+	lines!(ax2, t[2:end], abs.(∫dₜ∫Sdzdz - dₜ∫S✶zdz))
 	fig
 end
 
@@ -198,24 +207,29 @@ begin
 	g = 1 # 9.81
 	∫σzdz = g * sum(interior(σ₀, 1, 1, :, :) .* z * Δz, dims = 1)
 	dₜ∫σzdz = vec(diff(∫σzdz, dims = 2)) ./ Δt
-
+ 
 	# Sorted density, density contet, density flux
-	σ_sorted = similar(σ₀.data[1, 1, :, :])
-	σ_content = similar(σ₀.data[1, 1, :, :])
+	σ✶ = similar(σ₀.data[1, 1, :, :])
+	∫σdz = similar(σ₀.data[1, 1, :, :])
 	for i ∈ eachindex(t)
-		σ_sorted[:, i] = sort(interior(σ₀, 1, 1, :, i), rev = true)	
-		σ_content[:, i] = cumsum(reverse(σ_sorted[:, i]) * Δz)
+		σ✶[:, i] = sort(interior(σ₀, 1, 1, :, i), rev = true)
+		∫σdz[:, i] = cumsum(reverse(σ✶[:, i]) * Δz)
 	end
 
-	σ_flux = diff(σ_content, dims = 2) 
-	σ_flux_int = vec(sum(σ_flux * Δz, dims = 1)) ./ Δt
-	
+	dₜ∫σdz = diff(∫σdz, dims = 2)
+	∫dₜ∫σdzdz = vec(sum(dₜ∫σdz * Δz, dims = 1)) ./ Δt
+
 	# Background potential energy
-	∫σ✶zdz = g * sum(σ_sorted .* z * Δz, dims = 1)
+	∫σ✶zdz = g * sum(σ✶ .* z * Δz, dims = 1)
 	dₜ∫σ✶zdz = vec(diff(∫σ✶zdz, dims = 2)) ./ Δt
 
 	nothing
 end
+
+# ╔═╡ 385c06a8-f60b-4f5b-8bd2-e2a56447397c
+md"""
+### Time evolution
+"""
 
 # ╔═╡ 2a164d51-759d-4341-811d-d1fd406c0c3d
 let
@@ -239,55 +253,62 @@ end
 # ╔═╡ febc3ebe-8d07-4c7d-aaec-fd04bb7378a2
 let
 	fig, ax = lines(interior(σ₀, 1, 1, :, timestep2), z, label = "Initial profile")
-	lines!(ax, σ_sorted[:, timestep2], z, label = "Sorted profile", linestyle = :dash)
+	lines!(ax, σ✶[:, timestep2], z, label = "Sorted profile", linestyle = :dash)
 	ax.title = "Density profiles t = $(t[timestep2] / 60) minutes"
 	ax.xlabel = "Density (σ₀, kg/m^3)"
 	ax.ylabel = "z (m)"
-	axislegend(ax)
+	axislegend(ax, position = :lb)
 	fig
+end
+
+# ╔═╡ c98ca6ac-0af9-4bbf-88d7-8ef72a58b3e0
+md"""
+### Energetics
+"""
+
+# ╔═╡ 4fea18d5-9fb5-40ff-8ea0-7e9bbf3cb9e1
+let
+	fig2 = Figure(size = (500, 1000))
+	ax1 = Axis(fig2[1, 1], title = "Potential energies")
+	lines!(ax1, t, vec(∫σzdz), label = "PE")
+	lines!(ax1, t, vec(∫σ✶zdz), label = "BPE", linestyle = :dash)
+	axislegend(ax1, position = :rb)
+	ax2 = Axis(fig2[2, 1], title = "Available potential energy")
+	lines!(ax2, t, vec(∫σzdz) .- vec(∫σ✶zdz), label = "APE")
+	axislegend(ax2, position = :rt)
+	fig2
 end
 
 # ╔═╡ 3217dc82-a988-448f-9bd4-ef5f62b75630
 let
-	fig2, ax2 = lines(t[2:end], dₜ∫σzdz, label = "dₜPE")
-	lines!(ax2, t[2:end], dₜ∫σ✶zdz, label = "dₜBPE", linestyle = :dash)
-	lines!(ax2, t[2:end], dₜ∫σzdz .- dₜ∫σ✶zdz, label = "dₜAPE", linestyle = :dot)
-	ax2.title = "Potential energies"
-	axislegend(ax2, position = :rb)
-	ax2.xlabel = "time (s)"
-	ax2.ylabel = "pseudo-Watts"
+	fig2 = Figure(size = (500, 1000))
+	ax1 = Axis(fig2[1, 1], title = "Time change potential energies")
+	lines!(ax1, t[2:end], dₜ∫σzdz, label = "dₜPE")
+	lines!(ax1, t[2:end], dₜ∫σ✶zdz, label = "dₜBPE", linestyle = :dash)
+	axislegend(ax1, position = :rb)
+	ax2 = Axis(fig2[2, 1], title = "Time change available potential energy")
+	lines!(ax2, t[2:end], dₜ∫σzdz .- dₜ∫σ✶zdz, label = "dₜAPE", color = :red)
+	axislegend(ax2, position = :rt)
 	fig2
 end
 
-# ╔═╡ 71181476-bbf2-4855-8973-89c0b8814cde
-let
-	fig2, ax2 = lines(t, vec(∫σzdz), label = "PE")
-	lines!(ax2, t, vec(∫σ✶zdz), label = "BPE", linestyle = :dash)
-	#lines!(ax2, t, vec(∫σzdz) .- vec(∫σ✶zdz), label = "APE", linestyle = :dot)
-	ax2.title = "Potential energies"
-	axislegend(ax2, position = :rb)
-	ax2.xlabel = "time (s)"
-	ax2.ylabel = "pseudo-Watts"
-	fig2
-end
+# ╔═╡ e01432d2-627c-44cf-aba7-67d2094092d3
+md"""
+### Flux and BPE
+"""
 
 # ╔═╡ 1a9eee8b-545f-4da3-a931-49d447521e3c
 let
-	fig, ax = lines(t[2:end], dₜ∫σ✶zdz, label = "BPE")
-	lines!(ax, t[2:end], σ_flux_int, label = "Density flux", linestyle = :dash)
-	ax.title = "Density flux and BPE"
-	ax.xlabel = "time (s)"
-	ax.ylabel = "pseduo-Watts"
+	fig = Figure(size = (500, 1000))
+	ax = Axis(fig[1, 1], title = "Density flux and BPE")
+	lines!(ax, t[2:end], dₜ∫σ✶zdz, label = "dₜ∫σ✶zdz")
+	lines!(ax, t[2:end], ∫dₜ∫σdzdz, label = "∫dₜ∫Sdzdz", linestyle = :dash)
 	axislegend(ax, position = :rb)
-	fig
-end
-
-# ╔═╡ 725627af-aafc-42de-9462-67577e01de98
-let
-	fig, ax = lines(t[2:end], log10.(abs.(σ_flux_int - dₜ∫σ✶zdz)))
-	ax.xlabel = "time (s)"
-	ax.ylabel = "Absolute error (log10)"
-	ax.title = "Absolute error between density flux and background energy"
+	ax2 = Axis(fig[2, 1],
+				title = "Absolute error between salinity flux and background salt energy",
+				xlabel = "time (s)",
+				ylabel = "Absolute error (log10)")
+	lines!(ax2, t[2:end], log10.(abs.(∫dₜ∫σdzdz - dₜ∫σ✶zdz)))
 	fig
 end
 
@@ -304,8 +325,31 @@ We calculate the diffusivity from the tracers using
 
 As this model has the diffusivity values parameterised we should recover the background diffusivity ``\kappa_{back} = 1\times 10^{-2}m^{2}s^{-1}`` in the isothermal case and something that looks like the convective adjustment schemes used above.
 
-**Need to check this and finish off the calculation.**
+From output below can see for all cases there diffusivity about the estimates match what is expected --- background diffusivity (``\kappa_{back} = 1\times 10^{-2}m^{2}s^{-1}``) in isothermal case convective diffusivity ``(\kappa_{c} = 1m^{2}s^{-1}``, ``\kappa_{c} = 10m^{2}s^{-1})`` in cabbeling cases.
 """
+
+# ╔═╡ 9a82d299-0274-4e68-9c4b-da1350e52fe1
+begin
+	dSdz = diff(reverse(S✶, dims = 1), dims = 1) ./ Δz
+	replace!(dSdz, 0 => NaN)
+	κₛ = dₜ∫Sdz[2:end, :] ./ dSdz[:, 2:end]
+	zrange = 690:710
+	κₛ[zrange, :]
+end
+
+# ╔═╡ 52a15ea8-600d-4bbf-8dee-def4895a4ded
+let
+	zrange = 698:702
+	# fig, ax, hm = heatmap(t[2:end], z[zrange], κₛ[zrange, :]')
+	# Colorbar(fig[1, 2], hm)
+	# fig
+	fig, ax = series(t[20:end-1], κₛ[zrange, 20:end], labels = ["z = -$(round(i, digits = 2))m" for i ∈ z[zrange]])
+	ax.title = "Diffusivity estimates for salinity about the model interface"
+	ax.xlabel = "time (s)"
+	ax.ylabel = "κ (m2/s)"
+	axislegend(ax)
+	fig
+end
 
 # ╔═╡ 666c8467-6460-4ae9-adca-27c241ef3fdd
 TableOfContents()
@@ -315,24 +359,28 @@ TableOfContents()
 # ╟─ac639feb-9ee4-43f4-acd9-466fe3478d40
 # ╟─edd033e9-55ca-4b68-bf03-330baaa35e67
 # ╟─0f390348-56c2-46ee-98c3-0cd7fc09b1d3
-# ╠═d2a1ec90-16ef-47b2-9adb-8829681ad5d9
+# ╟─d2a1ec90-16ef-47b2-9adb-8829681ad5d9
+# ╟─daf8bad7-444b-4da7-968b-32f29f1b7eba
 # ╟─0efe7042-82d9-44aa-be55-eb3634425bd5
 # ╟─06bd6b0a-8d01-43c1-8560-f3c20972fe9e
 # ╟─08a90e73-8312-4cd2-9c5d-8ff9829962bc
 # ╟─ebff4d86-8013-4473-ae43-0fc2b4fe2015
+# ╟─1b7fba62-557e-4c53-8f67-b45b16548e1f
 # ╟─944526a6-5154-44ac-af06-c7dba206007c
-# ╟─f8da3bdd-c912-4764-9f65-afc25414a049
 # ╟─3e3eb9fd-8208-4f99-8cbb-730e4a501772
 # ╟─ab6e5cd8-9a90-4cc2-8e83-330aa7ae8b30
-# ╟─e14dbf9d-3a92-4051-b99f-8a7c9eb7de5f
 # ╟─16562398-cd61-4697-b94a-931a5d44a2f3
-# ╠═b3fc213d-03c1-4fb5-9c13-f3f6e5f1f648
+# ╟─b3fc213d-03c1-4fb5-9c13-f3f6e5f1f648
+# ╟─385c06a8-f60b-4f5b-8bd2-e2a56447397c
 # ╟─2a164d51-759d-4341-811d-d1fd406c0c3d
 # ╟─6cce82f4-b6a8-4be4-8e15-e93908d72eee
 # ╟─febc3ebe-8d07-4c7d-aaec-fd04bb7378a2
+# ╟─c98ca6ac-0af9-4bbf-88d7-8ef72a58b3e0
+# ╟─4fea18d5-9fb5-40ff-8ea0-7e9bbf3cb9e1
 # ╟─3217dc82-a988-448f-9bd4-ef5f62b75630
-# ╟─71181476-bbf2-4855-8973-89c0b8814cde
+# ╟─e01432d2-627c-44cf-aba7-67d2094092d3
 # ╟─1a9eee8b-545f-4da3-a931-49d447521e3c
-# ╟─725627af-aafc-42de-9462-67577e01de98
 # ╟─0121a899-a1bf-4fc8-9aa2-ce5c801753ec
+# ╠═9a82d299-0274-4e68-9c4b-da1350e52fe1
+# ╠═52a15ea8-600d-4bbf-8dee-def4895a4ded
 # ╟─666c8467-6460-4ae9-adca-27c241ef3fdd
