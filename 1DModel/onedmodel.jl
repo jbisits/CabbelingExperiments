@@ -80,7 +80,7 @@ function run_OneDModel(salinity_initial_condition::Symbol;
         end
     end
 
-    # savefile = savepath*"_"*string(salinity_initial_condition)*".jld2"
+    savefile = savepath*"_"*string(salinity_initial_condition)*".jld2"
 
     @info "Setting up model and building simulation."
     model = NonhydrostaticModel(grid = grid,
