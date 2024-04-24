@@ -54,7 +54,7 @@ md"""
 """
 
 # ╔═╡ 0f390348-56c2-46ee-98c3-0cd7fc09b1d3
-@bind experiment Select(["isothermal", "cabbeling_cd1", "cabbeling_cd10"])
+@bind experiment Select(["isothermal_nonoise", "isothermal_withnoise", "cabbeling_cd1", "cabbeling_cd10"])
 
 # ╔═╡ d2a1ec90-16ef-47b2-9adb-8829681ad5d9
 begin
@@ -64,6 +64,7 @@ begin
 	σ₀ = FieldTimeSeries(iso_data, "σ")
 	t = S.times
 	Δt = diff(t)
+	zplot = znodes(S)
 	z = reverse(abs.(znodes(S)))
 	Δz = S.grid.Δzᵃᵃᶜ
 
@@ -98,7 +99,7 @@ md"""
 
 # ╔═╡ 0efe7042-82d9-44aa-be55-eb3634425bd5
 let
-	fig, ax, hm = heatmap(t, z, interior(S, 1, 1, :, :)', colormap = :haline)
+	fig, ax, hm = heatmap(t, zplot, interior(S, 1, 1, :, :)', colormap = :haline)
 	ax.title = "Salinity hovmoller"
 	ax.xlabel = "time (s)"
 	ax.ylabel = "z (m)"
@@ -117,8 +118,8 @@ end
 
 # ╔═╡ 08a90e73-8312-4cd2-9c5d-8ff9829962bc
 let
-	fig, ax = lines(interior(S, 1, 1, :, timestep), z, label = "Profile")
-	lines!(ax, S✶[:, timestep], z, label = "Sorted profile", linestyle = :dash)
+	fig, ax = lines(interior(S, 1, 1, :, timestep), zplot, label = "Profile")
+	lines!(ax, S✶[:, timestep], zplot, label = "Sorted profile", linestyle = :dash)
 	ax.title = "Salinity profiles t = $(t[timestep] / 60) minutes"
 	ax.xlabel = "Salinity (g/kg)"
 	ax.ylabel = "z (m)"
@@ -146,7 +147,7 @@ where ``S^{*}`` is the sorted salinity profile.
 let
 	fig2 = Figure(size = (500, 1000))
 	ax1 = Axis(fig2[1, 1], title = "Salinity potential energies")
-	ylims!(ax1, maximum(∫Szdz) .+ [-5, 10])
+	#ylims!(ax1, maximum(∫Szdz) .+ [-5, 10])
 	lines!(ax1, t, vec(∫Szdz), label = "PE")
 	lines!(ax1, t, vec(∫S✶zdz), label = "BPE", linestyle = :dash)
 	axislegend(ax1, position = :rb)
@@ -233,7 +234,7 @@ md"""
 
 # ╔═╡ 2a164d51-759d-4341-811d-d1fd406c0c3d
 let
-	fig, ax, hm = heatmap(t, z, interior(σ₀, 1, 1, :, :)', colormap = :dense)
+	fig, ax, hm = heatmap(t, zplot, interior(σ₀, 1, 1, :, :)', colormap = :dense)
 	ax.title = "Density hovmoller"
 	ax.xlabel = "time (s)"
 	ax.ylabel = "z (m)"
@@ -252,8 +253,8 @@ end
 
 # ╔═╡ febc3ebe-8d07-4c7d-aaec-fd04bb7378a2
 let
-	fig, ax = lines(interior(σ₀, 1, 1, :, timestep2), z, label = "Initial profile")
-	lines!(ax, σ✶[:, timestep2], z, label = "Sorted profile", linestyle = :dash)
+	fig, ax = lines(interior(σ₀, 1, 1, :, timestep2), zplot, label = "Initial profile")
+	lines!(ax, σ✶[:, timestep2], zplot, label = "Sorted profile", linestyle = :dash)
 	ax.title = "Density profiles t = $(t[timestep2] / 60) minutes"
 	ax.xlabel = "Density (σ₀, kg/m^3)"
 	ax.ylabel = "z (m)"
@@ -370,7 +371,7 @@ TableOfContents()
 # ╟─3e3eb9fd-8208-4f99-8cbb-730e4a501772
 # ╟─ab6e5cd8-9a90-4cc2-8e83-330aa7ae8b30
 # ╟─16562398-cd61-4697-b94a-931a5d44a2f3
-# ╟─b3fc213d-03c1-4fb5-9c13-f3f6e5f1f648
+# ╠═b3fc213d-03c1-4fb5-9c13-f3f6e5f1f648
 # ╟─385c06a8-f60b-4f5b-8bd2-e2a56447397c
 # ╟─2a164d51-759d-4341-811d-d1fd406c0c3d
 # ╟─6cce82f4-b6a8-4be4-8e15-e93908d72eee
@@ -381,6 +382,6 @@ TableOfContents()
 # ╟─e01432d2-627c-44cf-aba7-67d2094092d3
 # ╟─1a9eee8b-545f-4da3-a931-49d447521e3c
 # ╟─0121a899-a1bf-4fc8-9aa2-ce5c801753ec
-# ╠═9a82d299-0274-4e68-9c4b-da1350e52fe1
-# ╠═52a15ea8-600d-4bbf-8dee-def4895a4ded
+# ╟─9a82d299-0274-4e68-9c4b-da1350e52fe1
+# ╟─52a15ea8-600d-4bbf-8dee-def4895a4ded
 # ╟─666c8467-6460-4ae9-adca-27c241ef3fdd
