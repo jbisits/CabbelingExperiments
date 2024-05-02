@@ -18,43 +18,48 @@ end
 begin
 	using Pkg
 	Pkg.activate("..")
-	using JLD2, Oceananigans, CairoMakie, PlutoUI
+	using JLD2, Oceananigans, CairoMakie, PlutoUI, Statistics
 end
 
 # ╔═╡ ac639feb-9ee4-43f4-acd9-466fe3478d40
-md"""
-# Flux and background state check with 1D model
+begin
+	choose_expt = @bind experiment Select(["isothermal_nonoise", "isothermal_withnoise", "cabbeling_cd1_nonoise", "cabbeling_cd1_withnoise", "cabbeling_cd10_nonoise", "cabbeling_cd10_withnoise"])
+	
+	md"""
+	# Flux and background state check with 1D model
+	
+	While computing the background state and the buoyancy flux for the model there were some discrepancies.
+	In this notebook I run equivalent 1D model and analysis to try and find out what might be going on with some of these calculations.
+	
+	The main two experiments I will compare are the isothermal experiment and the cabbeling experiment (this is all I have done for DNS).
+	
+	## Model runs
+	
+	I have three model runs with background diffusivity ``\kappa_{back} = 1\times 10^{-2}\mathrm{m}^{2}\mathrm{s}^{-1}``:
+	
+	1. isothermal, uniform ``T = 0.5^{\circ}C`` (there is also a lower resolution one of these experiments)
+	2. cabbeling with convective diffusivity ``\kappa_{c} = 1\mathrm{m}^{2}\mathrm{s}^{-1}``
+	2. cabbeling with convective diffusivity ``\kappa_{c} = 10\mathrm{m}^{2}\mathrm{s}^{-1}``
+	
+	In all experiments with no initial noise in the salinity field, the salinity profile and the background profile *should be the same* as there are no sources and sinks of salinity.
+	We see this in the output below.
+	
+	In the isothermal case, the background state (for density) should be equal to the profile so the BPE and the PE should be equal (or very close to equal) throughout the length of the because the mixed water at the interface will not be denser/lighter than the lower/upper layers.
+	This means that there is no available potential energy in the system.
+	
+	In the cabbeling case, the background state (for density) and profile should start roughly equal but after the mixing has created some denser water the PE and the BPE should separate until when/if lower layer has all been transformed to the maximum density.
+	This means that there is available potential energy in the system which is dissipated as the simulation runs.
 
-While computing the background state and the buoyancy flux for the model there were some discrepancies.
-In this notebook I run equivalent 1D model and analysis to try and find out what might be going on with some of these calculations.
+	Adding noise about the interface gives a closer representation of what the DNS experiments look like.
 
-The main two experiments I will compare are the isothermal experiment and the cabbeling experiment (this is all I have done for DNS).
-
-## Model runs
-
-I have three model runs with background diffusivity ``\kappa_{back} = 1\times 10^{-2}\mathrm{m}^{2}\mathrm{s}^{-1}``:
-
-1. isothermal, uniform ``T = 0.5^{\circ}C`` (there is also a lower resolution one of these experiments)
-2. cabbeling with convective diffusivity ``\kappa_{c} = 1\mathrm{m}^{2}\mathrm{s}^{-1}``
-2. cabbeling with convective diffusivity ``\kappa_{c} = 10\mathrm{m}^{2}\mathrm{s}^{-1}``
-
-In all cases the salinity profile and the background profile *should be the same* as there are no sources and sinks of salinity.
-We see this in the output below.
-
-In the isothermal case, the background state (for density) should be equal to the profile so the BPE and the PE should be equal (or very close to equal) throughout the length of the because the mixed water at the interface will not be denser/lighter than the lower/upper layers.
-This means that there is no available potential energy in the system.
-
-In the cabbeling case, the background state (for density) and profile should start roughly equal but after the mixing has created some denser water the PE and the BPE should separate until when/if lower layer has all been transformed to the maximum density.
-This means that there is available potential energy in the system which is dissipated as the simulation runs
-"""
+	The different experiments can be chose from this list $(choose_expt).
+	"""
+end
 
 # ╔═╡ edd033e9-55ca-4b68-bf03-330baaa35e67
 md"""
 ## Salinity
 """
-
-# ╔═╡ 0f390348-56c2-46ee-98c3-0cd7fc09b1d3
-@bind experiment Select(["isothermal_nonoise", "isothermal_withnoise", "cabbeling_cd1", "cabbeling_cd10_nonoise", "cabbeling_cd10_withnoise"])
 
 # ╔═╡ d2a1ec90-16ef-47b2-9adb-8829681ad5d9
 begin
@@ -67,6 +72,12 @@ begin
 	zplot = znodes(S)
 	z = reverse(abs.(znodes(S)))
 	Δz = S.grid.Δzᵃᵃᶜ
+
+	κc = if experiment ∈ ("cabbeling_cd1_nonoise", "cabbeling_cd1_withnoise")
+			 1.0
+		 else
+			 10.0
+		 end
 
 	#Computations to check
 
@@ -92,11 +103,6 @@ begin
 	nothing
 end
 
-# ╔═╡ daf8bad7-444b-4da7-968b-32f29f1b7eba
-md"""
-### Time evolution
-"""
-
 # ╔═╡ 0efe7042-82d9-44aa-be55-eb3634425bd5
 let
 	fig, ax, hm = heatmap(t, zplot, interior(S, 1, 1, :, :)', colormap = :haline)
@@ -106,6 +112,11 @@ let
 	Colorbar(fig[1, 2], hm, label = "S (g/kg )")
 	fig
 end
+
+# ╔═╡ daf8bad7-444b-4da7-968b-32f29f1b7eba
+md"""
+### Time evolution
+"""
 
 # ╔═╡ 06bd6b0a-8d01-43c1-8560-f3c20972fe9e
 begin
@@ -271,6 +282,7 @@ md"""
 let
 	fig2 = Figure(size = (500, 1000))
 	ax1 = Axis(fig2[1, 1], title = "Potential energies")
+	ylims!(ax1, maximum(∫σzdz) .+ [-1e2, 1e2])
 	lines!(ax1, t, vec(∫σzdz), label = "PE")
 	lines!(ax1, t, vec(∫σ✶zdz), label = "BPE", linestyle = :dash)
 	axislegend(ax1, position = :rb)
@@ -306,7 +318,7 @@ let
 	lines!(ax, t[2:end], ∫dₜ∫σdzdz, label = "∫dₜ∫Sdzdz", linestyle = :dash)
 	axislegend(ax, position = :rb)
 	ax2 = Axis(fig[2, 1],
-				title = "Absolute error between salinity flux and background salt energy",
+				title = "Absolute error between density flux and background potential energy",
 				xlabel = "time (s)",
 				ylabel = "Absolute error (log10)")
 	lines!(ax2, t[2:end], log10.(abs.(∫dₜ∫σdzdz - dₜ∫σ✶zdz)))
@@ -335,11 +347,18 @@ begin
 	replace!(dSdz, 0 => NaN)
 	κₛ = dₜ∫Sdz[2:end, :] ./ dSdz[:, 2:end]
 	zrange = 690:710
-	κₛ[zrange, :]
+	∫κₛ = sum(κₛ[.!isnan.(κₛ)] * Δz, dims = 1)
+	κₛ_mean = mean(κₛ[.!isnan.(κₛ)])
+	nothing
 end
 
 # ╔═╡ 2642bc19-9c7c-45f5-b199-fe318da98101
-@bind z_ PlutoUI.Slider(eachindex(z[1:end-1]))
+begin
+	z_slider = @bind z_ PlutoUI.Slider(eachindex(z[1:end-1]))
+	md"""
+	Choose a depth level to display the diffusivity calculated $(z_slider).
+	"""
+end
 
 # ╔═╡ 52a15ea8-600d-4bbf-8dee-def4895a4ded
 let
@@ -358,7 +377,7 @@ let
 	ax.xlabel = "time (s)"
 	ax.ylabel = "κ (m2/s)"
 	hlines!(0.01, label = "κ background", color = :black, linestyle = :dash)
-	hlines!(10, label = "κ background", color = :red, linestyle = :dash)
+	hlines!(κc, label = "κ convective", color = :red, linestyle = :dash)
 	axislegend(ax)
 	fig
 end
@@ -369,12 +388,320 @@ let
 	# fig, ax, hm = heatmap(t[2:end], z[zrange], κₛ[zrange, :]')
 	# Colorbar(fig[1, 2], hm)
 	# fig
-	fig, ax = series(t[20:end-1], κₛ[zrange, 20:end], labels = ["z = -$(round(i, digits = 2))m" for i ∈ z[zrange]], solid_color=:black)
+	fig, ax = series(t[20:end-1], κₛ[zrange, 20:end], labels = ["z = -$(round(i, digits = 2))m" for i ∈ z[zrange]], solid_color=:grey)
 	ax.title = "Diffusivity estimates for salinity about the model interface"
 	ax.xlabel = "time (s)"
 	# ax.ylabel = "κ (m2/s)"
 	# axislegend(ax)
 	Legend(fig[1, 2], ax)
+	fig
+end
+
+# ╔═╡ 4f5f7717-53fc-4252-804a-c0a3293df8d5
+begin
+	iso_path = "../outputs_equaldiffusion/isothermal_stepchange_nothing_660min/isothermal_profile.jld2"
+	cab_path = "../outputs_equaldiffusion/cabbeling_stepchange_nothing_660min/cabbeling_profile.jld2"
+	DNS_EXPT = @bind dns_expt Select([iso_path => "isothermal", cab_path => "cabbeling"])
+	md"""
+	# DNS profile
+	
+	I am now interested in how a single profile of the DNS compares to this.
+	Eventually I will also look at a horizontally averaged profile but the full thing will use all volume elements of the 3D grid resorted.
+	
+	There are only two DNS experiments one isothermal, single scalar field (salinity), and the cabbeling, two tracer fields (salinity and temperature).
+	
+	There are the same number of vertical levels so I should be able as the 1D model above but the diffusivity is a `ScalarDiffusivity` with value of ``1\times 10^{-7}\mathrm{m}^{2}\mathrm{s}^{-1}``.
+
+	Simulation: $(DNS_EXPT).
+
+	## Salinity
+	"""
+end
+
+# ╔═╡ 0602c590-4435-4963-acd3-15798c9de894
+begin
+	file = jldopen(dns_expt)
+	S_dns = file["S"]
+	T_dns = file["T"]
+	σ₀_dns = file["σ"]
+	t_dns = file["time"]
+	close(file)
+	
+	Δt_dns = diff(t_dns)
+
+	Δz_dns = dns_expt == cab_path ? 0.0007142857142857784 :  0.0010000000000000009
+	z_dns_plot = range(-1, 0, step = Δz_dns)
+	z_dns = reverse(abs.(z_dns_plot))
+	
+	#Computations to check
+
+	# Potential energy for salt
+	∫Szdz_dns = sum(S_dns .* z_dns * Δz_dns, dims = 1)
+	dₜ∫Szdz_dns = vec(diff(∫Szdz_dns, dims = 2)) ./ Δt_dns
+
+	# Salt sorted, content and flux
+	S✶_dns = similar(S_dns)
+	∫Sdz_dns = similar(S_dns)
+	for i ∈ eachindex(t_dns)
+		S✶_dns[:, i] = sort(S_dns[:, i], rev = true)
+		∫Sdz_dns[:, i] = cumsum(reverse(S✶_dns[:, i]) * Δz_dns)
+	end
+
+	dₜ∫Sdz_dns = diff(∫Sdz_dns, dims = 2)./ Δt_dns'
+	∫dₜ∫Sdzdz_dns = vec(sum(dₜ∫Sdz_dns * Δz_dns, dims = 1))
+
+	# Background potential energy
+	∫S✶zdz_dns = sum(S✶_dns .* z_dns * Δz_dns, dims = 1)
+	dₜ∫S✶zdz_dns = vec(diff(∫S✶zdz_dns, dims = 2)) ./ Δt_dns
+
+	nothing
+end
+
+# ╔═╡ ebf2aa23-5cdd-4de7-a285-ce1534666899
+md"""
+### Time evolution
+"""
+
+# ╔═╡ 7a2b5232-e081-45ae-95be-7d219aae91ed
+let
+	fig, ax, hm = heatmap(t_dns, z_dns, S_dns', colormap = :haline)
+	ax.title = "Salinity hovmoller"
+	ax.xlabel = "time (s)"
+	ax.ylabel = "z (m)"
+	Colorbar(fig[1, 2], hm, label = "S (g/kg )")
+	fig
+end
+
+# ╔═╡ ffdd23ec-190f-4307-adc9-7058bfcc2593
+begin
+	t_slider_dns = @bind timestep_dns PlutoUI.Slider(eachindex(t_dns))
+	md"""
+	Slider for plotting salinity profiles (profile and sorted profile)
+	$(t_slider_dns)
+	"""
+end
+
+# ╔═╡ b4dcdf1e-09ce-41e5-83de-90356dce3eeb
+let
+	fig, ax = lines(S_dns[:, timestep_dns], z_dns_plot, label = "Profile")
+	lines!(ax, S✶_dns[:, timestep_dns], z_dns_plot, label = "Sorted profile", linestyle = :dash)
+	ax.title = "Salinity profiles t = $(t[timestep_dns] / 60) minutes"
+	ax.xlabel = "Salinity (g/kg)"
+	ax.ylabel = "z (m)"
+	axislegend(ax, position = :lb)
+	fig
+end
+
+# ╔═╡ 7579eacb-fddd-40bb-a50f-a8f98cbbdbcd
+md"""
+### "Energetics" (Salinity only) 
+"""
+
+# ╔═╡ cf9aba94-ef48-4478-a49a-92e9da84e9d9
+let
+	fig2 = Figure(size = (500, 1000))
+	ax1 = Axis(fig2[1, 1], title = "Salinity potential energies")
+	lines!(ax1, t_dns, vec(∫Szdz_dns), label = "PE")
+	lines!(ax1, t_dns, vec(∫S✶zdz_dns), label = "BPE", linestyle = :dash)
+	axislegend(ax1, position = :rb)
+	ax2 = Axis(fig2[2, 1], title = "Available potential energy")
+	lines!(ax2, t_dns, vec(∫Szdz_dns) .- vec(∫S✶zdz_dns), label = "APE")
+	axislegend(ax2, position = :rt)
+	fig2
+end
+
+# ╔═╡ d552957f-3c0d-40f2-b356-1914449c0e2d
+let
+	fig2 = Figure(size = (500, 1000))
+	ax1 = Axis(fig2[1, 1], title = "Time change salinity potential energies")
+	lines!(ax1, t_dns[2:end], dₜ∫Szdz_dns, label = "dₜPE")
+	lines!(ax1, t_dns[2:end], dₜ∫S✶zdz_dns, label = "dₜBPE", linestyle = :dash)
+	axislegend(ax1, position = :rb)
+	ax2 = Axis(fig2[2, 1], title = "Time change available potential energy")
+	lines!(ax2, t_dns[2:end], dₜ∫Szdz_dns .- dₜ∫S✶zdz_dns, label = "dₜAPE", color = :red)
+	axislegend(ax2, position = :rt)
+	fig2
+end
+
+# ╔═╡ 998bbe9a-5846-47a5-8c52-ab550f0c32fd
+md"""
+### Flux and BPE
+"""
+
+# ╔═╡ 1b4b28cb-5220-4a4f-ab98-7d19de52343c
+let
+	fig = Figure(size = (500, 1000))
+	ax = Axis(fig[1, 1], title = "Salt flux and BPE")
+	lines!(ax, t_dns[2:end], dₜ∫S✶zdz_dns, label = "dₜ∫S✶zdz")
+	lines!(ax, t_dns[2:end], ∫dₜ∫Sdzdz_dns, label = "∫dₜ∫Sdzdz", linestyle = :dash)
+	axislegend(ax, position = :rb)
+	ax2 = Axis(fig[2, 1],
+				title = "Absolute error between salinity flux and background salt energy",
+				xlabel = "time (s)",
+				ylabel = "Absolute error")
+	lines!(ax2, t_dns[2:end], abs.(∫dₜ∫Sdzdz_dns - dₜ∫S✶zdz_dns))
+	fig
+end
+
+# ╔═╡ cfb85301-23bc-4074-9a28-7b0a4952142f
+md"""
+## Density
+"""
+
+# ╔═╡ 218f3e2f-a448-4c8c-9101-e542ae8478c2
+begin
+	# Potential energy no gravity
+	∫σzdz_dns = 9.81 * sum(σ₀_dns .* z_dns * Δz_dns, dims = 1)
+	dₜ∫σzdz_dns = vec(diff(∫σzdz_dns, dims = 2)) ./ Δt_dns
+ 
+	# Sorted density, density contet, density flux
+	σ✶_dns = similar(σ₀_dns)
+	∫σdz_dns = similar(σ₀_dns)
+	for i ∈ eachindex(t_dns)
+		σ✶_dns[:, i] = sort(σ₀_dns[:, i], rev = true)
+		∫σdz_dns[:, i] = cumsum(reverse(σ✶_dns[:, i]) * Δz)
+	end
+
+	dₜ∫σdz_dns = diff(∫σdz_dns, dims = 2)
+	∫dₜ∫σdzdz_dns = (vec(sum(dₜ∫σdz_dns * Δz_dns, dims = 1)) ./ Δt_dns) ./ 100
+
+	# Background potential energy
+	∫σ✶zdz_dns = 9.81 * sum(σ✶_dns .* z_dns * Δz_dns, dims = 1)
+	dₜ∫σ✶zdz_dns = vec(diff(∫σ✶zdz_dns, dims = 2)) ./ Δt_dns
+
+	nothing
+end
+
+# ╔═╡ 9833d0cc-d423-4901-abb3-bad2ad8fe895
+md"""
+### Time evolution
+"""
+
+# ╔═╡ 7718a697-809a-43af-9a9a-87da66cc655d
+let
+	fig, ax, hm = heatmap(t_dns, z_dns_plot, σ₀_dns', colormap = :dense)
+	ax.title = "Density hovmoller"
+	ax.xlabel = "time (s)"
+	ax.ylabel = "z (m)"
+	Colorbar(fig[1, 2], hm, label = "σ₀ (kg/m^3 )")
+	fig
+end
+
+# ╔═╡ c0ceb3b3-0c79-4a69-ade1-8c6281b3bab1
+begin
+	t_slider_dns_2 = @bind timestep_dns_2 PlutoUI.Slider(eachindex(t_dns))
+	md"""
+	Slider for plotting density profiles (profile and sorted profile)
+	$(t_slider_dns_2)
+	"""
+end
+
+# ╔═╡ 68b20f1d-649b-4cb7-9d80-7f66e08691f4
+let
+	fig, ax = lines(σ₀_dns[:, timestep_dns_2], z_dns_plot, label = "Initial profile")
+	lines!(ax, σ✶_dns[:, timestep_dns_2], z_dns_plot, label = "Sorted profile", linestyle = :dash)
+	ax.title = "Density profiles t = $(t[timestep_dns_2] / 60) minutes"
+	ax.xlabel = "Density (σ₀, kg/m^3)"
+	ax.ylabel = "z (m)"
+	axislegend(ax, position = :lb)
+	fig
+end
+
+# ╔═╡ 551f307c-f4bc-4b3b-9704-e721e2429247
+md"""
+### Energetics
+"""
+
+# ╔═╡ 17615a2c-41d5-454b-b786-1c87191ffc31
+let
+	fig2 = Figure(size = (500, 1000))
+	ax1 = Axis(fig2[1, 1], title = "Potential energies")
+	lines!(ax1, t_dns, vec(∫σzdz_dns), label = "PE")
+	lines!(ax1, t_dns, vec(∫σ✶zdz_dns), label = "BPE", linestyle = :dash)
+	axislegend(ax1, position = :rb)
+	ax2 = Axis(fig2[2, 1], title = "Available potential energy")
+	lines!(ax2, t_dns, vec(∫σzdz_dns) .- vec(∫σ✶zdz_dns), label = "APE")
+	axislegend(ax2, position = :rt)
+	fig2
+end
+
+# ╔═╡ cb5cc791-f7e1-450e-bbc9-e0edb2b22498
+let
+	fig2 = Figure(size = (500, 1000))
+	ax1 = Axis(fig2[1, 1], title = "Time change potential energies")
+	lines!(ax1, t_dns[2:end], dₜ∫σzdz_dns, label = "dₜPE")
+	lines!(ax1, t_dns[2:end], dₜ∫σ✶zdz_dns, label = "dₜBPE", linestyle = :dash)
+	axislegend(ax1, position = :rb)
+	ax2 = Axis(fig2[2, 1], title = "Time change available potential energy")
+	lines!(ax2, t_dns[2:end], dₜ∫σzdz_dns .- dₜ∫σ✶zdz_dns, label = "dₜAPE", color = :red)
+	axislegend(ax2, position = :rt)
+	fig2
+end
+
+# ╔═╡ cb227724-0437-444d-98bc-be2f658c2702
+md"""
+### Flux and BPE
+"""
+
+# ╔═╡ 5e993f26-9ce3-4f11-83a8-6c6f2a78fc12
+let
+	fig = Figure(size = (500, 1000))
+	ax = Axis(fig[1, 1], title = "Density flux and BPE")
+	lines!(ax, t_dns[2:end], dₜ∫σ✶zdz_dns, label = "dₜ∫σ✶zdz")
+	lines!(ax, t_dns[2:end], ∫dₜ∫σdzdz_dns, label = "∫dₜ∫Sdzdz", linestyle = :dash)
+	axislegend(ax, position = :rb)
+	ax2 = Axis(fig[2, 1],
+				title = "Absolute error between density flux and background potential energy",
+				xlabel = "time (s)",
+				ylabel = "Absolute error (log10)")
+	lines!(ax2, t_dns[2:end], log10.(abs.(∫dₜ∫σdzdz_dns - dₜ∫σ✶zdz_dns)))
+	fig
+end
+
+# ╔═╡ cd5de5b1-33f9-4a32-8fc6-6724ce1570a8
+md"""
+## Diffusivity
+
+### Salt or (temperature)
+"""
+
+# ╔═╡ f3b225dc-8cc6-444d-b6ae-7ef7798f3303
+begin
+	dSdz_dns = diff(reverse(S✶_dns, dims = 1), dims = 1) ./ Δz_dns
+	replace!(dSdz_dns, 0 => NaN)
+	κₛ_dns = dₜ∫Sdz_dns[2:end, :] ./ dSdz_dns[:, 2:end]
+	zrange_dns = 690:710
+	∫κₛ_dns = sum(κₛ_dns[.!isnan.(κₛ_dns)] * Δz_dns, dims = 1)
+	κₛ_dns_mean = mean(κₛ_dns[.!isnan.(κₛ_dns)])
+	nothing
+end
+
+# ╔═╡ 65c16680-0150-44c8-8cad-5a0023abf916
+begin
+	z_slider_dns = @bind z_dns_ PlutoUI.Slider(eachindex(z_dns[1:end-1]))
+	md"""
+	Choose a depth level to display the diffusivity calculated $(z_slider_dns).
+	"""
+end
+
+# ╔═╡ 2bee25dc-8e7d-4476-9b13-b3b3760533bd
+let
+	# zrange = 680:720
+	# fig, ax, hm = heatmap(t[2:end], z_dns[:], κₛ_dns[:, :]')
+	# Colorbar(fig[1, 2], hm)
+	# fig
+	# fig, ax = series(t[20:end-1], κₛ[zrange, 20:end], labels = ["z = -$(round(i, digits = 2))m" for i ∈ z[zrange]], solid_color=:black)
+	# ax.title = "Diffusivity estimates for salinity about the model interface"
+	# ax.xlabel = "time (s)"
+	# ax.ylabel = "κ (m2/s)"
+	# axislegend(ax)
+	# Legend(fig[1, 2], ax)
+	fig, ax = lines(t_dns[20:end-1], κₛ_dns[z_dns_, 20:end], label = "z = -$(round(z_dns[z_dns_], digits = 2))", solid_color=:black)
+	ax.title = "Diffusivity estimates for salinity about the model interface"
+	ax.xlabel = "time (s)"
+	ax.ylabel = "κ (m2/s)"
+	hlines!(1e-7, label = "κ molecular", color = :red, linestyle = :dash)
+	axislegend(ax)
 	fig
 end
 
@@ -385,10 +712,9 @@ TableOfContents()
 # ╟─a290de4c-f791-11ee-0e04-11e4e34b7428
 # ╟─ac639feb-9ee4-43f4-acd9-466fe3478d40
 # ╟─edd033e9-55ca-4b68-bf03-330baaa35e67
-# ╟─0f390348-56c2-46ee-98c3-0cd7fc09b1d3
 # ╟─d2a1ec90-16ef-47b2-9adb-8829681ad5d9
-# ╟─daf8bad7-444b-4da7-968b-32f29f1b7eba
 # ╟─0efe7042-82d9-44aa-be55-eb3634425bd5
+# ╟─daf8bad7-444b-4da7-968b-32f29f1b7eba
 # ╟─06bd6b0a-8d01-43c1-8560-f3c20972fe9e
 # ╟─08a90e73-8312-4cd2-9c5d-8ff9829962bc
 # ╟─ebff4d86-8013-4473-ae43-0fc2b4fe2015
@@ -412,4 +738,30 @@ TableOfContents()
 # ╟─2642bc19-9c7c-45f5-b199-fe318da98101
 # ╟─52a15ea8-600d-4bbf-8dee-def4895a4ded
 # ╟─cd11a001-c306-4e16-8df5-8a51eb0a46ee
+# ╟─4f5f7717-53fc-4252-804a-c0a3293df8d5
+# ╟─0602c590-4435-4963-acd3-15798c9de894
+# ╟─ebf2aa23-5cdd-4de7-a285-ce1534666899
+# ╟─7a2b5232-e081-45ae-95be-7d219aae91ed
+# ╟─ffdd23ec-190f-4307-adc9-7058bfcc2593
+# ╟─b4dcdf1e-09ce-41e5-83de-90356dce3eeb
+# ╟─7579eacb-fddd-40bb-a50f-a8f98cbbdbcd
+# ╟─cf9aba94-ef48-4478-a49a-92e9da84e9d9
+# ╟─d552957f-3c0d-40f2-b356-1914449c0e2d
+# ╟─998bbe9a-5846-47a5-8c52-ab550f0c32fd
+# ╟─1b4b28cb-5220-4a4f-ab98-7d19de52343c
+# ╟─cfb85301-23bc-4074-9a28-7b0a4952142f
+# ╟─218f3e2f-a448-4c8c-9101-e542ae8478c2
+# ╟─9833d0cc-d423-4901-abb3-bad2ad8fe895
+# ╟─7718a697-809a-43af-9a9a-87da66cc655d
+# ╟─c0ceb3b3-0c79-4a69-ade1-8c6281b3bab1
+# ╟─68b20f1d-649b-4cb7-9d80-7f66e08691f4
+# ╟─551f307c-f4bc-4b3b-9704-e721e2429247
+# ╟─17615a2c-41d5-454b-b786-1c87191ffc31
+# ╟─cb5cc791-f7e1-450e-bbc9-e0edb2b22498
+# ╟─cb227724-0437-444d-98bc-be2f658c2702
+# ╟─5e993f26-9ce3-4f11-83a8-6c6f2a78fc12
+# ╟─cd5de5b1-33f9-4a32-8fc6-6724ce1570a8
+# ╟─f3b225dc-8cc6-444d-b6ae-7ef7798f3303
+# ╟─65c16680-0150-44c8-8cad-5a0023abf916
+# ╟─2bee25dc-8e7d-4476-9b13-b3b3760533bd
 # ╟─666c8467-6460-4ae9-adca-27c241ef3fdd
