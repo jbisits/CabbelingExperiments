@@ -163,7 +163,7 @@ let
 	lines!(ax1, t, vec(∫S✶zdz), label = "BPE", linestyle = :dash)
 	axislegend(ax1, position = :rb)
 	ax2 = Axis(fig2[2, 1], title = "Available potential energy")
-	lines!(ax2, t, vec(∫Szdz) .- vec(∫S✶zdz), label = "APE")
+	lines!(ax2, t[400:end], vec(∫Szdz)[400:end] .- vec(∫S✶zdz)[400:end], label = "APE")
 	axislegend(ax2, position = :rt)
 	fig2
 end
@@ -210,13 +210,53 @@ end
 md"""
 ## Density
 
-As the salinity is looking ok I would like to look at density and see if I can make sense of things in the 1D case.
+When using the density the energetic quantities are the actual quantites (not the faux energetics computed using salinity only).
+This means that changes in the background potential energy can be linked to a density flux.
+
+Mathematically we can see this because
+```math
+\begin{equation}
+\frac{\mathrm{d}}{\mathrm{d} t}E_{b} = \frac{\mathrm{d}}{\mathrm{d} t}g\int_{V}\rho z^{*}\mathrm{d}V
+\end{equation}
+```
+where ``z^{*}`` is
+```math
+\begin{equation}
+z^{*} = \frac{1}{A}\int_{\rho_{\mathrm{min}}}^{\rho'}\mathrm{d}V
+\end{equation}
+```
+for all ``\rho_{\mathrm{min}} \leq \rho' \leq \rho_{\mathrm{max}}`` in the sorted 1D density profile, ``\rho^{*}``, so
+```math
+\begin{equation}
+\frac{\mathrm{d}}{\mathrm{d} t}E_{b} = \frac{g}{A}\frac{\partial}{\partial t}\int_{V}\rho^{*}\left(\int_{\rho_{\mathrm{min}}}^{\rho'}\mathrm{d}V\right)\mathrm{d}V.
+\end{equation}
+```
+As
+```math
+\int_{\rho_{\mathrm{min}}}^{\rho'}\mathrm{d}V
+```
+is the cumulative volume up to ``\rho'`` in the sorted array, let this amount of volume be $V'$, this can be inverted to give to integrate up to $V'$,
+```math
+\int_{\rho_{\mathrm{min}}}^{\rho'}\mathrm{d}V \Leftrightarrow \int_{V_{\mathrm{min}}}^{V'}\mathrm{d}V,
+```
+hence we have
+```math
+\begin{equation}
+\frac{\mathrm{d}}{\mathrm{d} t}E_{b} = \frac{g}{A}\int_{V}\frac{\partial}{\partial t}\int_{V_{\mathrm{min}}}^{V'}\rho^{*}\mathrm{d}V\mathrm{d}V.
+\end{equation}
+```
+
+This derivation shows that the density content (not sure if this term is appropriate as is not measureable like salinity or heat) within a bounding volume $V'$ in the sorted reference profile can only be caused by mixing (i.e. a change in the density content within a fixed volume over time is proprtional to a diffusive flux).
+
+My work then becomes interesting because we show the influence of non-linearity by an increase in density changing the APE.
+
+By closing the energy budget should be able to use something like Winters et al. (1995) energy diagram and show how APE generation occurs from non-linearity.
 """
 
 # ╔═╡ b3fc213d-03c1-4fb5-9c13-f3f6e5f1f648
 begin
 	# Potential energy no gravity
-	g = 1 # 9.81
+	g = 9.81
 	∫σzdz = g * sum(interior(σ₀, 1, 1, :, :) .* z * Δz, dims = 1)
 	dₜ∫σzdz = vec(diff(∫σzdz, dims = 2)) ./ Δt
  
@@ -235,6 +275,18 @@ begin
 	∫σ✶zdz = g * sum(σ✶ .* z * Δz, dims = 1)
 	dₜ∫σ✶zdz = vec(diff(∫σ✶zdz, dims = 2)) ./ Δt
 
+	# Alternate method using z✶
+
+	Δxgrid, Δygrid, Δzgrid = σ₀.grid.Δxᶜᵃᵃ, σ₀.grid.Δyᵃᶜᵃ, σ₀.grid.Δzᵃᵃᶜ
+	ΔV = Δxgrid * Δygrid * Δzgrid
+	z✶ = cumsum(ones(length((σ✶[:, 1]))) * ΔV)
+
+	∫σz✶dz = vec(g * sum(interior(σ₀, 1, 1, :, :) .* z✶ * Δz, dims = 1))
+	dₜ∫σz✶dz = diff(∫σz✶dz) ./ Δt
+	
+	∫σ✶z✶dz = vec(g * sum(σ✶ .* z✶ * Δz, dims = 1))
+	dₜ∫σ✶z✶dz = diff(∫σ✶z✶dz) ./ Δt
+		
 	nothing
 end
 
@@ -282,12 +334,15 @@ md"""
 let
 	fig2 = Figure(size = (500, 1000))
 	ax1 = Axis(fig2[1, 1], title = "Potential energies")
-	ylims!(ax1, maximum(∫σzdz) .+ [-1e2, 1e2])
-	lines!(ax1, t, vec(∫σzdz), label = "PE")
-	lines!(ax1, t, vec(∫σ✶zdz), label = "BPE", linestyle = :dash)
+	#ylims!(ax1, maximum(∫σzdz) .+ [-1e2, 1e2])
+	#lines!(ax1, t, vec(∫σzdz), label = "PE")
+	#lines!(ax1, t, vec(∫σ✶zdz), label = "BPE", linestyle = :dash)
+	lines!(ax1, t, ∫σz✶dz, label = "PE")
+	lines!(ax1, t, ∫σ✶z✶dz, label = "BPE", linestyle = :dash)
 	axislegend(ax1, position = :rb)
 	ax2 = Axis(fig2[2, 1], title = "Available potential energy")
-	lines!(ax2, t, vec(∫σzdz) .- vec(∫σ✶zdz), label = "APE")
+	#lines!(ax2, t, vec(∫σzdz) .- vec(∫σ✶zdz), label = "APE")
+	lines!(ax2, t, ∫σz✶dz .- vec(∫σ✶z✶dz), label = "APE")
 	axislegend(ax2, position = :rt)
 	fig2
 end
@@ -296,11 +351,14 @@ end
 let
 	fig2 = Figure(size = (500, 1000))
 	ax1 = Axis(fig2[1, 1], title = "Time change potential energies")
-	lines!(ax1, t[2:end], dₜ∫σzdz, label = "dₜPE")
-	lines!(ax1, t[2:end], dₜ∫σ✶zdz, label = "dₜBPE", linestyle = :dash)
+	# lines!(ax1, t[2:end], dₜ∫σzdz, label = "dₜPE")
+	# lines!(ax1, t[2:end], dₜ∫σ✶zdz, label = "dₜBPE", linestyle = :dash)
+	lines!(ax1, t[2:end], dₜ∫σz✶dz, label = "dₜPE")
+	lines!(ax1, t[2:end], dₜ∫σ✶z✶dz, label = "dₜBPE", linestyle = :dash)
 	axislegend(ax1, position = :rb)
 	ax2 = Axis(fig2[2, 1], title = "Time change available potential energy")
-	lines!(ax2, t[2:end], dₜ∫σzdz .- dₜ∫σ✶zdz, label = "dₜAPE", color = :red)
+	# lines!(ax2, t[2:end], dₜ∫σzdz .- dₜ∫σ✶zdz, label = "dₜAPE", color = :red)
+	lines!(ax2, t[2:end], dₜ∫σz✶dz .- dₜ∫σ✶z✶dz, label = "dₜAPE", color = :red)
 	axislegend(ax2, position = :rt)
 	fig2
 end
@@ -314,8 +372,8 @@ md"""
 let
 	fig = Figure(size = (500, 1000))
 	ax = Axis(fig[1, 1], title = "Density flux and BPE")
-	lines!(ax, t[2:end], dₜ∫σ✶zdz, label = "dₜ∫σ✶zdz")
-	lines!(ax, t[2:end], ∫dₜ∫σdzdz, label = "∫dₜ∫Sdzdz", linestyle = :dash)
+	lines!(ax, t[2:end], dₜ∫σ✶z✶dz, label = "dₜ∫σ✶zdz")
+	lines!(ax, t[2:end], g * ∫dₜ∫σdzdz, label = "∫dₜ∫σdzdz", linestyle = :dash)
 	axislegend(ax, position = :rb)
 	ax2 = Axis(fig[2, 1],
 				title = "Absolute error between density flux and background potential energy",
