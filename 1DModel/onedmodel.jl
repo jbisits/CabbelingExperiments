@@ -29,13 +29,14 @@ salinity in the upper layer.
 function run_OneDModel(salinity_initial_condition::Symbol;
                     Tᵤ = -1.5,
                     Tₗ = 0.5,
+                 Tgrad = 0.0,
                     Sₗ = 34.7,
-                    Sₘ = 34.7,   # maximum salinity
+                 Sgrad = 0.0,
                     Nz = 1400,     # number of levels
-                    Lz = -1000,    # overall depth
+                    Lz = -1,    # overall depth
      reference_density = gsw_rho(Sₗ, Tₗ, 0),
          convective_κz = 10.0,
-         background_κz = 1e-7,
+         background_κz = 1e-5,
                      ν = 1e-6,
    reference_gp_height = 0,
                     Δt = 0.1,       # seconds
@@ -59,15 +60,16 @@ function run_OneDModel(salinity_initial_condition::Symbol;
     # Set temperature initial condition
     T₀ = Array{Float64}(undef, size(grid))
     # This adds a temperature gradient to avoid spurios convective mixing in the mixed layer
-    Tₗ_array = fill(Tₗ, Int(Nz / 2))
-    Tᵤ_array = reverse(range(Tᵤ, Tᵤ, length = Int(Nz / 2)))
+    Tₗ_array = range(Tₗ + Tgrad, Tₗ, length = Int(Nz / 2))
+    Tᵤ_array = reverse(range(Tᵤ, Tᵤ + Tgrad, length = Int(Nz / 2)))
     T₀[:, :, :] = vcat(Tₗ_array, Tᵤ_array)
 
     # Set the salinity initial condition
     S₀ = Array{Float64}(undef, size(grid))
     Sᵤ = getfield(salinity_initial_conditions, salinity_initial_condition)
-    Sᵤ_array = fill(Sᵤ, Int(Nz / 2))
-    Sₗ_array = range(Sₘ, Sₗ, length = Int(Nz / 2))
+    # Sᵤ_array = fill(Sᵤ, Int(Nz / 2))
+    Sᵤ_array = reverse(range(Sᵤ, Sᵤ + Sgrad, length = Int(Nz / 2)))
+    Sₗ_array = range(Sₗ + Sgrad, Sₗ, length = Int(Nz / 2))
     S₀[:, :, :] = vcat(Sₗ_array, Sᵤ_array)
 
     if salinity_noise
