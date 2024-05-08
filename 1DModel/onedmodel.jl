@@ -11,6 +11,8 @@ using Oceananigans, SeawaterPolynomials.TEOS10, GibbsSeaWater, CairoMakie
 using Oceananigans.Units: seconds, minutes, hours, days
 using Oceananigans: ∂z_b
 using Oceananigans: Models.seawater_density
+using Oceanostics: KineticEnergyDissipationRate, KineticEnergy
+using Oceanostics.TKEBudgetTerms: BuoyancyProductionTerm
 
 """
     function run_OneDModel(salinity_initial_condition::Symbol; params)
@@ -92,11 +94,15 @@ function run_OneDModel(salinity_initial_condition::Symbol;
 
     σ = seawater_density(model, geopotential_height = reference_gp_height)
     set!(model, T = T₀, S = S₀)
+    ε = KineticEnergyDissipationRate(model)
+    ∫ε = Integral(ε)
+    wb = BuoyancyProductionTerm(model)
+    ∫wb = Integral(wb)
 
     simulation = Simulation(model, Δt = Δt, stop_time = sim_length * days)
 
     outputs = (T = model.tracers.T, S = model.tracers.S,
-               κ = save_diffusivity, σ = σ)
+               κ = save_diffusivity, σ = σ, ∫ε = ∫ε, ∫wb = ∫wb)
 
     simulation.output_writers[:outputs] = JLD2OutputWriter(model, outputs,
                                             filename = savefile,
