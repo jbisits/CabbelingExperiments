@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.41
+# v0.19.42
 
 using Markdown
 using InteractiveUtils
@@ -23,7 +23,7 @@ end
 
 # ╔═╡ ac639feb-9ee4-43f4-acd9-466fe3478d40
 begin
-	choose_expt = @bind experiment Select(["isothermal_nonoise", "isothermal_withnoise", "cabbeling_cd1_nonoise", "cabbeling_cd1_withnoise", "cabbeling_cd10_nonoise", "cabbeling_cd10_withnoise"])
+	choose_expt = @bind experiment Select(["isothermal", "isothermal_nonoise", "isothermal_withnoise", "cabbeling_cd1_nonoise", "cabbeling_cd1_withnoise", "cabbeling_cd10_nonoise", "cabbeling_cd10_withnoise"])
 	
 	md"""
 	# Flux and background state check with 1D model
@@ -67,6 +67,8 @@ begin
 	S = FieldTimeSeries(iso_data, "S")
 	T = FieldTimeSeries(iso_data, "T")
 	σ₀ = FieldTimeSeries(iso_data, "σ")
+	# ∫ε = FieldTimeSeries(iso_data, "∫ε")
+	# ∫wb = FieldTimeSeries(iso_data, "∫wb")
 	t = S.times
 	Δt = diff(t)
 	zplot = znodes(S)
@@ -112,6 +114,15 @@ let
 	Colorbar(fig[1, 2], hm, label = "S (g/kg )")
 	fig
 end
+
+# ╔═╡ bc597e7b-c5ae-47d4-ab6d-30d78bcdebc6
+interior(S, 1, 1, 699:701, :)
+
+# ╔═╡ 3ae9d269-ddf0-41ec-bcb1-d195b8fab50a
+interior(S, 1, 1, 1400, 1)
+
+# ╔═╡ 7def5f67-5b4d-4ee4-bfa4-01234a268235
+interior(S, 1, 1, 1, 1)
 
 # ╔═╡ daf8bad7-444b-4da7-968b-32f29f1b7eba
 md"""
@@ -772,6 +783,9 @@ TableOfContents()
 # ╟─edd033e9-55ca-4b68-bf03-330baaa35e67
 # ╟─d2a1ec90-16ef-47b2-9adb-8829681ad5d9
 # ╟─0efe7042-82d9-44aa-be55-eb3634425bd5
+# ╠═bc597e7b-c5ae-47d4-ab6d-30d78bcdebc6
+# ╠═3ae9d269-ddf0-41ec-bcb1-d195b8fab50a
+# ╠═7def5f67-5b4d-4ee4-bfa4-01234a268235
 # ╟─daf8bad7-444b-4da7-968b-32f29f1b7eba
 # ╟─06bd6b0a-8d01-43c1-8560-f3c20972fe9e
 # ╟─08a90e73-8312-4cd2-9c5d-8ff9829962bc

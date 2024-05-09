@@ -61,22 +61,20 @@ function run_OneDModel(salinity_initial_condition::Symbol;
 
     # Set temperature initial condition
     T₀ = Array{Float64}(undef, size(grid))
-    # This adds a temperature gradient to avoid spurios convective mixing in the mixed layer
-    Tₗ_array = range(Tₗ + Tgrad, Tₗ, length = Int(Nz / 2))
-    Tᵤ_array = reverse(range(Tᵤ, Tᵤ + Tgrad, length = Int(Nz / 2)))
+    Tₗ_array = range(Tₗ - Tgrad, Tₗ, length = Int(Nz / 2))
+    Tᵤ_array = range(Tᵤ, Tᵤ + Tgrad, length = Int(Nz / 2))
     T₀[:, :, :] = vcat(Tₗ_array, Tᵤ_array)
 
     # Set the salinity initial condition
     S₀ = Array{Float64}(undef, size(grid))
     Sᵤ = getfield(salinity_initial_conditions, salinity_initial_condition)
-    # Sᵤ_array = fill(Sᵤ, Int(Nz / 2))
-    Sᵤ_array = reverse(range(Sᵤ, Sᵤ + Sgrad, length = Int(Nz / 2)))
     Sₗ_array = range(Sₗ + Sgrad, Sₗ, length = Int(Nz / 2))
+    Sᵤ_array = range(Sᵤ, Sᵤ - Sgrad, length = Int(Nz / 2))
     S₀[:, :, :] = vcat(Sₗ_array, Sᵤ_array)
 
     if salinity_noise
         z = znodes(grid, Center(), Center(), Center())
-        depths = findall(-500 - 10 .≤ z .≤ -500 + 10)
+        depths = findall(-0.5 - 0.02 .≤ z .≤ -0.5 + 0.02)
         for i ∈ eachindex(z)
             if i ∈ depths
                 S₀[:, :, i] .+= randn() * 2e-4
@@ -92,8 +90,9 @@ function run_OneDModel(salinity_initial_condition::Symbol;
                                 buoyancy = buoyancy,
                                 closure = closure)
 
-    σ = seawater_density(model, geopotential_height = reference_gp_height)
     set!(model, T = T₀, S = S₀)
+
+    σ = seawater_density(model, geopotential_height = reference_gp_height)
     ε = KineticEnergyDissipationRate(model)
     ∫ε = Integral(ε)
     wb = BuoyancyProductionTerm(model)
