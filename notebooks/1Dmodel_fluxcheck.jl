@@ -18,15 +18,16 @@ end
 begin
 	using Pkg
 	Pkg.activate("..")
-	using JLD2, Oceananigans, CairoMakie, PlutoUI, Statistics
+	using JLD2, Oceananigans, CairoMakie, PlutoUI, Statistics, LsqFit
+	using SpecialFunctions: erf
 end
 
 # ╔═╡ ac639feb-9ee4-43f4-acd9-466fe3478d40
 begin
-	choose_expt = @bind experiment Select(["isothermal", "isothermal_nonoise", "isothermal_withnoise", "cabbeling_cd1_nonoise", "cabbeling_cd1_withnoise", "cabbeling_cd10_nonoise", "cabbeling_cd10_withnoise"])
+	choose_expt = @bind experiment Select(["isothermal_nonoise", "isothermal_withnoise", "cabbeling_cd1_nonoise", "cabbeling_cd1_withnoise", "cabbeling_cd10_nonoise", "cabbeling_cd10_withnoise"])
 	
 	md"""
-	# Flux and background state check with 1D model
+	# 1D model
 	
 	While computing the background state and the buoyancy flux for the model there were some discrepancies.
 	In this notebook I run equivalent 1D model and analysis to try and find out what might be going on with some of these calculations.
@@ -114,15 +115,6 @@ let
 	Colorbar(fig[1, 2], hm, label = "S (g/kg )")
 	fig
 end
-
-# ╔═╡ bc597e7b-c5ae-47d4-ab6d-30d78bcdebc6
-interior(S, 1, 1, 699:701, :)
-
-# ╔═╡ 3ae9d269-ddf0-41ec-bcb1-d195b8fab50a
-interior(S, 1, 1, 1400, 1)
-
-# ╔═╡ 7def5f67-5b4d-4ee4-bfa4-01234a268235
-interior(S, 1, 1, 1, 1)
 
 # ╔═╡ daf8bad7-444b-4da7-968b-32f29f1b7eba
 md"""
@@ -398,7 +390,7 @@ end
 md"""
 ## Diffusivity
 
-### Salt (or temperature)
+### Estimate using tracer flux and gradient
 
 We calculate the diffusivity from the tracers using
 ```math
@@ -464,6 +456,44 @@ let
 	# axislegend(ax)
 	Legend(fig[1, 2], ax)
 	fig
+end
+
+# ╔═╡ 7f735207-955c-4594-94cf-8395982f925b
+md"""
+### Estimate fitting an error function
+
+Another method to esimate the diffusivity is fit a an analytic solution in terms of an error function to the profile,
+```math
+S(z, t) = S^{*} + \frac{1}{2}\left(\frac{z - a}{\sqrt{4\kappa_{S}t}}\right)
+```
+to obtain an estimate to the diffusivity.
+In the isothermal case this salinity profile is equal to the reference profile (after the noise has been mixed away) so it is an exact metric.
+I will try fitting *only to the second half of the simulation*.
+Probably also a good idea to consider the salinity anomaly.
+
+I do not really know what happens when the interface moves as in the cabbeling case. Perhaps it will just work but I would have thought the initial interface would be required.
+
+**Not working as yet.**
+I have a toy example which does this well but maybe I need to find a better way (in julia) to do this.
+"""
+
+# ╔═╡ 052c6552-264a-45ab-9042-686b36971264
+function erf_model(z, p)
+
+    a, κ = p
+    erf_func = @. 34.7 - 0.5*(1 + erf((z - a) / sqrt(4 * κ * t[1])))
+
+    return erf_func
+end
+
+# ╔═╡ 6f887231-0734-45d5-95c0-16af503e17d8
+begin
+	p0 = [-800, 1e-4]
+	S′ = interior(S, 1, 1, :, 1)
+	zdata = znodes(S.grid, Center())
+	lower = [-1000, 5e-6]
+	upper = [0.0, 11]
+	fit = curve_fit(erf_model, zdata, S′, p0; lower, upper)
 end
 
 # ╔═╡ 4f5f7717-53fc-4252-804a-c0a3293df8d5
@@ -731,7 +761,7 @@ end
 md"""
 ## Diffusivity
 
-### Salt or (temperature)
+### Estimate using tracer flux and gradient
 """
 
 # ╔═╡ f3b225dc-8cc6-444d-b6ae-7ef7798f3303
@@ -774,8 +804,21 @@ let
 	fig
 end
 
+# ╔═╡ 8c3b9612-0bbb-47a8-be8c-a03646cf5e76
+md"""
+### Estimate using an error function
+"""
+
+# ╔═╡ 0ea80f8a-ff24-4e4a-8f23-05ee44164b5d
+begin
+	p02 = [-0.5, 1e-3]
+	S′2 = S_dns[:, 1] .- 34.7
+	zdata2 = z_dns_plot
+	fit2 = curve_fit(erf_model, zdata2, S′2, p02)
+end
+
 # ╔═╡ 666c8467-6460-4ae9-adca-27c241ef3fdd
-TableOfContents()
+TableOfContents(title = "1D Model and DNS")
 
 # ╔═╡ Cell order:
 # ╟─a290de4c-f791-11ee-0e04-11e4e34b7428
@@ -783,9 +826,6 @@ TableOfContents()
 # ╟─edd033e9-55ca-4b68-bf03-330baaa35e67
 # ╟─d2a1ec90-16ef-47b2-9adb-8829681ad5d9
 # ╟─0efe7042-82d9-44aa-be55-eb3634425bd5
-# ╠═bc597e7b-c5ae-47d4-ab6d-30d78bcdebc6
-# ╠═3ae9d269-ddf0-41ec-bcb1-d195b8fab50a
-# ╠═7def5f67-5b4d-4ee4-bfa4-01234a268235
 # ╟─daf8bad7-444b-4da7-968b-32f29f1b7eba
 # ╟─06bd6b0a-8d01-43c1-8560-f3c20972fe9e
 # ╟─08a90e73-8312-4cd2-9c5d-8ff9829962bc
@@ -810,6 +850,9 @@ TableOfContents()
 # ╟─2642bc19-9c7c-45f5-b199-fe318da98101
 # ╟─52a15ea8-600d-4bbf-8dee-def4895a4ded
 # ╟─cd11a001-c306-4e16-8df5-8a51eb0a46ee
+# ╟─7f735207-955c-4594-94cf-8395982f925b
+# ╠═052c6552-264a-45ab-9042-686b36971264
+# ╠═6f887231-0734-45d5-95c0-16af503e17d8
 # ╟─4f5f7717-53fc-4252-804a-c0a3293df8d5
 # ╟─0602c590-4435-4963-acd3-15798c9de894
 # ╟─ebf2aa23-5cdd-4de7-a285-ce1534666899
@@ -836,4 +879,6 @@ TableOfContents()
 # ╟─f3b225dc-8cc6-444d-b6ae-7ef7798f3303
 # ╟─65c16680-0150-44c8-8cad-5a0023abf916
 # ╟─2bee25dc-8e7d-4476-9b13-b3b3760533bd
+# ╟─8c3b9612-0bbb-47a8-be8c-a03646cf5e76
+# ╠═0ea80f8a-ff24-4e4a-8f23-05ee44164b5d
 # ╟─666c8467-6460-4ae9-adca-27c241ef3fdd
