@@ -24,7 +24,7 @@ end
 
 # ╔═╡ ac639feb-9ee4-43f4-acd9-466fe3478d40
 begin
-	choose_expt = @bind experiment Select(["isothermal_nonoise", "isothermal_withnoise", "cabbeling_cd1_nonoise", "cabbeling_cd1_withnoise", "cabbeling_cd10_nonoise", "cabbeling_cd10_withnoise"])
+	choose_expt = @bind experiment Select(["isothermal", "isothermal_nonoise", "isothermal_withnoise", "cabbeling_cd1_nonoise", "cabbeling_cd1_withnoise", "cabbeling_cd10_nonoise", "cabbeling_cd10_withnoise"])
 	
 	md"""
 	# 1D model
@@ -488,7 +488,7 @@ end
 
 # ╔═╡ 6f887231-0734-45d5-95c0-16af503e17d8
 begin
-	p0 = [-800, 1e-4]
+	p0 = [-0.6, 1e-4]
 	S′ = interior(S, 1, 1, :, 1)
 	zdata = znodes(S.grid, Center())
 	lower = [-1000, 5e-6]
