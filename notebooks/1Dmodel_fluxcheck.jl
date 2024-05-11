@@ -437,7 +437,7 @@ let
 	ax.title = "Diffusivity estimates for salinity about the model interface"
 	ax.xlabel = "time (s)"
 	ax.ylabel = "κ (m2/s)"
-	hlines!(0.01, label = "κ background", color = :black, linestyle = :dash)
+	hlines!(1e-7, label = "κ background", color = :black, linestyle = :dash)
 	hlines!(κc, label = "κ convective", color = :red, linestyle = :dash)
 	axislegend(ax)
 	fig
@@ -488,7 +488,7 @@ end
 
 # ╔═╡ 6f887231-0734-45d5-95c0-16af503e17d8
 begin
-	p0 = [-0.6, 1e-4]
+	p0 = [-0.6, 1e-2]
 	S′ = interior(S, 1, 1, :, 1)
 	zdata = znodes(S.grid, Center())
 	lower = [-1000, 5e-6]
@@ -846,7 +846,7 @@ TableOfContents(title = "1D Model and DNS")
 # ╟─e01432d2-627c-44cf-aba7-67d2094092d3
 # ╟─1a9eee8b-545f-4da3-a931-49d447521e3c
 # ╟─0121a899-a1bf-4fc8-9aa2-ce5c801753ec
-# ╟─9a82d299-0274-4e68-9c4b-da1350e52fe1
+# ╠═9a82d299-0274-4e68-9c4b-da1350e52fe1
 # ╟─2642bc19-9c7c-45f5-b199-fe318da98101
 # ╟─52a15ea8-600d-4bbf-8dee-def4895a4ded
 # ╟─cd11a001-c306-4e16-8df5-8a51eb0a46ee

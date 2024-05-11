@@ -37,7 +37,7 @@ function run_OneDModel(salinity_initial_condition::Symbol;
                     Nz = 1400,     # number of levels
                     Lz = -1,    # overall depth
      reference_density = gsw_rho(Sₗ, Tₗ, 0),
-         convective_κz = 10.0,
+         convective_κz = 1.0,
          background_κz = 1e-7,
                      ν = 1e-6,
    reference_gp_height = 0,
