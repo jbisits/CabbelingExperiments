@@ -24,7 +24,8 @@ end
 
 # ╔═╡ ac639feb-9ee4-43f4-acd9-466fe3478d40
 begin
-	choose_expt = @bind experiment Select(["isothermal", "isothermal_nonoise", "isothermal_withnoise", "cabbeling_cd1_nonoise", "cabbeling_cd1_withnoise", "cabbeling_cd10_nonoise", "cabbeling_cd10_withnoise"])
+	# choose_expt = @bind experiment Select(["isothermal", "isothermal_nonoise", "isothermal_withnoise", "cabbeling_cd1_nonoise", "cabbeling_cd1_withnoise", "cabbeling_cd10_nonoise", "cabbeling_cd10_withnoise"])
+	choose_expt = @bind experiment Select(["isothermal", "cabbeling"])
 	
 	md"""
 	# 1D model
