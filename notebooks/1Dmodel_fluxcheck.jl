@@ -25,30 +25,30 @@ end
 # ╔═╡ ac639feb-9ee4-43f4-acd9-466fe3478d40
 begin
 	# choose_expt = @bind experiment Select(["isothermal", "isothermal_nonoise", "isothermal_withnoise", "cabbeling_cd1_nonoise", "cabbeling_cd1_withnoise", "cabbeling_cd10_nonoise", "cabbeling_cd10_withnoise"])
-	choose_expt = @bind experiment Select(["isothermal", "cabbeling"])
-	
+	choose_expt = @bind experiment Select(["isothermal", "cabbeling_cd1", "cabbeling_cd1e-1"])
+
 	md"""
 	# 1D model
-	
+
 	While computing the background state and the buoyancy flux for the model there were some discrepancies.
 	In this notebook I run equivalent 1D model and analysis to try and find out what might be going on with some of these calculations.
-	
+
 	The main two experiments I will compare are the isothermal experiment and the cabbeling experiment (this is all I have done for DNS).
-	
+
 	## Model runs
-	
+
 	I have three model runs with background diffusivity ``\kappa_{back} = 1\times 10^{-2}\mathrm{m}^{2}\mathrm{s}^{-1}``:
-	
+
 	1. isothermal, uniform ``T = 0.5^{\circ}C`` (there is also a lower resolution one of these experiments)
 	2. cabbeling with convective diffusivity ``\kappa_{c} = 1\mathrm{m}^{2}\mathrm{s}^{-1}``
 	2. cabbeling with convective diffusivity ``\kappa_{c} = 10\mathrm{m}^{2}\mathrm{s}^{-1}``
-	
+
 	In all experiments with no initial noise in the salinity field, the salinity profile and the background profile *should be the same* as there are no sources and sinks of salinity.
 	We see this in the output below.
-	
+
 	In the isothermal case, the background state (for density) should be equal to the profile so the BPE and the PE should be equal (or very close to equal) throughout the length of the because the mixed water at the interface will not be denser/lighter than the lower/upper layers.
 	This means that there is no available potential energy in the system.
-	
+
 	In the cabbeling case, the background state (for density) and profile should start roughly equal but after the mixing has created some denser water the PE and the BPE should separate until when/if lower layer has all been transformed to the maximum density.
 	This means that there is available potential energy in the system which is dissipated as the simulation runs.
 
@@ -263,7 +263,7 @@ begin
 	g = 9.81
 	∫σzdz = g * sum(interior(σ₀, 1, 1, :, :) .* z * Δz, dims = 1)
 	dₜ∫σzdz = vec(diff(∫σzdz, dims = 2)) ./ Δt
- 
+
 	# Sorted density, density contet, density flux
 	σ✶ = similar(σ₀.data[1, 1, :, :])
 	∫σdz = similar(σ₀.data[1, 1, :, :])
@@ -287,10 +287,10 @@ begin
 
 	∫σz✶dz = vec(g * sum(interior(σ₀, 1, 1, :, :) .* z✶ * Δz, dims = 1))
 	dₜ∫σz✶dz = diff(∫σz✶dz) ./ Δt
-	
+
 	∫σ✶z✶dz = vec(g * sum(σ✶ .* z✶ * Δz, dims = 1))
 	dₜ∫σ✶z✶dz = diff(∫σ✶z✶dz) ./ Δt
-		
+
 	nothing
 end
 
@@ -504,12 +504,12 @@ begin
 	DNS_EXPT = @bind dns_expt Select([iso_path => "isothermal", cab_path => "cabbeling"])
 	md"""
 	# DNS profile
-	
+
 	I am now interested in how a single profile of the DNS compares to this.
 	Eventually I will also look at a horizontally averaged profile but the full thing will use all volume elements of the 3D grid resorted.
-	
+
 	There are only two DNS experiments one isothermal, single scalar field (salinity), and the cabbeling, two tracer fields (salinity and temperature).
-	
+
 	There are the same number of vertical levels so I should be able as the 1D model above but the diffusivity is a `ScalarDiffusivity` with value of ``1\times 10^{-7}\mathrm{m}^{2}\mathrm{s}^{-1}``.
 
 	Simulation: $(DNS_EXPT).
@@ -526,13 +526,13 @@ begin
 	σ₀_dns = file["σ"]
 	t_dns = file["time"]
 	close(file)
-	
+
 	Δt_dns = diff(t_dns)
 
 	Δz_dns = dns_expt == cab_path ? 0.0007142857142857784 :  0.0010000000000000009
 	z_dns_plot = range(-1, 0, step = Δz_dns)
 	z_dns = reverse(abs.(z_dns_plot))
-	
+
 	#Computations to check
 
 	# Potential energy for salt
@@ -594,7 +594,7 @@ end
 
 # ╔═╡ 7579eacb-fddd-40bb-a50f-a8f98cbbdbcd
 md"""
-### "Energetics" (Salinity only) 
+### "Energetics" (Salinity only)
 """
 
 # ╔═╡ cf9aba94-ef48-4478-a49a-92e9da84e9d9
@@ -653,7 +653,7 @@ begin
 	# Potential energy no gravity
 	∫σzdz_dns = 9.81 * sum(σ₀_dns .* z_dns * Δz_dns, dims = 1)
 	dₜ∫σzdz_dns = vec(diff(∫σzdz_dns, dims = 2)) ./ Δt_dns
- 
+
 	# Sorted density, density contet, density flux
 	σ✶_dns = similar(σ₀_dns)
 	∫σdz_dns = similar(σ₀_dns)
