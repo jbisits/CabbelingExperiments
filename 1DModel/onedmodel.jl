@@ -70,8 +70,10 @@ function run_OneDModel(salinity_initial_condition::Symbol;
     # Set the salinity initial condition
     S₀ = Array{Float64}(undef, size(grid))
     Sᵤ = getfield(salinity_initial_conditions, salinity_initial_condition)
-    Sₗ_array = range(Sₗ + Sgrad, Sₗ, length = Int(Nz / 2))
-    Sᵤ_array = range(Sᵤ, Sᵤ - Sgrad, length = Int(Nz / 2))
+    # Sₗ_array = range(Sₗ + Sgrad, Sₗ, length = Int(Nz / 2))
+    # Sᵤ_array = range(Sᵤ, Sᵤ - Sgrad, length = Int(Nz / 2))
+    Sₗ_array = fill(Sₗ, Int(Nz / 2))
+    Sᵤ_array = fill(Sᵤ, Int(Nz / 2))
     S₀[:, :, :] = vcat(Sₗ_array, Sᵤ_array)
 
     if salinity_noise

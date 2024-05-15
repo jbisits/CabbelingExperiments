@@ -25,7 +25,7 @@ end
 # ╔═╡ ac639feb-9ee4-43f4-acd9-466fe3478d40
 begin
 	# choose_expt = @bind experiment Select(["isothermal", "isothermal_nonoise", "isothermal_withnoise", "cabbeling_cd1_nonoise", "cabbeling_cd1_withnoise", "cabbeling_cd10_nonoise", "cabbeling_cd10_withnoise"])
-	choose_expt = @bind experiment Select(["isothermal", "cabbeling_cd1", "cabbeling_cd1e-1"])
+	choose_expt = @bind experiment Select(["isothermal", "cabbeling_cd1", "cabbeling_cd1e-1", "cabbeling_cd1e-4"])
 
 	md"""
 	# 1D model
@@ -34,14 +34,16 @@ begin
 	In this notebook I run equivalent 1D model and analysis to try and find out what might be going on with some of these calculations.
 
 	The main two experiments I will compare are the isothermal experiment and the cabbeling experiment (this is all I have done for DNS).
+	To this end, the 1D model is made to be as similar as possible to the DNS (e.g. same vertical resolution, timestep, molecular diffusivity) and the convective adjustment scheme is tuned to match DNS output
 
 	## Model runs
 
-	I have three model runs with background diffusivity ``\kappa_{back} = 1\times 10^{-2}\mathrm{m}^{2}\mathrm{s}^{-1}``:
+	I have three model runs with background diffusivity ``\kappa_{back} = 1\times 10^{-7}\mathrm{m}^{2}\mathrm{s}^{-1}``:
 
 	1. isothermal, uniform ``T = 0.5^{\circ}C`` (there is also a lower resolution one of these experiments)
 	2. cabbeling with convective diffusivity ``\kappa_{c} = 1\mathrm{m}^{2}\mathrm{s}^{-1}``
-	2. cabbeling with convective diffusivity ``\kappa_{c} = 10\mathrm{m}^{2}\mathrm{s}^{-1}``
+	2. cabbeling with convective diffusivity ``\kappa_{c} = 0.1\mathrm{m}^{2}\mathrm{s}^{-1}``
+	3. cabbeling with convective diffusivity ``\kappa_{c} = 1\times 10 ^{-4}\mathrm{m}^{2}\mathrm{s}^{-1}``
 
 	In all experiments with no initial noise in the salinity field, the salinity profile and the background profile *should be the same* as there are no sources and sinks of salinity.
 	We see this in the output below.
@@ -77,10 +79,12 @@ begin
 	z = reverse(abs.(znodes(S)))
 	Δz = S.grid.Δzᵃᵃᶜ
 
-	κc = if experiment ∈ ("cabbeling_cd1_nonoise", "cabbeling_cd1_withnoise")
+	κc = if experiment == "cabbeling_cd1"
 			 1.0
-		 else
-			 10.0
+		 elseif experiment == "cabbeling_cd1e-1"
+			 1e-1
+		 elseif	experiment == "cabbeling_cd1e-4"
+			 1e-4
 		 end
 
 	#Computations to check
@@ -162,7 +166,6 @@ where ``S^{*}`` is the sorted salinity profile.
 let
 	fig2 = Figure(size = (500, 1000))
 	ax1 = Axis(fig2[1, 1], title = "Salinity potential energies")
-	ylims!(ax1, maximum(∫Szdz) .+ [-1e4, 1e3])
 	lines!(ax1, t, vec(∫Szdz), label = "PE")
 	lines!(ax1, t, vec(∫S✶zdz), label = "BPE", linestyle = :dash)
 	axislegend(ax1, position = :rb)
@@ -398,9 +401,9 @@ We calculate the diffusivity from the tracers using
 \kappa_{S} = \frac{\mathrm{d}_{t}\int S^{*} \mathrm{d}z}{\mathrm{d}S^{*} / \mathrm{d}z}
 ```
 
-As this model has the diffusivity values parameterised we should recover the background diffusivity ``\kappa_{back} = 1\times 10^{-2}m^{2}s^{-1}`` in the isothermal case and something that looks like the convective adjustment schemes used above.
+As this model has the diffusivity values parameterised we should recover the background diffusivity ``\kappa_{back} = 1\times 10^{-7}m^{2}s^{-1}`` in the isothermal case and something that looks like the convective adjustment schemes used above.
 
-From output below can see for all cases there diffusivity about the estimates match what is expected --- background diffusivity (``\kappa_{back} = 1\times 10^{-2}m^{2}s^{-1}``) in isothermal case convective diffusivity ``(\kappa_{c} = 1m^{2}s^{-1}``, ``\kappa_{c} = 10m^{2}s^{-1})`` in cabbeling cases.
+From output below can see for all cases there diffusivity about the estimates match what is expected --- background diffusivity (``\kappa_{back} = 1\times 10^{-7}m^{2}s^{-1}``) in isothermal case convective diffusivity ``(\kappa_{c} = 1m^{2}s^{-1}``, ``\kappa_{c} = 1\times 10^{-1}m^{2}s^{-1})`` in cabbeling cases.
 """
 
 # ╔═╡ 9a82d299-0274-4e68-9c4b-da1350e52fe1
@@ -408,9 +411,10 @@ begin
 	dSdz = diff(reverse(S✶, dims = 1), dims = 1) ./ Δz
 	replace!(dSdz, 0 => NaN)
 	κₛ = dₜ∫Sdz[2:end, :] ./ dSdz[:, 2:end]
+	κₛ_mean = mean(κₛ[.!isnan.(κₛ)]) # time mean
 	zrange = 690:710
-	∫κₛ = sum(κₛ[.!isnan.(κₛ)] * Δz, dims = 1)
-	κₛ_mean = mean(κₛ[.!isnan.(κₛ)])
+	replace!(κₛ, NaN => 0)
+	∫κₛ = sum(κₛ * Δz, dims = 1)
 	nothing
 end
 
@@ -439,7 +443,7 @@ let
 	ax.xlabel = "time (s)"
 	ax.ylabel = "κ (m2/s)"
 	hlines!(1e-7, label = "κ background", color = :black, linestyle = :dash)
-	hlines!(κc, label = "κ convective", color = :red, linestyle = :dash)
+	experiment == "isothermal" ? nothing : hlines!(κc, label = "κ convective", color = :red, linestyle = :dash)
 	axislegend(ax)
 	fig
 end
@@ -456,6 +460,18 @@ let
 	# ax.ylabel = "κ (m2/s)"
 	# axislegend(ax)
 	Legend(fig[1, 2], ax)
+	fig
+end
+
+# ╔═╡ aaf10855-fb41-4992-bdfd-60f404d38da1
+let
+	fig, ax = hlines(1e-7, label = "κ background", color = :black, linestyle = :dash)
+	ax.title = "Depth integrated estimate vs parameterised value (second half of simualtion)"
+	ax.xlabel = "time (s)"
+	ax.ylabel = "κ (m2/s)"
+	experiment == "isothermal" ? nothing : hlines!(κc, label = "κ convective", color = :red, linestyle = :dash)
+	lines!(ax, t[301:end], vec(∫κₛ)[300:end], label = "Depth integrated diffusivity estimate")
+	axislegend(ax, position = :lt)
 	fig
 end
 
@@ -763,6 +779,12 @@ md"""
 ## Diffusivity
 
 ### Estimate using tracer flux and gradient
+
+In the isothermal experiment this estimate is positive definite and is a little lower than the parameterised value but overall I think something that is showing the method is reliable.
+
+In the cabbeling case for the DNS we still get a *negative value* for the depth integrated diffusivity.
+This could be an artifact of only using a single profile rather than the whole domain as salt and temperature would not be conserved in this single profile.
+Need to run a calculation similar to what I have done here on the whole DNS soon to see if I can get a positive definite value for the diffusivity.
 """
 
 # ╔═╡ f3b225dc-8cc6-444d-b6ae-7ef7798f3303
@@ -770,9 +792,10 @@ begin
 	dSdz_dns = diff(reverse(S✶_dns, dims = 1), dims = 1) ./ Δz_dns
 	replace!(dSdz_dns, 0 => NaN)
 	κₛ_dns = dₜ∫Sdz_dns[2:end, :] ./ dSdz_dns[:, 2:end]
+	κₛ_dns_mean = mean(κₛ_dns[.!isnan.(κₛ_dns)]) # time mean
+	replace!(κₛ_dns, NaN => 0)
+	∫κₛ_dns = sum(κₛ_dns * Δz_dns, dims = 1)
 	zrange_dns = 690:710
-	∫κₛ_dns = sum(κₛ_dns[.!isnan.(κₛ_dns)] * Δz_dns, dims = 1)
-	κₛ_dns_mean = mean(κₛ_dns[.!isnan.(κₛ_dns)])
 	nothing
 end
 
@@ -805,6 +828,18 @@ let
 	fig
 end
 
+# ╔═╡ 8e84670e-59cc-4f82-9e24-c0769e50ac6d
+let
+	fig, ax = hlines(1e-7, label = "κ molecular", color = :black, linestyle = :dash)
+	ax.title = "Depth integrated estimate vs parameterised value (second half of simualtion)"
+	ax.xlabel = "time (s)"
+	ax.ylabel = "κ (m2/s)"
+	lines!(ax, t_dns[301:end], vec(∫κₛ_dns)[300:end], label = "Depth integrated diffusivity estimate")
+	position = DNS_EXPT == "isothermal" ? :rb : :rt
+	axislegend(ax; position)
+	fig
+end
+
 # ╔═╡ 8c3b9612-0bbb-47a8-be8c-a03646cf5e76
 md"""
 ### Estimate using an error function
@@ -816,6 +851,47 @@ begin
 	S′2 = S_dns[:, 1] .- 34.7
 	zdata2 = z_dns_plot
 	fit2 = curve_fit(erf_model, zdata2, S′2, p02)
+end
+
+# ╔═╡ 21257936-b3f6-44d9-b76e-c91749f09dfc
+md"""
+# DNS volume integrated diffusivity estimates
+
+I have computed these from output that I already saved.
+These are rather coarse and need to be checked, especially as there was some scaling that I had done manually.
+
+I do not understand what is going on with the beginning of the isothermal experiment (the very large spike) and the end the cabbeling experiment (mixing increasing).
+If not for that I think everything looks pretty reasonable
+"""
+
+# ╔═╡ 1949460b-6e8a-4ba7-9f5a-ebbd188ab795
+begin
+	∫κₛ_dns_full = load("../1DModel/volume_integrated_eff_diff.jld2")
+	∫κₛ_iso = ∫κₛ_dns_full["isothermal_∫κₛ"]
+	∫κₛ_cab = ∫κₛ_dns_full["cabbeling_∫κₛ"]
+	# mean(∫κₛ_iso[300:end]), mean(∫κₛ_cab[300:end])
+	nothing
+end
+
+# ╔═╡ ae3024e9-f9a9-4840-9588-cff389de71d3
+let
+	fig = Figure(size = (500, 500))
+	ax = Axis(fig[1, 1], title = "DNS volume integrated effective diffusivity estimate")
+	lines!(ax, t_dns[2:end], ∫κₛ_iso, label = "Isothermal")
+	lines!(ax, t_dns[2:end], ∫κₛ_cab, label = "Cabbeling")
+	axislegend(ax)
+	fig
+end
+
+# ╔═╡ 2c73e6ec-8a49-475a-9161-d1245fc415d8
+let
+	fig = Figure(size = (500, 500))
+	ax = Axis(fig[1, 1], title = "Second half")
+	hlines!(ax, 1e-7, label = "Molecular κ", linestyle = :dot, color = :black)
+	lines!(ax, t_dns[331:end], ∫κₛ_iso[330:end], label = "Isothermal")
+	lines!(ax, t_dns[331:end], ∫κₛ_cab[330:end], label = "Cabbeling")
+	axislegend(ax, position = :lt)
+	fig
 end
 
 # ╔═╡ 666c8467-6460-4ae9-adca-27c241ef3fdd
@@ -847,10 +923,11 @@ TableOfContents(title = "1D Model and DNS")
 # ╟─e01432d2-627c-44cf-aba7-67d2094092d3
 # ╟─1a9eee8b-545f-4da3-a931-49d447521e3c
 # ╟─0121a899-a1bf-4fc8-9aa2-ce5c801753ec
-# ╠═9a82d299-0274-4e68-9c4b-da1350e52fe1
+# ╟─9a82d299-0274-4e68-9c4b-da1350e52fe1
 # ╟─2642bc19-9c7c-45f5-b199-fe318da98101
 # ╟─52a15ea8-600d-4bbf-8dee-def4895a4ded
 # ╟─cd11a001-c306-4e16-8df5-8a51eb0a46ee
+# ╟─aaf10855-fb41-4992-bdfd-60f404d38da1
 # ╟─7f735207-955c-4594-94cf-8395982f925b
 # ╠═052c6552-264a-45ab-9042-686b36971264
 # ╠═6f887231-0734-45d5-95c0-16af503e17d8
@@ -880,6 +957,11 @@ TableOfContents(title = "1D Model and DNS")
 # ╟─f3b225dc-8cc6-444d-b6ae-7ef7798f3303
 # ╟─65c16680-0150-44c8-8cad-5a0023abf916
 # ╟─2bee25dc-8e7d-4476-9b13-b3b3760533bd
+# ╟─8e84670e-59cc-4f82-9e24-c0769e50ac6d
 # ╟─8c3b9612-0bbb-47a8-be8c-a03646cf5e76
 # ╠═0ea80f8a-ff24-4e4a-8f23-05ee44164b5d
+# ╟─21257936-b3f6-44d9-b76e-c91749f09dfc
+# ╟─1949460b-6e8a-4ba7-9f5a-ebbd188ab795
+# ╟─ae3024e9-f9a9-4840-9588-cff389de71d3
+# ╟─2c73e6ec-8a49-475a-9161-d1245fc415d8
 # ╟─666c8467-6460-4ae9-adca-27c241ef3fdd
