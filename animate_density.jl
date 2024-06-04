@@ -1,4 +1,4 @@
-using CairoMakie, NCDatasets
+using CairoMakie, NCDatasets, Printf
 
 isothermal = "outputs_equaldiffusion/isothermal_stepchange_nothing_660min/computed_output.nc"
 cabbeling = "outputs_equaldiffusion/cabbeling_stepchange_nothing_660min/computed_output.nc"
@@ -59,3 +59,5 @@ function animate_density(isothermal::AbstractString, cabbeling::AbstractString, 
 
     return nothing
 end
+
+animate_density(isothermal, cabbeling)

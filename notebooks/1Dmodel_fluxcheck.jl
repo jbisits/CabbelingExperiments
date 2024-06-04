@@ -935,7 +935,7 @@ end
 
 # ╔═╡ 2ca89649-6a6b-442d-8445-aeb6627c6849
 let
-	fig = Figure(size = (1000, 1500))
+	fig = Figure(size = (1000, 1500), fontsize = 22)
 	dₜEp = diff(iso["Ep"]) ./ diff(iso["time"])
 	dₜEb = diff(iso["Eb"]) ./ diff(iso["time"])
 	dₜEa = dₜEp .- dₜEb
@@ -943,11 +943,11 @@ let
 	ax = [Axis(fig[i, 1], xlabel = "time (s)", ylabel = "Watts (J/s)") for i ∈ 1:4]
 	lines!(ax[1], iso["time"][2:end], dₜEp, label = "dₜEp")
 	lines!(ax[1], iso["time"][2:end], dₜEb, label = "dₜEb")
-	axislegend(ax[1])
+	axislegend(ax[1], orientation = :horizontal)
 	hidexdecorations!(ax[1], grid = false, ticks = false)
 	lines!(ax[2], iso["time"][2:end], dₜEa, label = "dₜEa", color = :red)
-	axislegend(ax[2])
-	hidexdecorations!(ax[2], grid = false, ticks = false)
+	axislegend(ax[2], position = :rb)
+	#hidexdecorations!(ax[2], grid = false, ticks = false)
 	lines!(ax[3], iso["time"][2:end], dₜEk, label = "dₜEk", color = :magenta)
 	axislegend(ax[3])
 	hidexdecorations!(ax[3], grid = false, ticks = false)
@@ -955,6 +955,62 @@ let
 	axislegend(ax[4])
 	ax[1].title = "Isothermal time changing energy quantities"
 	fig
+	save("isothermal_energies.png", fig)
+end
+
+# ╔═╡ e5440723-8d6b-44e4-ab4f-4d03765aa732
+md"""
+## Cabbeling
+"""
+
+# ╔═╡ 3f7aa537-f0d3-4cd4-8f0b-82c24e80d8ab
+begin
+	cab_energy = "../outputs_equaldiffusion/cabbeling_stepchange_nothing_660min/cabbeling_energetics.jld2"
+	cab = load(cab_energy)
+end
+
+# ╔═╡ c90e53a1-43bd-4150-b2cf-0ef1e2b56370
+let
+	fig = Figure(size = (1000, 1500))
+	ax = [Axis(fig[i, 1], xlabel = "time (s)", ylabel = "Energy (J)") for i ∈ 1:3]
+	lines!(ax[1], cab["time"], cab["Ep"], label = "PE")
+	lines!(ax[1], cab["time"], cab["Eb"], label = "BPE")
+	axislegend(ax[1])
+	hidexdecorations!(ax[1], grid = false, ticks = false)
+	lines!(ax[2], cab["time"], cab["Ep"] .- cab["Eb"], label = "APE", color = :red)
+	axislegend(ax[2])
+	hidexdecorations!(ax[2], grid = false, ticks = false)
+	lines!(ax[3], cab["time"], cab["Ek"], label = "KE", color = :magenta)
+	axislegend(ax[3])
+	hidexdecorations!(ax[3], grid = false, ticks = false)
+	# lines!(ax[4], iso["time"], iso["ϵ"], label = "ϵ", color = :green)
+	# axislegend(ax[4])
+	fig
+end
+
+# ╔═╡ 8232c591-e8b3-47eb-8ba2-33ca02df4d76
+let
+	fig = Figure(size = (1000, 1500), fontsize = 22)
+	dₜEp = diff(cab["Ep"]) ./ diff(cab["time"])
+	dₜEb = diff(cab["Eb"]) ./ diff(cab["time"])
+	dₜEa = dₜEp .- dₜEb
+	dₜEk = diff(cab["Ek"]) ./ diff(cab["time"])
+	ax = [Axis(fig[i, 1], xlabel = "time (s)", ylabel = "Watts (J/s)") for i ∈ 1:4]
+	lines!(ax[1], cab["time"][2:end], dₜEp, label = "dₜEp")
+	lines!(ax[1], cab["time"][2:end], dₜEb, label = "dₜEb")
+	axislegend(ax[1], position = :rb)
+	hidexdecorations!(ax[1], grid = false, ticks = false)
+	lines!(ax[2], cab["time"][2:end], dₜEa, label = "dₜEa", color = :red)
+	axislegend(ax[2])
+	#hidexdecorations!(ax[2], grid = false, ticks = false)
+	lines!(ax[3], cab["time"][2:end], dₜEk, label = "dₜEk", color = :magenta)
+	axislegend(ax[3])
+	hidexdecorations!(ax[3], grid = false, ticks = false)
+	lines!(ax[4], cab["time"], cab["ϵ"], label = "ϵ", color = :green)
+	axislegend(ax[4])
+	ax[1].title = "Cabbeling time changing energy quantities"
+	fig
+	save("cabbeling_energies.png", fig)
 end
 
 # ╔═╡ 666c8467-6460-4ae9-adca-27c241ef3fdd
@@ -1030,5 +1086,9 @@ TableOfContents(title = "1D Model and DNS")
 # ╟─59eccb7e-eefd-4ab4-bd27-1e682b8b1d1f
 # ╟─dd0b3079-bd7f-4325-9f07-e72676764514
 # ╟─eafe654e-89cf-4a11-a3ac-b219ac1f2da2
-# ╠═2ca89649-6a6b-442d-8445-aeb6627c6849
+# ╟─2ca89649-6a6b-442d-8445-aeb6627c6849
+# ╟─e5440723-8d6b-44e4-ab4f-4d03765aa732
+# ╟─3f7aa537-f0d3-4cd4-8f0b-82c24e80d8ab
+# ╟─c90e53a1-43bd-4150-b2cf-0ef1e2b56370
+# ╠═8232c591-e8b3-47eb-8ba2-33ca02df4d76
 # ╟─666c8467-6460-4ae9-adca-27c241ef3fdd
