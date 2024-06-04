@@ -876,7 +876,7 @@ end
 
 # ╔═╡ ae3024e9-f9a9-4840-9588-cff389de71d3
 let
-	fig = Figure(size = (500, 500))
+	fig = Figure(size = (500, 500), fontsize = 24)
 	ax = Axis(fig[1, 1], title = "DNS volume integrated effective diffusivity estimate", xlabel = "time (s)", ylabel = "Effective diffusivity (m²s⁻¹)")
 	lines!(ax, t_dns[2:end], ∫κₛ_iso, label = "Isothermal")
 	lines!(ax, t_dns[2:end], ∫κₛ_cab, label = "Cabbeling")
@@ -896,6 +896,64 @@ let
 	lines!(ax, t_dns[331:end], ∫κₛ_iso[330:end], label = "Isothermal")
 	lines!(ax, t_dns[331:end], ∫κₛ_cab[330:end], label = "Cabbeling")
 	axislegend(ax, position = :lt)
+	fig
+end
+
+# ╔═╡ 59eccb7e-eefd-4ab4-bd27-1e682b8b1d1f
+md"""
+# DNS energy budgets
+
+Having checked everything I now have the energy budgets for both the cabbeling and isothermal cases with corrected direction.
+
+## Isothermal
+"""
+
+# ╔═╡ dd0b3079-bd7f-4325-9f07-e72676764514
+begin
+	iso_energy = "../outputs_equaldiffusion/isothermal_stepchange_nothing_660min/isothermal_energetics.jld2"
+	iso = load(iso_energy)
+end
+
+# ╔═╡ eafe654e-89cf-4a11-a3ac-b219ac1f2da2
+let
+	fig = Figure(size = (1000, 1500))
+	ax = [Axis(fig[i, 1], xlabel = "time (s)", ylabel = "Energy (J)") for i ∈ 1:3]
+	lines!(ax[1], iso["time"], iso["Ep"], label = "PE")
+	lines!(ax[1], iso["time"], iso["Eb"], label = "BPE")
+	axislegend(ax[1])
+	hidexdecorations!(ax[1], grid = false, ticks = false)
+	lines!(ax[2], iso["time"], iso["Ep"] .- iso["Eb"], label = "APE", color = :red)
+	axislegend(ax[2])
+	hidexdecorations!(ax[2], grid = false, ticks = false)
+	lines!(ax[3], iso["time"], iso["Ek"], label = "KE", color = :magenta)
+	axislegend(ax[3])
+	hidexdecorations!(ax[3], grid = false, ticks = false)
+	# lines!(ax[4], iso["time"], iso["ϵ"], label = "ϵ", color = :green)
+	# axislegend(ax[4])
+	fig
+end
+
+# ╔═╡ 2ca89649-6a6b-442d-8445-aeb6627c6849
+let
+	fig = Figure(size = (1000, 1500))
+	dₜEp = diff(iso["Ep"]) ./ diff(iso["time"])
+	dₜEb = diff(iso["Eb"]) ./ diff(iso["time"])
+	dₜEa = dₜEp .- dₜEb
+	dₜEk = diff(iso["Ek"]) ./ diff(iso["time"])
+	ax = [Axis(fig[i, 1], xlabel = "time (s)", ylabel = "Watts (J/s)") for i ∈ 1:4]
+	lines!(ax[1], iso["time"][2:end], dₜEp, label = "dₜEp")
+	lines!(ax[1], iso["time"][2:end], dₜEb, label = "dₜEb")
+	axislegend(ax[1])
+	hidexdecorations!(ax[1], grid = false, ticks = false)
+	lines!(ax[2], iso["time"][2:end], dₜEa, label = "dₜEa", color = :red)
+	axislegend(ax[2])
+	hidexdecorations!(ax[2], grid = false, ticks = false)
+	lines!(ax[3], iso["time"][2:end], dₜEk, label = "dₜEk", color = :magenta)
+	axislegend(ax[3])
+	hidexdecorations!(ax[3], grid = false, ticks = false)
+	lines!(ax[4], iso["time"], iso["ϵ"], label = "ϵ", color = :green)
+	axislegend(ax[4])
+	ax[1].title = "Isothermal time changing energy quantities"
 	fig
 end
 
@@ -969,4 +1027,8 @@ TableOfContents(title = "1D Model and DNS")
 # ╟─1949460b-6e8a-4ba7-9f5a-ebbd188ab795
 # ╟─ae3024e9-f9a9-4840-9588-cff389de71d3
 # ╟─2c73e6ec-8a49-475a-9161-d1245fc415d8
+# ╟─59eccb7e-eefd-4ab4-bd27-1e682b8b1d1f
+# ╟─dd0b3079-bd7f-4325-9f07-e72676764514
+# ╟─eafe654e-89cf-4a11-a3ac-b219ac1f2da2
+# ╠═2ca89649-6a6b-442d-8445-aeb6627c6849
 # ╟─666c8467-6460-4ae9-adca-27c241ef3fdd
