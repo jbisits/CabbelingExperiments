@@ -61,19 +61,15 @@ function run_OneDModel(salinity_initial_condition::Symbol;
 
     # Set temperature initial condition
     T₀ = Array{Float64}(undef, size(grid))
-    # Tₗ_array = range(Tₗ - Tgrad, Tₗ, length = Int(Nz / 2))
-    # Tᵤ_array = range(Tᵤ, Tᵤ + Tgrad, length = Int(Nz / 2))
-    Tₗ_array = fill(Tₗ, Int(Nz / 2))
-    Tᵤ_array = fill(Tᵤ, Int(Nz / 2))
+    Tₗ_array = Tgrad == 0 ? fill(Tₗ, Int(Nz / 2)) : range(Tₗ - Tgrad, Tₗ, length = Int(Nz / 2))
+    Tᵤ_array = Tgrad == 0 ? fill(Tᵤ, Int(Nz / 2)) : range(Tᵤ, Tᵤ + Tgrad, length = Int(Nz / 2))
     T₀[:, :, :] = vcat(Tₗ_array, Tᵤ_array)
 
     # Set the salinity initial condition
     S₀ = Array{Float64}(undef, size(grid))
     Sᵤ = getfield(salinity_initial_conditions, salinity_initial_condition)
-    # Sₗ_array = range(Sₗ + Sgrad, Sₗ, length = Int(Nz / 2))
-    # Sᵤ_array = range(Sᵤ, Sᵤ - Sgrad, length = Int(Nz / 2))
-    Sₗ_array = fill(Sₗ, Int(Nz / 2))
-    Sᵤ_array = fill(Sᵤ, Int(Nz / 2))
+    Sₗ_array = Sgrad == 0 ? fill(Sₗ, Int(Nz / 2)) : range(Sₗ + Sgrad, Sₗ, length = Int(Nz / 2))
+    Sᵤ_array = Sgrad == 0 ? fill(Sᵤ, Int(Nz / 2)) : range(Sᵤ, Sᵤ - Sgrad, length = Int(Nz / 2))
     S₀[:, :, :] = vcat(Sₗ_array, Sᵤ_array)
 
     if salinity_noise

@@ -25,7 +25,7 @@ end
 # ╔═╡ ac639feb-9ee4-43f4-acd9-466fe3478d40
 begin
 	# choose_expt = @bind experiment Select(["isothermal", "isothermal_nonoise", "isothermal_withnoise", "cabbeling_cd1_nonoise", "cabbeling_cd1_withnoise", "cabbeling_cd10_nonoise", "cabbeling_cd10_withnoise"])
-	choose_expt = @bind experiment Select(["isothermal", "cabbeling_cd1", "cabbeling_cd1e-1", "cabbeling_cd1e-4"])
+	choose_expt = @bind experiment Select(["isothermal", "isothermal_sgrad", "cabbeling_cd1", "cabbeling_cd1e-1", "cabbeling_cd1e-4", "cabbeling_cd1e-4_sgrad"])
 
 	md"""
 	# 1D model
@@ -443,7 +443,7 @@ let
 	ax.xlabel = "time (s)"
 	ax.ylabel = "κ (m2/s)"
 	hlines!(1e-7, label = "κ background", color = :black, linestyle = :dash)
-	experiment == "isothermal" ? nothing : hlines!(κc, label = "κ convective", color = :red, linestyle = :dash)
+	# experiment == "isothermal_sgrad" ? nothing : hlines!(κc, label = "κ convective", color = :red, linestyle = :dash)
 	axislegend(ax)
 	fig
 end
@@ -465,12 +465,13 @@ end
 
 # ╔═╡ aaf10855-fb41-4992-bdfd-60f404d38da1
 let
-	fig, ax = hlines(1e-7, label = "κ background", color = :black, linestyle = :dash)
+	fig, ax = hlines(log10(1e-7), label = "κ background", color = :black, linestyle = :dash)
 	ax.title = "Depth integrated estimate vs parameterised value (second half of simualtion)"
 	ax.xlabel = "time (s)"
 	ax.ylabel = "κ (m2/s)"
-	experiment == "isothermal" ? nothing : hlines!(κc, label = "κ convective", color = :red, linestyle = :dash)
-	lines!(ax, t[301:end], vec(∫κₛ)[300:end], label = "Depth integrated diffusivity estimate")
+	# experiment == "isothermal_sgrad" ? nothing : hlines!(κc, label = "κ convective", color = :red, linestyle = :dash)
+	lines!(ax, t[2:end], log10.(vec(∫κₛ)), label = "Depth integrated diffusivity estimate")
+	hlines!(ax, log10(1e-4), color = :red)
 	axislegend(ax, position = :lt)
 	fig
 end
@@ -876,18 +877,22 @@ end
 # ╔═╡ ae3024e9-f9a9-4840-9588-cff389de71d3
 let
 	fig = Figure(size = (500, 500))
-	ax = Axis(fig[1, 1], title = "DNS volume integrated effective diffusivity estimate")
+	ax = Axis(fig[1, 1], title = "DNS volume integrated effective diffusivity estimate", xlabel = "time (s)", ylabel = "Effective diffusivity (m²s⁻¹)")
 	lines!(ax, t_dns[2:end], ∫κₛ_iso, label = "Isothermal")
 	lines!(ax, t_dns[2:end], ∫κₛ_cab, label = "Cabbeling")
+	hlines!(ax, 1e-7, label = "Molecular κ", linestyle = :dot, color = :black)
+	hlines!(ax, 1e-4, label = "κ = 1e-4", linestyle = :dot, color = :red)
 	axislegend(ax)
 	fig
+	#save("volume_int_kappa.png", fig)
 end
 
 # ╔═╡ 2c73e6ec-8a49-475a-9161-d1245fc415d8
 let
 	fig = Figure(size = (500, 500))
-	ax = Axis(fig[1, 1], title = "Second half")
+	ax = Axis(fig[1, 1], title = "Second half", xlabel = "time", ylabel = "Effective diffusivity")
 	hlines!(ax, 1e-7, label = "Molecular κ", linestyle = :dot, color = :black)
+	hlines!(ax, 1e-4, label = "κ = 1e-4", linestyle = :dot, color = :red)
 	lines!(ax, t_dns[331:end], ∫κₛ_iso[330:end], label = "Isothermal")
 	lines!(ax, t_dns[331:end], ∫κₛ_cab[330:end], label = "Cabbeling")
 	axislegend(ax, position = :lt)
@@ -927,7 +932,7 @@ TableOfContents(title = "1D Model and DNS")
 # ╟─2642bc19-9c7c-45f5-b199-fe318da98101
 # ╟─52a15ea8-600d-4bbf-8dee-def4895a4ded
 # ╟─cd11a001-c306-4e16-8df5-8a51eb0a46ee
-# ╟─aaf10855-fb41-4992-bdfd-60f404d38da1
+# ╠═aaf10855-fb41-4992-bdfd-60f404d38da1
 # ╟─7f735207-955c-4594-94cf-8395982f925b
 # ╠═052c6552-264a-45ab-9042-686b36971264
 # ╠═6f887231-0734-45d5-95c0-16af503e17d8
