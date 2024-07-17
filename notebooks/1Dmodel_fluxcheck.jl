@@ -940,7 +940,8 @@ let
 	dₜEb = diff(iso["Eb"]) ./ diff(iso["time"])
 	dₜEa = dₜEp .- dₜEb
 	dₜEk = diff(iso["Ek"]) ./ diff(iso["time"])
-	ax = [Axis(fig[i, 1], xlabel = "time (s)", ylabel = "Watts (J/s)") for i ∈ 1:4]
+	ax = [Axis(fig[i, 1], xlabel = "time (s)", ylabel = "Watts (J/s)",
+				xticklabelsize = 14, yticklabelsize = 14, xlabelsize = 16, ylabelsize = 16) for i ∈ 1:4]
 	lines!(ax[1], iso["time"][2:end], dₜEp, label = "dₜEp")
 	lines!(ax[1], iso["time"][2:end], dₜEb, label = "dₜEb")
 	axislegend(ax[1], orientation = :horizontal)
@@ -955,7 +956,7 @@ let
 	axislegend(ax[4])
 	ax[1].title = "Isothermal time changing energy quantities"
 	fig
-	save("isothermal_energies.png", fig)
+	#save("isothermal_energies.png", fig)
 end
 
 # ╔═╡ e5440723-8d6b-44e4-ab4f-4d03765aa732
@@ -995,7 +996,8 @@ let
 	dₜEb = diff(cab["Eb"]) ./ diff(cab["time"])
 	dₜEa = dₜEp .- dₜEb
 	dₜEk = diff(cab["Ek"]) ./ diff(cab["time"])
-	ax = [Axis(fig[i, 1], xlabel = "time (s)", ylabel = "Watts (J/s)") for i ∈ 1:4]
+	ax = [Axis(fig[i, 1], xlabel = "time (s)", ylabel = "Watts (J/s)",
+				xticklabelsize = 14, yticklabelsize = 14, xlabelsize = 16, ylabelsize = 16) for i ∈ 1:4]
 	lines!(ax[1], cab["time"][2:end], dₜEp, label = "dₜEp")
 	lines!(ax[1], cab["time"][2:end], dₜEb, label = "dₜEb")
 	axislegend(ax[1], position = :rb)
@@ -1010,7 +1012,7 @@ let
 	axislegend(ax[4])
 	ax[1].title = "Cabbeling time changing energy quantities"
 	fig
-	save("cabbeling_energies.png", fig)
+	#save("cabbeling_energies.png", fig)
 end
 
 # ╔═╡ 666c8467-6460-4ae9-adca-27c241ef3fdd
@@ -1086,7 +1088,7 @@ TableOfContents(title = "1D Model and DNS")
 # ╟─59eccb7e-eefd-4ab4-bd27-1e682b8b1d1f
 # ╟─dd0b3079-bd7f-4325-9f07-e72676764514
 # ╟─eafe654e-89cf-4a11-a3ac-b219ac1f2da2
-# ╟─2ca89649-6a6b-442d-8445-aeb6627c6849
+# ╠═2ca89649-6a6b-442d-8445-aeb6627c6849
 # ╟─e5440723-8d6b-44e4-ab4f-4d03765aa732
 # ╟─3f7aa537-f0d3-4cd4-8f0b-82c24e80d8ab
 # ╟─c90e53a1-43bd-4150-b2cf-0ef1e2b56370
