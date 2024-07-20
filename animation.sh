@@ -11,7 +11,7 @@
 cd /g/data/e14/jb2381/CabbelingExperiments/
 
 # Julia
-export JULIA_DEPOT_PATH="/home/561/jb2381/.julia"
+export JULIA_DEPOT_PATH="/g/data/e14/jb2381/.julia"
 export JULIA_NUM_THREADS=auto
 module load julia
 
