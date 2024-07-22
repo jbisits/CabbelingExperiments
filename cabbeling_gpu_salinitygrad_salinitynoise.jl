@@ -8,16 +8,15 @@ eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 
 ## Setup the dns_model
 @info "Model setup"
-isothermal_resolution = (Nx = 100, Ny = 100, Nz = 1000)
-dns_model = DNSModel(architecture, DOMAIN_EXTENT, isothermal_resolution, diffusivities, eos)
+dns_model = DNSModel(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities, eos)
 
 ## set initial conditions
-@info "Setting initial conditions"
-T₀ᵘ = 0.5
-S₀ᵘ = 34.69431424
+@info "Setting initial conditions in upper layer"
+T₀ᵘ = -1.5
+S₀ᵘ = 34.58
 const interface_location = -0.5
-isothermal = IsothermalUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
-initial_conditions = TwoLayerInitialConditions(isothermal)
+cabbeling = CabbelingUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
+initial_conditions = TwoLayerInitialConditions(cabbeling)
 depth = find_depth(dns_model, interface_location)
 dSdz = 1e-5
 dTdz = 0.0
@@ -29,13 +28,13 @@ scales = similar(depths)
 fill!(scales, 2e-4)
 initial_noise = SalinityNoise(depths, scales)
 @info "Building DNS"
-tldns = TwoLayerDNS(dns_model, profile_function, initial_conditions; initial_noise = nothing)
+tldns = TwoLayerDNS(dns_model, profile_function, initial_conditions; initial_noise)
 
 @info "Setting two layer initial conditions"
 set_two_layer_initial_conditions!(tldns)
 
 ## build the simulation
-Δt = 1e-2
+Δt = 1e-4
 max_Δt = 0.1
 stop_time = 5 * 60 * 60 # seconds
 save_schedule = 60  # seconds
