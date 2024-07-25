@@ -29,7 +29,7 @@ scales = similar(depths)
 fill!(scales, 2e-4)
 initial_noise = SalinityNoise(depths, scales)
 @info "Building DNS"
-tldns = TwoLayerDNS(dns_model, profile_function, initial_conditions; initial_noise = nothing)
+tldns = TwoLayerDNS(dns_model, profile_function, initial_conditions; initial_noise)
 
 @info "Setting two layer initial conditions"
 set_two_layer_initial_conditions!(tldns)
