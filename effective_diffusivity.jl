@@ -11,10 +11,10 @@ save_names = ["isothermal/salinity_gradient", "isothermal/no_gradient",
 effective_diffusivity = "effective_diffusivity.jld2"
 jldopen(effective_diffusivity, "w") do file
     file["time/salinity_gradient"] = NCDataset(tracers[1]) do ds
-        ds[:time]
+        ds[:time][:]
     end
     file["time/no_gradient"] = NCDataset(tracers[2]) do ds
-        ds[:time]
+        ds[:time][:]
     end
 end
 
