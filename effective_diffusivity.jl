@@ -24,7 +24,7 @@ for (i, tracer) ∈ enumerate(tracers)
 
     time = ds[:time][:]
     Δt = diff(time)
-    ΔV = diff(ds[:xC][1:2])[1] * diff(ds[:yC][1:2])[1] * diff(ds[:z∫:2])[1]
+    ΔV = diff(ds[:xC][1:2])[1] * diff(ds[:yC][1:2])[1] * diff(ds[:zC][1:2])[1]
     V = (1:length(reshape(ds[:S][:, :, :, 1], :))) * ΔV
     SA = 0.1 * 0.1
     ẑ = V / SA
