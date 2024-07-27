@@ -47,7 +47,7 @@ for (i, tracer) ∈ enumerate(tracers)
     close(ds)
 
     jldopen(effective_diffusivity, "a+") do file
-        file[save_names[i]] = ∫κₛ[t]
+        file[save_names[i]] = ∫κₛ
     end
 
 end
