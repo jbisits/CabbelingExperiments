@@ -1,5 +1,7 @@
 using NCDatasets, JLD2
 
+effective_diffusivity = "effective_diffusivity.jld2"
+
 # tracers = "outputs_equaldiffusion/" .* ["isothermal_stepchangelineargradient_nothing_300min",
 #                                         "isothermal_stepchange_nothing_660min",
 #                                         "cabbeling_stepchangelineargradient_nothing_300min",
@@ -8,7 +10,6 @@ using NCDatasets, JLD2
 # save_names = ["isothermal/salinity_gradient", "isothermal/no_gradient",
 #               "cabbeling/salinity_gradient", "cabbeling/no_gradient"]
 
-# effective_diffusivity = "effective_diffusivity.jld2"
 # jldopen(effective_diffusivity, "w") do file
 #     file["time/salinity_gradient"] = NCDataset(tracers[1]) do ds
 #         ds[:time][:]
