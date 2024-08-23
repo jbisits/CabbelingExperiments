@@ -1,6 +1,6 @@
 using TwoLayerDirectNumericalShenanigans
 
-restart = true
+restart = false
 
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
@@ -43,7 +43,8 @@ simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule, TLDNS.
                                     checkpointer_time_interval, output_path, max_Δt,
                                     overwrite_saved_output = restart,
                                     save_velocities = true)
-
-pickup = restart ? false : true
+simulation.stop_time = 22 * 60 * 60 # seconds
+pickup = restart ? false : joinpath(output_path,
+                                    "cabbeling_stepchange_nothing_660min/model_checkpoints/checkpoint_iteration396659.jld2")
 ## Run the simulation
 run!(simulation; pickup)

@@ -14,6 +14,7 @@ Rasters = "a3a2b9e3-a471-40c9-b274-f788e487c689"
 SeawaterPolynomials = "d496a93d-167e-4197-9f49-d3af4ff8fe40"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 TwoLayerDirectNumericalShenanigans = "40aaee9f-3595-48be-b36c-f1067009652f"
 
 [compat]
