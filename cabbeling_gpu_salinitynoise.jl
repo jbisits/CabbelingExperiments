@@ -36,7 +36,7 @@ set_two_layer_initial_conditions!(tldns)
 max_Δt = 0.1
 stop_time = 20 * 60 * 60 # seconds
 save_schedule = 60  # seconds
-checkpointer_time_interval = 30 * 60 # seconds
+checkpointer_time_interval = 60 * 60 # seconds
 output_path = joinpath(@__DIR__, "outputs_equaldiffusion/")
 @info "Setting up simulation"
 simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule, TLDNS.save_computed_output!,
