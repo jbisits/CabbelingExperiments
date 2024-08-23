@@ -18,4 +18,4 @@ TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 TwoLayerDirectNumericalShenanigans = "40aaee9f-3595-48be-b36c-f1067009652f"
 
 [compat]
-TwoLayerDirectNumericalShenanigans = "0.6"
+TwoLayerDirectNumericalShenanigans = "0.7"
