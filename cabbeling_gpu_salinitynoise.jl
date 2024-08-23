@@ -43,8 +43,8 @@ simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule, TLDNS.
                                     checkpointer_time_interval, output_path, max_Δt,
                                     overwrite_saved_output = restart,
                                     save_velocities = true)
-simulation.stop_time = 22 * 60 * 60 # seconds
 pickup = restart ? false : joinpath(output_path,
                                     "cabbeling_stepchange_nothing_660min/model_checkpoints/checkpoint_iteration396659.jld2")
+simulation.stop_time = 22 * 60 * 60 # seconds
 ## Run the simulation
 run!(simulation; pickup)

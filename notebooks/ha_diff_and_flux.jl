@@ -101,7 +101,7 @@ end
 # ╔═╡ a2fb3348-1272-4860-b364-7c34782ff0a5
 let
 	fig, ax, hm = heatmap(iso["time"][1:end-1], iso["z"], log10.(abs.(iso["κₛ"]')),
-	colorrange = (log10(1e-8), log10(1)), colormap = :tempo, 
+						colorrange = (log10(1e-8), log10(1)), colormap = :tempo, 
 						highclip = :red, lowclip = :orange)
 	ax.title = "Horizontally averaged effective diffusivity"
 	ax.xlabel = "time (s)"
@@ -301,7 +301,8 @@ end
 let
 	fig, ax, hm = heatmap(cab["time"][1:end-1], cab["z"], log10.(abs.(cab["κₛ"]')),
 						colorrange = (log10(1e-8), log10(1)), colormap = :tempo, 
-						highclip = :red, lowclip = :orange)
+						#highclip = :red, lowclip = :orange
+	)
 	ax.title = "Horizontally averaged effective diffusivity"
 	ax.xlabel = "time (s)"
 	ax.ylabel = "z (m)"
@@ -489,7 +490,7 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 # ╟─33a637d5-5357-4fdf-bdb7-268cd5999f5d
 # ╟─4079a130-62b6-402d-a2e7-940192874f5d
 # ╟─1155f907-8771-408d-b525-0d0abbb2a780
-# ╠═a2fb3348-1272-4860-b364-7c34782ff0a5
+# ╟─a2fb3348-1272-4860-b364-7c34782ff0a5
 # ╟─def05ee6-781c-42e4-8700-70ca78c41925
 # ╟─fe6cade8-dd0f-4b16-aa37-babb4a2ae791
 # ╟─8cd975f4-0b08-4d5b-9acf-541e19c76391
@@ -509,7 +510,7 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 # ╟─b7f3c4b1-b9b1-4dfa-8e45-5c20adf0d868
 # ╟─c6dc6652-487a-4b5e-9a5f-94563e768f6e
 # ╟─885a9ae3-a19b-47c9-9eea-31d2653888ad
-# ╟─62353120-49c2-4a2a-9ec0-d72249fd1280
+# ╠═62353120-49c2-4a2a-9ec0-d72249fd1280
 # ╟─75f0c7a3-04ff-4679-bd79-8ba911430c30
 # ╟─f246bb02-7cb2-461f-9c39-9c458601ef33
 # ╟─3d3879a6-22ba-4107-86b3-32f6fa97050c
