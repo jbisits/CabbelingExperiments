@@ -19,4 +19,4 @@ module load julia
 
 # Run the experiment
 # julia --project cabbeling_gpu_salinitynoise.jl > $PBS_JOBID.log
-julia --project cabbeling_gpu_salinitygrad_salinitynoise.jl > $PBS_JOBID.log
+julia --project cabbeling_gpu_salinitynoise.jl > $PBS_JOBID.log
