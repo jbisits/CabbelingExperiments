@@ -6,7 +6,7 @@ bflux = "buoyancy_flux.jld2"
 
 ds_co = NCDataset(co)
 time = ds_co[:time][:]
-ΔV = diff(ds[:xC][1:2])[1] * diff(ds[:yC][1:2])[1] * diff(ds[:zC][1:2])[1]
+ΔV = diff(ds_co[:xC][1:2])[1] * diff(ds_co[:yC][1:2])[1] * diff(ds_co[:zC][1:2])[1]
 ds_vel = NCDataset(velocities)
 
 g = 9.81
