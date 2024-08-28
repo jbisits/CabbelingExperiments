@@ -223,6 +223,28 @@ let
 	fig
 end
 
+# ╔═╡ 1d0dcc31-ad71-4522-8165-73194847d0c6
+md"""
+## Tracer fluxes
+"""
+
+# ╔═╡ f12e37c2-b18d-4684-81ec-97b10eb17138
+let
+	fig, ax, hm = heatmap(iso["time"][2:end], iso["z"], iso["Fₜ"]', colormap = :thermal)
+	ax.title = "Temperature flux"
+	ax.xlabel = "time (s)"
+	ax.ylabel = "z (m)"
+	hidexdecorations!(ax, ticks = false)
+	Colorbar(fig[1, 2], hm)
+	ax2 = Axis(fig[2, 1])
+	hm = heatmap!(ax2, iso["time"][2:end], iso["z"], log10.(abs.(iso["Fₛ"]')), colormap = :haline)
+	ax2.title = "Salinity flux"
+	ax2.xlabel = "time (s)"
+	ax2.ylabel = "z (m)"
+	Colorbar(fig[2, 2], hm)
+	fig
+end
+
 # ╔═╡ c8895415-4d2a-44f7-a15f-8dd77503d940
 md"""
 ## Density flux
@@ -269,7 +291,9 @@ Need to check the salinity flux saving here --- looks like there is an error and
 
 # ╔═╡ b7f3c4b1-b9b1-4dfa-8e45-5c20adf0d868
 begin
-	cab = load("cabbeling_fluxes_and_diff.jld2")
+	cab = load("cabbeling_fluxes_and_diff_longer_run.jld2")
+	# cab = load("cabbeling_fluxes_and_diff.jld2")
+	cab_time = cab["time"]
 	Δz_cab = diff(cab["z"])
 	replace!(cab["∂S∂z"], 0 => NaN)
 	reverse!(cab["∂S∂z"], dims = 1)
@@ -348,7 +372,8 @@ end
 # ╔═╡ 757f818c-8b04-4dec-9f10-410194954384
 begin
 	being_ts_cab = 1
-	times_cab = Time(0, being_ts_cab, 0):Minute(1):Time(11, 0, 0)
+	# times_cab = Time(0, being_ts_cab, 0):Minute(1):Time(11, 0, 0)
+	times_cab = Time(0, being_ts_cab, 0):Minute(1):Time(20, 0, 0)
 	# data_cab = (times = times_cab, ∫κₛ = cab["∫κₛ"][being_ts_cab:end])
 	data_cab = (times = times_cab, ∫κₛ = test_κ_cab)
 	cab_ts = TimeArray(data_cab, timestamp=:times)
@@ -389,40 +414,64 @@ md"""
 
 # ╔═╡ 0942924b-aa60-4946-af97-fbea014c3e9c
 let
-	fig, ax = lines(cab["time"], cab["∫S²dV"])
+	fig, ax = lines(cab["time"], cab["∫(S - Smean)²dV"])
 	ax.title = "Salinity variance"
 	ax.xlabel = "time (s)"
 	ax.ylabel = "∫S²dV"
 	hidexdecorations!(ax, grid = false)
 	ax2 = Axis(fig[2, 1], xlabel = "time (s)", ylabel = "∫T²dV", title = "Temperature variance")
-	lines!(ax2, cab["time"], cab["∫T²dV"])
+	lines!(ax2, cab["time"], cab["∫(T - Tmean)²dV"])
 	fig
 end
 
 # ╔═╡ 77e44132-8a97-4b96-bc39-9fb8efcbd07f
 let
-	fig, ax = lines(cab["time"][2:end], cab["dₜ∫S²dV"])
+	S_var = diff(cab["∫(S - Smean)²dV"]) ./ diff(cab_time)
+	T_var = diff(cab["∫(T - Tmean)²dV"]) ./ diff(cab_time)
+	fig, ax = lines(cab["time"][2:end], S_var)
 	ax.title = "Salinity variance dissipation"
 	ax.xlabel = "time (s)"
 	ax.ylabel = "∫S²dV"
 	hidexdecorations!(ax, grid = false)
 	ax2 = Axis(fig[2, 1], xlabel = "time (s)", ylabel = "∫T²dV", title = "Temperature variance dissipation")
-	lines!(ax2, cab["time"][2:end], cab["dₜ∫T²dV"])
+	lines!(ax2, cab["time"][2:end], T_var)
 	fig
 end
 
 # ╔═╡ 93641a6d-1aad-4651-bad3-d06297fa6342
+md"""
+## Tracer fluxes
+"""
+
+# ╔═╡ a78a42a5-66d1-4aad-982d-32fccb1ebb84
+let
+	fig, ax, hm = heatmap(cab["time"][2:end], cab["z"], cab["Fₜ"]', colormap = :thermal)
+	ax.title = "Temperature flux"
+	ax.xlabel = "time (s)"
+	ax.ylabel = "z (m)"
+	hidexdecorations!(ax, ticks = false)
+	Colorbar(fig[1, 2], hm)
+	ax2 = Axis(fig[2, 1])
+	hm = heatmap!(ax2, cab["time"][2:end], cab["z"], cab["Fₛ"]', colormap = :haline)
+	ax2.title = "Salinity flux"
+	ax2.xlabel = "time (s)"
+	ax2.ylabel = "z (m)"
+	Colorbar(fig[2, 2], hm)
+	fig
+end
+
+# ╔═╡ 45d9e940-39eb-408c-ba16-e923f52d1874
 md"""
 ## Density flux
 """
 
 # ╔═╡ a74d95ff-6a44-4f60-b31e-c7a196eb7aab
 begin
-	g = 9.81
 	Sₘ, Tₘ = 0.5 * (34.58 + 34.7), 0.5 * (-1.5 + 0.5)
 	α_cab, β_cab = gsw_alpha(Sₘ, Tₘ, 0), gsw_beta(Sₘ, Tₘ, 0)
 	F_ρ_cab =  @. ρ₀ * (α_cab * cab["Fₜ"] - β_cab * cab["Fₛ"])
 	∫F_ρ_cab = vec(sum(F_ρ_cab .* Δz_cab[1], dims = 1))
+	# ∫F_ρ_cab = vec(sum(F_ρ_cab .* cab["ΔV"], dims = 1))
 	nothing
 end
 
@@ -465,15 +514,35 @@ end
 
 # ╔═╡ 11f01195-8bb0-4835-a722-b50e06efb314
 begin
-
+	
+	Ek = cab_energy["Ek"]
 	dₜEk = diff(cab_energy["Ek"]) ./ diff(cab_energy["time"])
 	ϵ = cab_energy["ϵ"]
+	Δϵ = diff(ϵ) 
+	g = 9.81
+	Cₚ = 4000
+	J_b = @. g * ((α_cab / Cₚ) * cab["Fₜ"][:, 1:660] - β_cab * cab["Fₛ"][:, 1:660])
+	∫J_b = vec(sum(J_b .* Δz_cab[1], dims = 1))
+	#dₜ∫J_b = diff(∫J_b) ./ diff(cab_energy["time"][1:2])
 
-	RHS = diff(ϵ)[1:end-1] .- (diff((g / ρ₀) * ∫F_ρ_cab) ./ diff(cab_energy["time"][1:end-1]))
+	RHS = ϵ[1:end-1] .+ ∫J_b
 
-	fig, ax = lines(cab_energy["time"][2:end], dₜEk, label = "dₜEk")
-	lines!(ax, cab_energy["time"][2:end-1], RHS, label = "ϵ + g∫ρwdV", linestyle = :dash)
+	fig, ax = lines(cab_energy["time"][1:end-1], dₜEk, label = "dₜEk")
+	lines!(ax, cab_energy["time"][1:end-1], RHS, label = "ϵ - ∫J_b", linestyle = :dash)
 	ax.title = "Time change in kinetic energy"
+	ax.xlabel = "time (s)"
+	ax.ylabel = "Watts (J/s)"
+	axislegend(ax)
+	fig
+end
+
+# ╔═╡ 329efe29-dced-444c-89b9-14dbfd95727c
+let
+	fig, ax = lines(cab_energy["time"][2:end], ∫J_b, label = "∫Jb")
+	lines!(ax, cab_energy["time"][2:end], ϵ[2:end], label = "ϵ", linestyle = :dash)
+	lines!(ax, cab_energy["time"][2:end], ϵ[2:end] .+ ∫J_b)
+	#lines!(ax, cab_energy["time"][2:end], diff(Ek), label = "Ek")
+	ax.title = "Kinetic energy and TKE dissipation"
 	ax.xlabel = "time (s)"
 	ax.ylabel = "Watts (J/s)"
 	axislegend(ax)
@@ -502,6 +571,8 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 # ╟─3af61b46-9a3e-49af-8d4a-ebee72f62c96
 # ╟─2bff8570-e034-4b2d-bd6f-0042cea0d0a0
 # ╟─8cdf7dc6-6fe9-4c31-95ac-5841314e8c01
+# ╟─1d0dcc31-ad71-4522-8165-73194847d0c6
+# ╟─f12e37c2-b18d-4684-81ec-97b10eb17138
 # ╟─c8895415-4d2a-44f7-a15f-8dd77503d940
 # ╟─12a475e5-4937-4e88-90b0-1d4f9a84e391
 # ╟─5f5e360a-1dec-4f62-b45c-b771ecb0a7da
@@ -510,7 +581,7 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 # ╟─b7f3c4b1-b9b1-4dfa-8e45-5c20adf0d868
 # ╟─c6dc6652-487a-4b5e-9a5f-94563e768f6e
 # ╟─885a9ae3-a19b-47c9-9eea-31d2653888ad
-# ╠═62353120-49c2-4a2a-9ec0-d72249fd1280
+# ╟─62353120-49c2-4a2a-9ec0-d72249fd1280
 # ╟─75f0c7a3-04ff-4679-bd79-8ba911430c30
 # ╟─f246bb02-7cb2-461f-9c39-9c458601ef33
 # ╟─3d3879a6-22ba-4107-86b3-32f6fa97050c
@@ -521,10 +592,13 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 # ╟─0942924b-aa60-4946-af97-fbea014c3e9c
 # ╟─77e44132-8a97-4b96-bc39-9fb8efcbd07f
 # ╟─93641a6d-1aad-4651-bad3-d06297fa6342
+# ╟─a78a42a5-66d1-4aad-982d-32fccb1ebb84
+# ╟─45d9e940-39eb-408c-ba16-e923f52d1874
 # ╟─a74d95ff-6a44-4f60-b31e-c7a196eb7aab
 # ╟─3701b3aa-d28e-47cc-9539-d0327995250f
 # ╟─eef3bde2-9709-4bd3-894e-801f2db806a7
 # ╟─4c613a5a-cc72-4846-81f9-4fd5f9cc72e6
 # ╠═11f01195-8bb0-4835-a722-b50e06efb314
+# ╠═329efe29-dced-444c-89b9-14dbfd95727c
 # ╟─f1e195a5-ea3c-4898-9709-7bd9855bbdef
 # ╟─cb752927-287f-4e57-b4fc-0a19777bf1e5
