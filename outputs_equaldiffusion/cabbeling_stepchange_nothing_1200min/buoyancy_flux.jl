@@ -15,8 +15,11 @@ for t ∈ eachindex(time)
 
     σ = ds_co[:σ][:, :, :, t]
     w = ds_vel[:w][:, :, :, t]
+    w1 = @view w[:, :, 1:end-1]
+    w2 = @view w[:, :, 2:end]
+    w_interp = (w1 .+ w2) / 2
 
-    ∫gρw[t] = g * sum(σ .* w) * ΔV
+    ∫gρw[t] = g * sum(σ .* w_interp) * ΔV
 
 end
 
