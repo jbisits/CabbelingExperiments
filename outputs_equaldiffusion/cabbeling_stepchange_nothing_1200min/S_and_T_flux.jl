@@ -13,8 +13,8 @@ ds_vel = NCDataset(velocities)
 ∫αΘw = similar(time)
 for t ∈ eachindex(time)
 
-    S = @view ds_tracers[:S][:, :, :, t]
-    T = @view ds_tracers[:T][:, :, :, t]
+    S = ds_tracers[:S][:, :, :, t]
+    T = ds_tracers[:T][:, :, :, t]
     α = gsw_alpha.(S, T, 0)
     β = gsw_beta.(S, T, 0)
     w = ds_vel[:w][:, :, :, t]

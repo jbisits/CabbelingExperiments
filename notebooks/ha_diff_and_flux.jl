@@ -465,36 +465,6 @@ md"""
 ## Density flux
 """
 
-# ╔═╡ a74d95ff-6a44-4f60-b31e-c7a196eb7aab
-begin
-	Sₘ, Tₘ = 0.5 * (34.58 + 34.7), 0.5 * (-1.5 + 0.5)
-	α_cab, β_cab = gsw_alpha(Sₘ, Tₘ, 0), gsw_beta(Sₘ, Tₘ, 0)
-	F_ρ_cab =  @. ρ₀ * (α_cab * cab["Fₜ"] - β_cab * cab["Fₛ"])
-	∫F_ρ_cab = vec(sum(F_ρ_cab .* Δz_cab[1], dims = 1))
-	# ∫F_ρ_cab = vec(sum(F_ρ_cab .* cab["ΔV"], dims = 1))
-	nothing
-end
-
-# ╔═╡ 3701b3aa-d28e-47cc-9539-d0327995250f
-let
-	fig, ax, hm = heatmap(iso["time"], iso["z"], F_ρ_cab')
-	# fig, ax, hm = heatmap(iso["time"], iso["z"], log10.(abs.(F_ρ_cab)'))
-	ax.title = "Horizontally averaged density flux"
-	ax.xlabel = "time (s)"
-	ax.ylabel = "z (m)"
-	Colorbar(fig[1, 2], hm)
-	fig
-end
-
-# ╔═╡ eef3bde2-9709-4bd3-894e-801f2db806a7
-let
-	fig, ax = lines(cab["time"][2:end], ∫F_ρ_cab)
-	ax.title = "Volume integrated density flux"
-	ax.xlabel = "time (s)"
-	ax.ylabel = "∫F_ρdV"
-	fig
-end
-
 # ╔═╡ 4c613a5a-cc72-4846-81f9-4fd5f9cc72e6
 md"""
 The volume integrated density/buoyancy flux should be related to the kinetic energy and turbulent kinetic energy via (Winters et al. (1995))
@@ -524,6 +494,40 @@ begin
 	find_num = findfirst('k', cab_long_energetics["ρ₀"]) - 1
 	ρ₀_model = parse(Float64, cab_long_energetics["ρ₀"][1:find_num])
 	keys(cab_long_energetics)
+end
+
+# ╔═╡ a74d95ff-6a44-4f60-b31e-c7a196eb7aab
+begin
+	Sₘ, Tₘ = 0.5 * (34.58 + 34.7), 0.5 * (-1.5 + 0.5)
+	α_cab, β_cab = gsw_alpha(Sₘ, Tₘ, 0), gsw_beta(Sₘ, Tₘ, 0)
+	Cₚ = GibbsSeaWater.gsw_cp0
+	F_ρ_cab =  @. ρ₀_model * (α_cab * cab["Fₜ"] - β_cab * cab["Fₛ"])
+	∫F_ρ_cab = vec(sum(F_ρ_cab .* Δz_cab[1], dims = 1))
+	# ∫F_ρ_cab = vec(sum(F_ρ_cab .* cab["ΔV"], dims = 1))
+	nothing
+end
+
+# ╔═╡ 91af1f5f-6e25-4c5f-979b-150a54acae17
+Cₚ
+
+# ╔═╡ 3701b3aa-d28e-47cc-9539-d0327995250f
+let
+	fig, ax, hm = heatmap(iso["time"], iso["z"], F_ρ_cab')
+	# fig, ax, hm = heatmap(iso["time"], iso["z"], log10.(abs.(F_ρ_cab)'))
+	ax.title = "Horizontally averaged density flux"
+	ax.xlabel = "time (s)"
+	ax.ylabel = "z (m)"
+	Colorbar(fig[1, 2], hm)
+	fig
+end
+
+# ╔═╡ eef3bde2-9709-4bd3-894e-801f2db806a7
+let
+	fig, ax = lines(cab["time"][2:end], ∫F_ρ_cab)
+	ax.title = "Volume integrated density flux"
+	ax.xlabel = "time (s)"
+	ax.ylabel = "∫F_ρdV"
+	fig
 end
 
 # ╔═╡ 20c14d5c-b2d7-4238-a004-272eeb72014c
@@ -564,7 +568,8 @@ There will be computational error which could explain some of it.
 # ╔═╡ 3465bbc1-b6d1-4aa9-a87f-4ed204dc9adb
 let
 	fig, ax = lines(cab_time[1:end-1], ∫F_ρ_cab, label = "From fluxes")
-	lines!(ax, cab_time, cab_long_energetics["∫gρw"], label = "∫gρw from model output")
+	cab_model_density_flux = (cab_long_energetics["∫gρw"][1:end-1] .+ cab_long_energetics["∫gρw"][2:end]) / 2
+	lines!(ax, cab_time[1:end-1], cab_model_density_flux, label = "∫gρw from model output")
 	ax.title = "Comparison between density flux from S and T fluxes and computed directly from model"
 	axislegend(ax, position = :rb)
 	fig
@@ -590,12 +595,10 @@ begin
 	ϵ = cab_energy["ϵ"]
 	Δϵ = diff(ϵ) 
 	g = 9.81
-	Cₚ = 4000
-	J_b = @. g * ((α_cab / Cₚ) * cab["Fₜ"][:, 1:660] - β_cab * cab["Fₛ"][:, 1:660])
+	J_b = @. g * (α_cab * cab["Fₜ"][:, 1:660] - β_cab * cab["Fₛ"][:, 1:660]) * (Cₚ /ρ₀_model)
 	∫J_b = vec(sum(J_b .* Δz_cab[1], dims = 1))
-	#dₜ∫J_b = diff(∫J_b) ./ diff(cab_energy["time"][1:2])
 
-	RHS = ϵ[1:end-1] .+ ∫J_b
+	RHS = -0.5 * (ϵ[1:end-1] .+ ϵ[2:end]) .- ∫J_b
 
 	fig, ax = lines(cab_energy["time"][1:end-1], dₜEk, label = "dₜEk")
 	lines!(ax, cab_energy["time"][1:end-1], RHS, label = "ϵ - ∫J_b", linestyle = :dash)
@@ -608,9 +611,10 @@ end
 
 # ╔═╡ 329efe29-dced-444c-89b9-14dbfd95727c
 let
-	fig, ax = lines(cab_energy["time"][2:end], ∫J_b, label = "∫Jb")
-	lines!(ax, cab_energy["time"][2:end], ϵ[2:end], label = "ϵ", linestyle = :dash)
-	lines!(ax, cab_energy["time"][2:end], -ϵ[2:end] .+ ∫J_b/3)
+	ϵ_interp = (ϵ[1:end-1] .+ ϵ[2:end]) / 2
+	fig, ax = lines(cab_energy["time"][2:end], -ϵ_interp .- ∫J_b, label = "-ϵ - J_b")
+	lines!(ax, cab_energy["time"][2:end], ∫J_b, label = "∫Jb")
+	lines!(ax, cab_energy["time"][2:end], ϵ_interp, label = "ϵ", linestyle = :dash)
 	#lines!(ax, cab_energy["time"][2:end], diff(Ek), label = "Ek")
 	ax.title = "Kinetic energy and TKE dissipation"
 	ax.xlabel = "time (s)"
@@ -624,6 +628,7 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 
 # ╔═╡ Cell order:
 # ╟─b50f0e02-5ea4-11ef-0758-95c6ef87071e
+# ╠═91af1f5f-6e25-4c5f-979b-150a54acae17
 # ╟─d11f7aad-5cce-4957-a9cb-8366e2b219f1
 # ╟─7b5f9b88-5806-4e3a-92ae-3929af5ddc08
 # ╟─33a637d5-5357-4fdf-bdb7-268cd5999f5d
@@ -669,7 +674,7 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 # ╟─eef3bde2-9709-4bd3-894e-801f2db806a7
 # ╟─4c613a5a-cc72-4846-81f9-4fd5f9cc72e6
 # ╟─11f01195-8bb0-4835-a722-b50e06efb314
-# ╟─329efe29-dced-444c-89b9-14dbfd95727c
+# ╠═329efe29-dced-444c-89b9-14dbfd95727c
 # ╟─0a184e81-2d7a-483c-b223-adbac5aaa234
 # ╟─d252f33a-37d8-4f68-a4bd-0a4cb58b214e
 # ╟─20c14d5c-b2d7-4238-a004-272eeb72014c
