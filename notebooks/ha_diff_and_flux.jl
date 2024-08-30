@@ -18,7 +18,7 @@ end
 begin
 	using Pkg
 	Pkg.activate("..")
-	using JLD2, CairoMakie, PlutoUI, StatsBase, TimeSeries, Dates, GibbsSeaWater
+	using JLD2, CairoMakie, PlutoUI, StatsBase, TimeSeries, Dates, GibbsSeaWater, Statistics
 end
 
 # ╔═╡ d11f7aad-5cce-4957-a9cb-8366e2b219f1
@@ -49,9 +49,9 @@ Might not be needed if I frame in terms of buoyancy flux ``F_{b} = -g\left( αF_
 
 We also have have the tracer variance
 ```math
-\mathrm{Var}(C) = \int_{V}C^{2}\mathrm{d}V
+\mathrm{Var}(C) = \int_{V}(C - \langle C \rangle)^{2}\mathrm{d}V
 ```
-and tracer variance dissipation (which is the time change in the tracer variance).
+where ``\langle C \rangle`` is the mean of tracer ``C`` and tracer variance dissipation (which is the time change in the tracer variance).
 """
 
 # ╔═╡ 7b5f9b88-5806-4e3a-92ae-3929af5ddc08
@@ -505,6 +505,76 @@ The difference in magnitude means density flux is negligible compared to ``\epsi
 According to Inoue et al. bouyancy flux is defined as ``-g(αF_{T} - βF_{S})``.
 """
 
+# ╔═╡ 0a184e81-2d7a-483c-b223-adbac5aaa234
+md"""
+I was having trouble figuring out closing the energy budget as per
+```math
+\frac{\mathrm{d}}{\mathrm{d} t}E_{k} = -g\int_{V}ρw\mathrm{d}V - \epsilon.
+```
+so I have computed everything again (from the in situ model output) to check.
+"""
+
+# ╔═╡ d252f33a-37d8-4f68-a4bd-0a4cb58b214e
+begin
+	cab_long_energetics = load("buoyancy_flux.jld2")
+	∫Eₖ = cab_long_energetics["∫Eₖ"]
+	∫ϵ = cab_long_energetics["∫ϵ"]
+	∫gρw = cab_long_energetics["∫gρw"]
+	ρ₀_string = cab_long_energetics["ρ₀"]
+	find_num = findfirst('k', cab_long_energetics["ρ₀"]) - 1
+	ρ₀_model = parse(Float64, cab_long_energetics["ρ₀"][1:find_num])
+	keys(cab_long_energetics)
+end
+
+# ╔═╡ 20c14d5c-b2d7-4238-a004-272eeb72014c
+let
+	time = cab_long_energetics["time"]
+	Δt = diff(time)
+	∫Eₖ = cab_long_energetics["∫Eₖ"]
+	∫ϵ = cab_long_energetics["∫ϵ"]
+	∫gρw = cab_long_energetics["∫gρw"]
+
+	dₜ∫Eₖ = diff(∫Eₖ) ./ Δt
+	RHS_ = -∫ϵ .- ∫gρw / ρ₀_model
+	RHS = (RHS_[1:end-1] .+ RHS_[2:end]) / 2
+
+	fig = Figure(size = (1000, 800))
+	ax = Axis(fig[1, 1], title = "Kinetic energy, TKE dissipation and buoyancy flux", xlabel = "time (s)", ylabel = "Watts (J/s)")
+	lines!(ax, time[1:199], dₜ∫Eₖ[1:199], label = "dₜ∫Eₖ")
+	lines!(ax, time[1:199], RHS[1:199], label = "-∫ϵ - ∫gρw")
+	hidexdecorations!(ax, ticks = false, grid = false)
+	axislegend(ax)
+
+	RMS = sqrt(mean((dₜ∫Eₖ[1:199] .- RHS[1:199]).^2))
+	abs_err = abs.(dₜ∫Eₖ[1:199] .- RHS[1:199])
+	rel_err = abs_err ./ dₜ∫Eₖ[1:199]
+	ax2 = Axis(fig[2, 1], title = "Absolute error", subtitle = "RMS = $(RMS)", xlabel = "time (s)", ylabel = "Absolute error")
+	lines!(ax2, time[1:199], abs_err)
+	fig
+end
+
+# ╔═╡ 46fdeae9-293e-46bf-9ebc-243da60df30a
+md"""
+Qualatatively this now matches quite well but the absolute error peaks at nearly the same magnitude as the values so the relative errr will be high?
+Question is how clsely should these match?
+If the answer is exact then this needs to be closer.
+There will be computational error which could explain some of it.
+"""
+
+# ╔═╡ 3465bbc1-b6d1-4aa9-a87f-4ed204dc9adb
+let
+	fig, ax = lines(cab_time[1:end-1], ∫F_ρ_cab, label = "From fluxes")
+	lines!(ax, cab_time, cab_long_energetics["∫gρw"], label = "∫gρw from model output")
+	ax.title = "Comparison between density flux from S and T fluxes and computed directly from model"
+	axislegend(ax, position = :rb)
+	fig
+end
+
+# ╔═╡ 5d65a2c1-c535-43e0-92aa-e447c979ae9c
+md"""
+These look to be out by a factor of around three and I am not sure why or where the three would come from.
+"""
+
 # ╔═╡ f1e195a5-ea3c-4898-9709-7bd9855bbdef
 begin
 	cab_energy_path = "../outputs_equaldiffusion/cabbeling_stepchange_nothing_660min/cabbeling_energetics.jld2"
@@ -540,7 +610,7 @@ end
 let
 	fig, ax = lines(cab_energy["time"][2:end], ∫J_b, label = "∫Jb")
 	lines!(ax, cab_energy["time"][2:end], ϵ[2:end], label = "ϵ", linestyle = :dash)
-	lines!(ax, cab_energy["time"][2:end], ϵ[2:end] .+ ∫J_b)
+	lines!(ax, cab_energy["time"][2:end], -ϵ[2:end] .+ ∫J_b/3)
 	#lines!(ax, cab_energy["time"][2:end], diff(Ek), label = "Ek")
 	ax.title = "Kinetic energy and TKE dissipation"
 	ax.xlabel = "time (s)"
@@ -598,7 +668,13 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 # ╟─3701b3aa-d28e-47cc-9539-d0327995250f
 # ╟─eef3bde2-9709-4bd3-894e-801f2db806a7
 # ╟─4c613a5a-cc72-4846-81f9-4fd5f9cc72e6
-# ╠═11f01195-8bb0-4835-a722-b50e06efb314
-# ╠═329efe29-dced-444c-89b9-14dbfd95727c
+# ╟─11f01195-8bb0-4835-a722-b50e06efb314
+# ╟─329efe29-dced-444c-89b9-14dbfd95727c
+# ╟─0a184e81-2d7a-483c-b223-adbac5aaa234
+# ╟─d252f33a-37d8-4f68-a4bd-0a4cb58b214e
+# ╟─20c14d5c-b2d7-4238-a004-272eeb72014c
+# ╟─46fdeae9-293e-46bf-9ebc-243da60df30a
+# ╟─3465bbc1-b6d1-4aa9-a87f-4ed204dc9adb
+# ╟─5d65a2c1-c535-43e0-92aa-e447c979ae9c
 # ╟─f1e195a5-ea3c-4898-9709-7bd9855bbdef
 # ╟─cb752927-287f-4e57-b4fc-0a19777bf1e5
