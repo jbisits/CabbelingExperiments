@@ -36,7 +36,7 @@ function mean_and_interpolate_C(C1, C2)
     C1 = reshape(mean(C1, dims = (1, 2)), :)
     C2 = reshape(mean(C2, dims = (1, 2)), :)
 
-    return 0.5 * (C1[1:end-1] + C2[2:end])
+    return 0.5 * (C1 .+ C2)
 end
 
 
