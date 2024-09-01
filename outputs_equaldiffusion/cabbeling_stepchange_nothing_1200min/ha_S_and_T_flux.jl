@@ -26,6 +26,19 @@ function compute_flux(C, Δz, Δt)
     return dₜ∫Cdz
 
 end
+"""
+    function mean_and_interpolate_C(C1, C2)
+Take the horizontal `mean` the interpolate between the values (of the horizontally averaged
+`Vector`s).
+"""
+function mean_and_interpolate_C(C1, C2)
+
+    C1 = reshape(mean(C1, dims = (1, 2)), :)
+    C2 = reshape(mean(C2, dims = (1, 2)), :)
+
+    return 0.5 * (C1[1:end-1] + C2[2:end])
+end
+
 
 cab_flux_file = "cabbeling_fluxes_and_diff_longer_run.jld2"
 notebook_path = "/g/data/e14/jb2381/CabbelingExperiments/notebooks"
@@ -41,31 +54,37 @@ z = ds[:zC][:]
 snapshots = eachindex(Δt)
 Fₛ = Array{Float64}(undef, length(z), length(Δt))
 Fₜ = Array{Float64}(undef, length(z), length(Δt))
+α = Array{Float64}(undef, length(z), length(Δt))
+β = Array{Float64}(undef, length(z), length(Δt))
 
 for (i, t) ∈ enumerate(snapshots)
 
     S1 = ds[:S][:, :, :, t]
     S2 = ds[:S][:, :, :, t+1]
+    S = mean_and_interpolate_C(S1, S2)
     T1 = ds[:T][:, :, :, t]
     T2 = ds[:T][:, :, :, t+1]
+    T =  mean_and_interpolate_C(T1, T2)
+    β[:, i] = gsw_beta.(S, T, 0)
+    α[:, i] = gsw_alpha.(S, T, 0)
 
     ## Salinity
-    α1 = gsw_beta.(S1, T1, 0)
-    α2 = gsw_beta.(S2, T2, 0)
-    C = mean_and_reshape_C(S1, S2, α1, α2)
-    Fₛ[:, i] = compute_flux(C, Δz, Δt[t])
+    # α1 = gsw_beta.(S1, T1, 0)
+    # α2 = gsw_beta.(S2, T2, 0)
+    # C = mean_and_reshape_C(S1, S2, α1, α2)
+    # Fₛ[:, i] = compute_flux(C, Δz, Δt[t])
 
     ## Temperature
-    α1 = gsw_alpha.(S1, T1, 0)
-    α2 = gsw_alpha.(S2, T2, 0)
-    C = mean_and_reshape_C(T1, T2, α1, α2)
-    Fₜ[:, i] = compute_flux(C, Δz, Δt[t])
+    # α1 = gsw_alpha.(S1, T1, 0)
+    # α2 = gsw_alpha.(S2, T2, 0)
+    # C = mean_and_reshape_C(T1, T2, α1, α2)
+    # Fₜ[:, i] = compute_flux(C, Δz, Δt[t])
 
 end
 
 close(ds)
 
 jldopen(cab_flux_path, "a+") do file
-    file["Fₛ_with_β"] = Fₛ
-    file["Fₜ_with_α"] = Fₜ
+    file["β"] = β
+    file["α"] = α
 end

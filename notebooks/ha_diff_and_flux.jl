@@ -303,6 +303,8 @@ begin
 	reverse!(cab["κₛ"], dims = 1)
 	reverse!(cab["Fₜ"], dims = 1)
 	reverse!(cab["Fₛ"], dims = 1)
+	reverse!(cab["Fₜ_with_α"], dims = 1)
+	reverse!(cab["Fₛ_with_β"], dims = 1)
 	keys(cab)
 end
 
@@ -445,14 +447,14 @@ md"""
 
 # ╔═╡ a78a42a5-66d1-4aad-982d-32fccb1ebb84
 let
-	fig, ax, hm = heatmap(cab["time"][2:end], cab["z"], cab["Fₜ"]', colormap = :thermal)
+	fig, ax, hm = heatmap(cab["time"][2:end], cab["z"], cab["Fₜ_with_α"]', colormap = :thermal)
 	ax.title = "Temperature flux"
 	ax.xlabel = "time (s)"
 	ax.ylabel = "z (m)"
 	hidexdecorations!(ax, ticks = false)
 	Colorbar(fig[1, 2], hm)
 	ax2 = Axis(fig[2, 1])
-	hm = heatmap!(ax2, cab["time"][2:end], cab["z"], cab["Fₛ"]', colormap = :haline)
+	hm = heatmap!(ax2, cab["time"][2:end], cab["z"], cab["Fₛ_with_β"]', colormap = :haline)
 	ax2.title = "Salinity flux"
 	ax2.xlabel = "time (s)"
 	ax2.ylabel = "z (m)"
@@ -477,6 +479,9 @@ According to Inoue et al. bouyancy flux is defined as ``-g(αF_{T} - βF_{S})``.
 
 # ╔═╡ 0a184e81-2d7a-483c-b223-adbac5aaa234
 md"""
+
+## Sanity checks
+
 I was having trouble figuring out closing the energy budget as per
 ```math
 \frac{\mathrm{d}}{\mathrm{d} t}E_{k} = -g\int_{V}ρw\mathrm{d}V - \epsilon.
@@ -490,6 +495,8 @@ begin
 	∫Eₖ = cab_long_energetics["∫Eₖ"]
 	∫ϵ = cab_long_energetics["∫ϵ"]
 	∫gρw = cab_long_energetics["∫gρw"]
+	∫αΘw = cab_long_energetics["∫αΘw"]
+	∫βSw = cab_long_energetics["∫βSw"]
 	ρ₀_string = cab_long_energetics["ρ₀"]
 	find_num = findfirst('k', cab_long_energetics["ρ₀"]) - 1
 	ρ₀_model = parse(Float64, cab_long_energetics["ρ₀"][1:find_num])
@@ -501,14 +508,11 @@ begin
 	Sₘ, Tₘ = 0.5 * (34.58 + 34.7), 0.5 * (-1.5 + 0.5)
 	α_cab, β_cab = gsw_alpha(Sₘ, Tₘ, 0), gsw_beta(Sₘ, Tₘ, 0)
 	Cₚ = GibbsSeaWater.gsw_cp0
-	F_ρ_cab =  @. ρ₀_model * (α_cab * cab["Fₜ"] - β_cab * cab["Fₛ"])
+	F_ρ_cab =  @. ρ₀_model * (cab["Fₜ_with_α"]/Cₚ - cab["Fₛ_with_β"])
 	∫F_ρ_cab = vec(sum(F_ρ_cab .* Δz_cab[1], dims = 1))
 	# ∫F_ρ_cab = vec(sum(F_ρ_cab .* cab["ΔV"], dims = 1))
 	nothing
 end
-
-# ╔═╡ 91af1f5f-6e25-4c5f-979b-150a54acae17
-Cₚ
 
 # ╔═╡ 3701b3aa-d28e-47cc-9539-d0327995250f
 let
@@ -567,9 +571,9 @@ There will be computational error which could explain some of it.
 
 # ╔═╡ 3465bbc1-b6d1-4aa9-a87f-4ed204dc9adb
 let
-	fig, ax = lines(cab_time[1:end-1], ∫F_ρ_cab, label = "From fluxes")
 	cab_model_density_flux = (cab_long_energetics["∫gρw"][1:end-1] .+ cab_long_energetics["∫gρw"][2:end]) / 2
-	lines!(ax, cab_time[1:end-1], cab_model_density_flux, label = "∫gρw from model output")
+	fig, ax = lines(cab_time[1:200], cab_model_density_flux[1:200], label = "∫gρw")
+	lines!(ax, cab_time[1:200], ∫F_ρ_cab[1:200], label = "From sorted S, T fluxes")
 	ax.title = "Comparison between density flux from S and T fluxes and computed directly from model"
 	axislegend(ax, position = :rb)
 	fig
@@ -578,7 +582,18 @@ end
 # ╔═╡ 5d65a2c1-c535-43e0-92aa-e447c979ae9c
 md"""
 These look to be out by a factor of around three and I am not sure why or where the three would come from.
+With the updated version of the fluxes the above is more out but some further checks might help.
+THe volume integrated salinity and temperature fluxes are not equal to the density flux but for now a job for another day.
 """
+
+# ╔═╡ 032c0b8b-1363-4966-a963-80c141f5de6c
+let
+	F_ρ_vol_integrated = -ρ₀_model * (∫αΘw/Cₚ - ∫βSw)
+	fig, ax = lines(cab_long_energetics["time"][1:200], ∫gρw[1:200], label = "∫gρw")
+	lines!(ax, cab_long_energetics["time"][1:200], F_ρ_vol_integrated[1:200], label = "ρ₀(∫αΘw/Cₚ - ∫βSw)")
+	axislegend(ax, position = :rb)
+	fig
+end
 
 # ╔═╡ f1e195a5-ea3c-4898-9709-7bd9855bbdef
 begin
@@ -628,7 +643,6 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 
 # ╔═╡ Cell order:
 # ╟─b50f0e02-5ea4-11ef-0758-95c6ef87071e
-# ╠═91af1f5f-6e25-4c5f-979b-150a54acae17
 # ╟─d11f7aad-5cce-4957-a9cb-8366e2b219f1
 # ╟─7b5f9b88-5806-4e3a-92ae-3929af5ddc08
 # ╟─33a637d5-5357-4fdf-bdb7-268cd5999f5d
@@ -653,7 +667,7 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 # ╟─5f5e360a-1dec-4f62-b45c-b771ecb0a7da
 # ╟─483b7fb3-07e4-4c86-9c5b-15c6d437d02d
 # ╟─060b7142-ee7c-43cb-9892-68fd8a332daf
-# ╟─b7f3c4b1-b9b1-4dfa-8e45-5c20adf0d868
+# ╠═b7f3c4b1-b9b1-4dfa-8e45-5c20adf0d868
 # ╟─c6dc6652-487a-4b5e-9a5f-94563e768f6e
 # ╟─885a9ae3-a19b-47c9-9eea-31d2653888ad
 # ╟─62353120-49c2-4a2a-9ec0-d72249fd1280
@@ -674,12 +688,13 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 # ╟─eef3bde2-9709-4bd3-894e-801f2db806a7
 # ╟─4c613a5a-cc72-4846-81f9-4fd5f9cc72e6
 # ╟─11f01195-8bb0-4835-a722-b50e06efb314
-# ╠═329efe29-dced-444c-89b9-14dbfd95727c
+# ╟─329efe29-dced-444c-89b9-14dbfd95727c
 # ╟─0a184e81-2d7a-483c-b223-adbac5aaa234
 # ╟─d252f33a-37d8-4f68-a4bd-0a4cb58b214e
 # ╟─20c14d5c-b2d7-4238-a004-272eeb72014c
 # ╟─46fdeae9-293e-46bf-9ebc-243da60df30a
 # ╟─3465bbc1-b6d1-4aa9-a87f-4ed204dc9adb
 # ╟─5d65a2c1-c535-43e0-92aa-e447c979ae9c
+# ╠═032c0b8b-1363-4966-a963-80c141f5de6c
 # ╟─f1e195a5-ea3c-4898-9709-7bd9855bbdef
 # ╟─cb752927-287f-4e57-b4fc-0a19777bf1e5
