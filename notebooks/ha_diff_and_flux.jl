@@ -30,22 +30,26 @@ This gives behaviour like we would expect and perhaps taking a moving mean we ca
 
 The effective diffusivity at each depth level of the *horizontally averaged salinity profile* is
 ```math
-\kappa_{\mathrm{eff}}(z^{*}, t) = \frac{∂_{t}\int_{z < z^{*}} S \mathrm{d}z}{\partial S / \partial z}.
+\kappa_{\mathrm{eff}}(z^{*}, t) = \frac{∂_{t}\int_{z < z^{*}} \langle S \rangle_{xy}\mathrm{d}z}{\partial \langle S \rangle_{xy} / \partial z}.
 ```
 Integrating over all depths and dividing by total depth, which is 1m, to get a an average effective diffusivity for a *horizontally averaged profile*.
 **Note:** the horizontally averaged profile is still **sorted**.
 
 Tracer fluxes from horizontally averaged, sorted profiles are
 ```math
-F_{C} = ∂_{t}\int_{z < z^{*}}C\mathrm{d}z.
+F_{C} = ∂_{t}\int_{z < z^{*}}\langle C \rangle_{xy}\mathrm{d}z.
 ```
 Computing this for both salinity and temperature tracers then gives the density flux
 ```math
 F_{\rho} = \rho_{0} \left(αF_{T} - βF_{S}\right).
 ```
-I have taken ``α`` and ``\beta`` at the initial mean salinity and temperature as I did not save them (they can be easily computed from the simulation output if needed).
-I need to check if I need to multiply by reference density and specific heat capacity in this.
-Might not be needed if I frame in terms of buoyancy flux ``F_{b} = -g\left( αF_{T} - βF_{S}\right)``?
+In this calculation, the salinity/temperature field are multiplied by ``β/α`` which are computed from the *horizontally averaged tracer profiles*.
+Then, to get an integrated quantity, we need to integrate over `z` and multiply by surface area,
+```math
+\mathrm{SA} ∫_{z}F_{\rho}\mathrm{d}z.
+```
+This ensures our dimensions match (I think).
+I have been doing some sanity checks to see if things line up as they should.
 
 We also have have the tracer variance
 ```math
@@ -289,6 +293,68 @@ md"""
 Need to check the salinity flux saving here --- looks like there is an error and everything is just zero which it definitely should not be.
 """
 
+# ╔═╡ c6dc6652-487a-4b5e-9a5f-94563e768f6e
+md"""
+## Effective diffusivity
+"""
+
+# ╔═╡ 40f780eb-7ae5-4251-a302-a5016f13d6db
+begin
+	window_var_cab = @bind window_cab PlutoUI.Slider(5:100, show_value=true)
+	md"""
+	window = $window_var_cab
+	"""
+end
+
+# ╔═╡ a64c90c5-f75d-4ac1-84a4-cbd48fb3082b
+md"""
+## Tracer variance dissipation
+"""
+
+# ╔═╡ 93641a6d-1aad-4651-bad3-d06297fa6342
+md"""
+## Tracer fluxes
+"""
+
+# ╔═╡ 45d9e940-39eb-408c-ba16-e923f52d1874
+md"""
+## Density flux
+"""
+
+# ╔═╡ 4c613a5a-cc72-4846-81f9-4fd5f9cc72e6
+md"""
+The volume integrated density/buoyancy flux should be related to the kinetic energy and turbulent kinetic energy via (Winters et al. (1995))
+```math
+\frac{\mathrm{d}}{\mathrm{d} t}E_{k} = -g\int_{V}ρw\mathrm{d}V - \epsilon.
+```
+"""
+
+# ╔═╡ 0a184e81-2d7a-483c-b223-adbac5aaa234
+md"""
+
+## Sanity checks
+
+I was having trouble figuring out closing the energy budget as per
+```math
+\frac{\mathrm{d}}{\mathrm{d} t}E_{k} = -g\int_{V}ρw\mathrm{d}V - \epsilon.
+```
+so I have computed everything again (from the in situ model output) to check and all looks to check out.
+"""
+
+# ╔═╡ d252f33a-37d8-4f68-a4bd-0a4cb58b214e
+begin
+	cab_long_energetics = load("buoyancy_flux.jld2")
+	∫Eₖ = cab_long_energetics["∫Eₖ"]
+	∫ϵ = cab_long_energetics["∫ϵ"]
+	∫gρw = cab_long_energetics["∫gρw"]
+	∫αΘw = cab_long_energetics["∫αΘw"]
+	∫βSw = cab_long_energetics["∫βSw"]
+	ρ₀_string = cab_long_energetics["ρ₀"]
+	find_num = findfirst('k', cab_long_energetics["ρ₀"]) - 1
+	ρ₀_model = parse(Float64, cab_long_energetics["ρ₀"][1:find_num])
+	keys(cab_long_energetics)
+end
+
 # ╔═╡ b7f3c4b1-b9b1-4dfa-8e45-5c20adf0d868
 begin
 	cab = load("cabbeling_fluxes_and_diff_longer_run.jld2")
@@ -303,15 +369,10 @@ begin
 	reverse!(cab["κₛ"], dims = 1)
 	reverse!(cab["Fₜ"], dims = 1)
 	reverse!(cab["Fₛ"], dims = 1)
-	reverse!(cab["Fₜ_with_α"], dims = 1)
-	reverse!(cab["Fₛ_with_β"], dims = 1)
+	Cₚ = GibbsSeaWater.gsw_cp0
+	interp_∫gρw = (cab_long_energetics["∫gρw"][1:end-1] .+ cab_long_energetics["∫gρw"][2:end]) / 2
 	keys(cab)
 end
-
-# ╔═╡ c6dc6652-487a-4b5e-9a5f-94563e768f6e
-md"""
-## Effective diffusivity
-"""
 
 # ╔═╡ 885a9ae3-a19b-47c9-9eea-31d2653888ad
 let
@@ -336,18 +397,6 @@ let
 	fig
 end
 
-# ╔═╡ 75f0c7a3-04ff-4679-bd79-8ba911430c30
-let
-	fig, ax = lines(cab["time"][1:end-1], log10.(abs.(cab["∫κₛ"])))
-	hlines!(ax, log10.(1e-7), color = :black, linestyle = :dash)
-	# fig, ax = lines(cab["time"][1:end-1], cab["∫κₛ"])
-	# hlines!(ax, 1e-7, color = :black, linestyle = :dash)
-	ax.title = "Integrated horizontally averaged effective diffusivity"
-	ax.xlabel = "time (s)"
-	ax.ylabel = "Effective diffusivity (m²s⁻¹)"
-	fig
-end
-
 # ╔═╡ f246bb02-7cb2-461f-9c39-9c458601ef33
 begin
 	test_κ_cab = similar(cab["∫κₛ"])
@@ -357,18 +406,6 @@ begin
 		test_κ_cab[j] = sum(c[find] .* Δz_cab[find]) / sum(Δz_cab[find])
 		j += 1
 	end
-end
-
-# ╔═╡ 3d3879a6-22ba-4107-86b3-32f6fa97050c
-let
-	fig, ax = lines(cab["time"][1:end-1], log10.(abs.(test_κ_cab)))
-	hlines!(ax, log10.(1e-7), color = :black, linestyle = :dash)
-	# fig, ax = lines(cab["time"][1:end-1], cab["∫κₛ"])
-	# hlines!(ax, 1e-7, color = :black, linestyle = :dash)
-	ax.title = "Integrated horizontally averaged effective diffusivity"
-	ax.xlabel = "time (s)"
-	ax.ylabel = "Effective diffusivity (m²s⁻¹)"
-	fig
 end
 
 # ╔═╡ 757f818c-8b04-4dec-9f10-410194954384
@@ -381,12 +418,16 @@ begin
 	cab_ts = TimeArray(data_cab, timestamp=:times)
 end
 
-# ╔═╡ 40f780eb-7ae5-4251-a302-a5016f13d6db
-begin
-	window_var_cab = @bind window_cab PlutoUI.Slider(5:100, show_value=true)
-	md"""
-	window = $window_var_cab
-	"""
+# ╔═╡ 3d3879a6-22ba-4107-86b3-32f6fa97050c
+let
+	fig, ax = lines(cab["time"][1:end-1], log10.(abs.(test_κ_cab)))
+	hlines!(ax, log10.(1e-7), color = :black, linestyle = :dash)
+	# fig, ax = lines(cab["time"][1:end-1], cab["∫κₛ"])
+	# hlines!(ax, 1e-7, color = :black, linestyle = :dash)
+	ax.title = "Integrated horizontally averaged effective diffusivity"
+	ax.xlabel = "time (s)"
+	ax.ylabel = "Effective diffusivity (m²s⁻¹)"
+	fig
 end
 
 # ╔═╡ 3621f66f-b16b-4c6e-aa40-566f6a1fe752
@@ -408,11 +449,6 @@ let
 	# lines!(ax, cab["time"][window:end-being_ts], μ_log10 .- σ_log10)
 	fig
 end
-
-# ╔═╡ a64c90c5-f75d-4ac1-84a4-cbd48fb3082b
-md"""
-## Tracer variance dissipation
-"""
 
 # ╔═╡ 0942924b-aa60-4946-af97-fbea014c3e9c
 let
@@ -440,21 +476,16 @@ let
 	fig
 end
 
-# ╔═╡ 93641a6d-1aad-4651-bad3-d06297fa6342
-md"""
-## Tracer fluxes
-"""
-
 # ╔═╡ a78a42a5-66d1-4aad-982d-32fccb1ebb84
 let
-	fig, ax, hm = heatmap(cab["time"][2:end], cab["z"], cab["Fₜ_with_α"]', colormap = :thermal)
+	fig, ax, hm = heatmap(cab["time"][2:end], cab["z"], cab["Fₜ"]', colormap = :thermal)
 	ax.title = "Temperature flux"
 	ax.xlabel = "time (s)"
 	ax.ylabel = "z (m)"
 	hidexdecorations!(ax, ticks = false)
 	Colorbar(fig[1, 2], hm)
 	ax2 = Axis(fig[2, 1])
-	hm = heatmap!(ax2, cab["time"][2:end], cab["z"], cab["Fₛ_with_β"]', colormap = :haline)
+	hm = heatmap!(ax2, cab["time"][2:end], cab["z"], cab["Fₛ"]', colormap = :haline)
 	ax2.title = "Salinity flux"
 	ax2.xlabel = "time (s)"
 	ax2.ylabel = "z (m)"
@@ -462,61 +493,19 @@ let
 	fig
 end
 
-# ╔═╡ 45d9e940-39eb-408c-ba16-e923f52d1874
-md"""
-## Density flux
-"""
-
-# ╔═╡ 4c613a5a-cc72-4846-81f9-4fd5f9cc72e6
-md"""
-The volume integrated density/buoyancy flux should be related to the kinetic energy and turbulent kinetic energy via (Winters et al. (1995))
-```math
-\frac{\mathrm{d}}{\mathrm{d} t}E_{k} = -g\int_{V}ρw\mathrm{d}V - \epsilon.
-```
-The difference in magnitude means density flux is negligible compared to ``\epsilon`` so not sure if I am missing a reference density somewhere to make these things closer or it is just much smaller.
-According to Inoue et al. bouyancy flux is defined as ``-g(αF_{T} - βF_{S})``.
-"""
-
-# ╔═╡ 0a184e81-2d7a-483c-b223-adbac5aaa234
-md"""
-
-## Sanity checks
-
-I was having trouble figuring out closing the energy budget as per
-```math
-\frac{\mathrm{d}}{\mathrm{d} t}E_{k} = -g\int_{V}ρw\mathrm{d}V - \epsilon.
-```
-so I have computed everything again (from the in situ model output) to check.
-"""
-
-# ╔═╡ d252f33a-37d8-4f68-a4bd-0a4cb58b214e
-begin
-	cab_long_energetics = load("buoyancy_flux.jld2")
-	∫Eₖ = cab_long_energetics["∫Eₖ"]
-	∫ϵ = cab_long_energetics["∫ϵ"]
-	∫gρw = cab_long_energetics["∫gρw"]
-	∫αΘw = cab_long_energetics["∫αΘw"]
-	∫βSw = cab_long_energetics["∫βSw"]
-	ρ₀_string = cab_long_energetics["ρ₀"]
-	find_num = findfirst('k', cab_long_energetics["ρ₀"]) - 1
-	ρ₀_model = parse(Float64, cab_long_energetics["ρ₀"][1:find_num])
-	keys(cab_long_energetics)
-end
-
 # ╔═╡ a74d95ff-6a44-4f60-b31e-c7a196eb7aab
 begin
 	Sₘ, Tₘ = 0.5 * (34.58 + 34.7), 0.5 * (-1.5 + 0.5)
 	α_cab, β_cab = gsw_alpha(Sₘ, Tₘ, 0), gsw_beta(Sₘ, Tₘ, 0)
-	Cₚ = GibbsSeaWater.gsw_cp0
-	F_ρ_cab =  @. ρ₀_model * (cab["Fₜ_with_α"]/Cₚ - cab["Fₛ_with_β"])
-	∫F_ρ_cab = vec(sum(F_ρ_cab .* Δz_cab[1], dims = 1))
+	F_ρ_cab =  @. ρ₀_model * (cab["α"] * cab["Fₜ"] - cab["β"] * cab["Fₛ"])
+	∫F_ρ_cab = vec(sum(F_ρ_cab .* Δz_cab[1], dims = 1)) .* (0.1^2) # SA = 0.1^2
 	# ∫F_ρ_cab = vec(sum(F_ρ_cab .* cab["ΔV"], dims = 1))
 	nothing
 end
 
 # ╔═╡ 3701b3aa-d28e-47cc-9539-d0327995250f
 let
-	fig, ax, hm = heatmap(iso["time"], iso["z"], F_ρ_cab')
+	fig, ax, hm = heatmap(iso["time"], iso["z"], F_ρ_cab', colormap = :balance)
 	# fig, ax, hm = heatmap(iso["time"], iso["z"], log10.(abs.(F_ρ_cab)'))
 	ax.title = "Horizontally averaged density flux"
 	ax.xlabel = "time (s)"
@@ -531,6 +520,26 @@ let
 	ax.title = "Volume integrated density flux"
 	ax.xlabel = "time (s)"
 	ax.ylabel = "∫F_ρdV"
+	fig
+end
+
+# ╔═╡ 11f01195-8bb0-4835-a722-b50e06efb314
+begin
+	
+	Ek = cab_long_energetics["∫Eₖ"]
+	dₜEk = diff(Ek ) ./ diff(cab_long_energetics["time"])
+	ϵ =  cab_long_energetics["∫ϵ"]
+	g = 9.81
+	∫J_b = -g * ∫F_ρ_cab / ρ₀_model
+
+	RHS = -0.5 * (ϵ[1:end-1] .+ ϵ[2:end]) .- ∫J_b
+
+	fig, ax = lines(cab_long_energetics["time"][1:200], dₜEk[1:200], label = "dₜEk")
+	lines!(ax, cab_long_energetics["time"][1:200], RHS[1:200], label = "ϵ - ∫J_b", linestyle = :dash)
+	ax.title = "Time change in kinetic energy"
+	ax.xlabel = "time (s)"
+	ax.ylabel = "Watts (J/s)"
+	axislegend(ax)
 	fig
 end
 
@@ -563,17 +572,17 @@ end
 
 # ╔═╡ 46fdeae9-293e-46bf-9ebc-243da60df30a
 md"""
-Qualatatively this now matches quite well but the absolute error peaks at nearly the same magnitude as the values so the relative errr will be high?
-Question is how clsely should these match?
-If the answer is exact then this needs to be closer.
-There will be computational error which could explain some of it.
+Computing from model output, so I compute ``\int_{V}ρ w \mathrm{d}V`` from the `ρ` and `w` saved output, we have good agreement between the volume integrated quantities above.
+
+After scaling by the surface area actually have reasonably good agreement between in situ density flux and computed from fluxes density flux.
 """
 
 # ╔═╡ 3465bbc1-b6d1-4aa9-a87f-4ed204dc9adb
 let
-	cab_model_density_flux = (cab_long_energetics["∫gρw"][1:end-1] .+ cab_long_energetics["∫gρw"][2:end]) / 2
-	fig, ax = lines(cab_time[1:200], cab_model_density_flux[1:200], label = "∫gρw")
-	lines!(ax, cab_time[1:200], ∫F_ρ_cab[1:200], label = "From sorted S, T fluxes")
+	F_ρ_vol_integrated = ρ₀_model * (∫αΘw - ∫βSw)
+	fig, ax = lines(cab_time[1:200], interp_∫gρw[1:200] / cab_long_energetics["g"], label = "∫ρw")
+	lines!(ax, cab_time[1:200], -∫F_ρ_cab[1:200], label = "From sorted S, T fluxes")
+	# lines!(ax, cab_time[1:200], -F_ρ_vol_integrated[1:200])
 	ax.title = "Comparison between density flux from S and T fluxes and computed directly from model"
 	axislegend(ax, position = :rb)
 	fig
@@ -581,61 +590,37 @@ end
 
 # ╔═╡ 5d65a2c1-c535-43e0-92aa-e447c979ae9c
 md"""
-These look to be out by a factor of around three and I am not sure why or where the three would come from.
-With the updated version of the fluxes the above is more out but some further checks might help.
-THe volume integrated salinity and temperature fluxes are not equal to the density flux but for now a job for another day.
+If we compute ``\int_{V}α Θ w\mathrm{d}V``, ``\int_{V}β S w\mathrm{d}V``, from the in-situ model output then
+```math
+ρ₀\left(∫_{V}αΘw\mathrm{d}V - ∫_{V} βSw\mathrm{d}V\right)
+```
+we should also have good agreement, but do not.
+
+There are still some dimension things going on that I have not sorted.
 """
 
 # ╔═╡ 032c0b8b-1363-4966-a963-80c141f5de6c
 let
-	F_ρ_vol_integrated = -ρ₀_model * (∫αΘw/Cₚ - ∫βSw)
-	fig, ax = lines(cab_long_energetics["time"][1:200], ∫gρw[1:200], label = "∫gρw")
-	lines!(ax, cab_long_energetics["time"][1:200], F_ρ_vol_integrated[1:200], label = "ρ₀(∫αΘw/Cₚ - ∫βSw)")
+	F_ρ_vol_integrated = ρ₀_model * (∫αΘw - ∫βSw)
+	interp_F_ρ_vol_integrated = 0.5 * (F_ρ_vol_integrated[1:end-1] .+ F_ρ_vol_integrated[2:end])
+	fig, ax = lines(cab_long_energetics["time"][1:200], ∫F_ρ_cab[1:200], label = "From sorted S, T fluxes")
+	lines!(ax, cab_long_energetics["time"][1:200], interp_F_ρ_vol_integrated[1:200], label = "ρ₀(∫αΘw - ∫βSw)")
+	ax.xlabel = "time (s)"
+	ax.ylabel = ""
 	axislegend(ax, position = :rb)
 	fig
 end
+
+# ╔═╡ 6162b2c8-bcba-466d-90fe-4911a6e17122
+md"""
+Not seeing these lineup even though now the density flux looks to be reasnable!
+"""
 
 # ╔═╡ f1e195a5-ea3c-4898-9709-7bd9855bbdef
 begin
 	cab_energy_path = "../outputs_equaldiffusion/cabbeling_stepchange_nothing_660min/cabbeling_energetics.jld2"
 	cab_energy = load(cab_energy_path)
 	nothing
-end
-
-# ╔═╡ 11f01195-8bb0-4835-a722-b50e06efb314
-begin
-	
-	Ek = cab_energy["Ek"]
-	dₜEk = diff(cab_energy["Ek"]) ./ diff(cab_energy["time"])
-	ϵ = cab_energy["ϵ"]
-	Δϵ = diff(ϵ) 
-	g = 9.81
-	J_b = @. g * (α_cab * cab["Fₜ"][:, 1:660] - β_cab * cab["Fₛ"][:, 1:660]) * (Cₚ /ρ₀_model)
-	∫J_b = vec(sum(J_b .* Δz_cab[1], dims = 1))
-
-	RHS = -0.5 * (ϵ[1:end-1] .+ ϵ[2:end]) .- ∫J_b
-
-	fig, ax = lines(cab_energy["time"][1:end-1], dₜEk, label = "dₜEk")
-	lines!(ax, cab_energy["time"][1:end-1], RHS, label = "ϵ - ∫J_b", linestyle = :dash)
-	ax.title = "Time change in kinetic energy"
-	ax.xlabel = "time (s)"
-	ax.ylabel = "Watts (J/s)"
-	axislegend(ax)
-	fig
-end
-
-# ╔═╡ 329efe29-dced-444c-89b9-14dbfd95727c
-let
-	ϵ_interp = (ϵ[1:end-1] .+ ϵ[2:end]) / 2
-	fig, ax = lines(cab_energy["time"][2:end], -ϵ_interp .- ∫J_b, label = "-ϵ - J_b")
-	lines!(ax, cab_energy["time"][2:end], ∫J_b, label = "∫Jb")
-	lines!(ax, cab_energy["time"][2:end], ϵ_interp, label = "ϵ", linestyle = :dash)
-	#lines!(ax, cab_energy["time"][2:end], diff(Ek), label = "Ek")
-	ax.title = "Kinetic energy and TKE dissipation"
-	ax.xlabel = "time (s)"
-	ax.ylabel = "Watts (J/s)"
-	axislegend(ax)
-	fig
 end
 
 # ╔═╡ cb752927-287f-4e57-b4fc-0a19777bf1e5
@@ -667,11 +652,10 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 # ╟─5f5e360a-1dec-4f62-b45c-b771ecb0a7da
 # ╟─483b7fb3-07e4-4c86-9c5b-15c6d437d02d
 # ╟─060b7142-ee7c-43cb-9892-68fd8a332daf
-# ╠═b7f3c4b1-b9b1-4dfa-8e45-5c20adf0d868
+# ╟─b7f3c4b1-b9b1-4dfa-8e45-5c20adf0d868
 # ╟─c6dc6652-487a-4b5e-9a5f-94563e768f6e
 # ╟─885a9ae3-a19b-47c9-9eea-31d2653888ad
 # ╟─62353120-49c2-4a2a-9ec0-d72249fd1280
-# ╟─75f0c7a3-04ff-4679-bd79-8ba911430c30
 # ╟─f246bb02-7cb2-461f-9c39-9c458601ef33
 # ╟─3d3879a6-22ba-4107-86b3-32f6fa97050c
 # ╟─757f818c-8b04-4dec-9f10-410194954384
@@ -688,13 +672,13 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 # ╟─eef3bde2-9709-4bd3-894e-801f2db806a7
 # ╟─4c613a5a-cc72-4846-81f9-4fd5f9cc72e6
 # ╟─11f01195-8bb0-4835-a722-b50e06efb314
-# ╟─329efe29-dced-444c-89b9-14dbfd95727c
 # ╟─0a184e81-2d7a-483c-b223-adbac5aaa234
 # ╟─d252f33a-37d8-4f68-a4bd-0a4cb58b214e
 # ╟─20c14d5c-b2d7-4238-a004-272eeb72014c
 # ╟─46fdeae9-293e-46bf-9ebc-243da60df30a
 # ╟─3465bbc1-b6d1-4aa9-a87f-4ed204dc9adb
 # ╟─5d65a2c1-c535-43e0-92aa-e447c979ae9c
-# ╠═032c0b8b-1363-4966-a963-80c141f5de6c
+# ╟─032c0b8b-1363-4966-a963-80c141f5de6c
+# ╟─6162b2c8-bcba-466d-90fe-4911a6e17122
 # ╟─f1e195a5-ea3c-4898-9709-7bd9855bbdef
 # ╟─cb752927-287f-4e57-b4fc-0a19777bf1e5
