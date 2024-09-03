@@ -18,7 +18,7 @@ S₀ᵘ = 34.6
 const interface_location = -0.5
 stable = UnstableUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(stable)
-depth = find_depth(dns_model, INTERFACE_LOCATION)
+depth = find_depth(dns_model, interface_location)
 profile_function = StepChange(depth)
 
 ## Salinity noise
