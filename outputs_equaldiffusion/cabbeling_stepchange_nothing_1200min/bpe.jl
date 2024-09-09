@@ -23,5 +23,5 @@ for i ∈ eachindex(t)
 end
 
 jldopen(cab_flux_path, "a+") do file
-    file["∫Eb"] = ∫Eb
+    file["∫Eb"] = Eb
 end
