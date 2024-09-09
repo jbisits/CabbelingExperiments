@@ -5,7 +5,7 @@ cab_flux_file = "cabbeling_fluxes_and_diff_longer_run.jld2"
 notebook_path = "/g/data/e14/jb2381/CabbelingExperiments/notebooks"
 cab_flux_path = joinpath(notebook_path, cab_flux_file)
 
-co_ds = NCDataset(cab_computed_output)
+co_ds = NCDataset(computed_output)
 
 t = co_ds[:time][:]
 SA = 0.1 * 0.1
@@ -26,7 +26,7 @@ close(co_ds)
 Eb = similar(t)
 g = 9.81
 for i ∈ eachindex(t)
-    σᵢ = NCDataset(cab_computed_output) do ds
+    σᵢ = NCDataset(computed_output) do ds
             ds[:σ][:, :, :, i]
     end
     σᵢ_array = reshape(σᵢ, :)
