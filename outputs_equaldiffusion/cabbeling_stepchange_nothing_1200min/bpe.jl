@@ -6,6 +6,7 @@ notebook_path = "/g/data/e14/jb2381/CabbelingExperiments/notebooks"
 cab_flux_path = joinpath(notebook_path, cab_flux_file)
 
 co_ds = NCDataset(computed_output)
+ΔV = diff(co_ds[:xC][1:2])[1] * diff(co_ds[:yC][1:2])[1] * diff(co_ds[:zC][1:2])[1]
 t = co_ds[:time][:]
 z = co_ds[:zC][:]
 close(co_ds)
@@ -18,7 +19,7 @@ for i ∈ eachindex(t)
     end
     σᵢ_array = reshape(σᵢ, :)
     p = sortperm(σᵢ_array, rev = true) # Missing the `rev = true` in the full calculation!!!!
-    Eb[i] = 9.81 * sum(σᵢ_array .* z_[p] * dV[1])
+    Eb[i] = 9.81 * sum(σᵢ_array .* z_[p] * ΔV)
 end
 
 jldopen(cab_flux_path, "a+") do file
