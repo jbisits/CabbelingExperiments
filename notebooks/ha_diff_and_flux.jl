@@ -41,7 +41,7 @@ F_{C} = ∂_{t}\int_{z < z^{*}}\langle C \rangle_{xy}\mathrm{d}z.
 ```
 Computing this for both salinity and temperature tracers then gives the density flux
 ```math
-F_{\rho} = \rho_{0} \left(αF_{T} - βF_{S}\right).
+F_{\rho} = \rho_{0} \left(-αF_{T} + βF_{S}\right).
 ```
 In this calculation, the salinity/temperature field are multiplied by ``β/α`` which are computed from the *horizontally averaged tracer profiles*.
 Then, to get an integrated quantity, we need to integrate over `z` and multiply by surface area,
@@ -497,9 +497,8 @@ end
 begin
 	Sₘ, Tₘ = 0.5 * (34.58 + 34.7), 0.5 * (-1.5 + 0.5)
 	α_cab, β_cab = gsw_alpha(Sₘ, Tₘ, 0), gsw_beta(Sₘ, Tₘ, 0)
-	F_ρ_cab =  @. ρ₀_model * (cab["α"] * cab["Fₜ"] - cab["β"] * cab["Fₛ"])
-	∫F_ρ_cab = vec(sum(F_ρ_cab .* Δz_cab[1], dims = 1)) .* (0.1^2) # SA = 0.1^2
-	# ∫F_ρ_cab = vec(sum(F_ρ_cab .* cab["ΔV"], dims = 1))
+	F_ρ_cab =  ρ₀_model * (-cab["α"] .* cab["Fₜ"] .+ (cab["β"] .* cab["Fₛ"]))
+	∫F_ρ_cab = vec(sum(F_ρ_cab, dims = 1)) .* Δz_cab[1] .* (0.1^2) # SA = 0.1^2
 	nothing
 end
 
@@ -530,7 +529,7 @@ begin
 	dₜEk = diff(Ek ) ./ diff(cab_long_energetics["time"])
 	ϵ =  cab_long_energetics["∫ϵ"]
 	g = 9.81
-	∫J_b = -g * ∫F_ρ_cab / ρ₀_model
+	∫J_b = g * ∫F_ρ_cab / ρ₀_model
 
 	RHS = -0.5 * (ϵ[1:end-1] .+ ϵ[2:end]) .- ∫J_b
 
@@ -579,9 +578,8 @@ After scaling by the surface area actually have reasonably good agreement betwee
 
 # ╔═╡ 3465bbc1-b6d1-4aa9-a87f-4ed204dc9adb
 let
-	F_ρ_vol_integrated = ρ₀_model * (∫αΘw - ∫βSw)
 	fig, ax = lines(cab_time[1:200], interp_∫gρw[1:200] / cab_long_energetics["g"], label = "∫ρw")
-	lines!(ax, cab_time[1:200], -∫F_ρ_cab[1:200], label = "From sorted S, T fluxes")
+	lines!(ax, cab_time[1:200], ∫F_ρ_cab[1:200], label = "From sorted S, T fluxes")
 	# lines!(ax, cab_time[1:200], -F_ρ_vol_integrated[1:200])
 	ax.title = "Comparison between density flux from S and T fluxes and computed directly from model"
 	axislegend(ax, position = :rb)
@@ -592,7 +590,7 @@ end
 md"""
 If we compute ``\int_{V}α Θ w\mathrm{d}V``, ``\int_{V}β S w\mathrm{d}V``, from the in-situ model output then
 ```math
-ρ₀\left(∫_{V}αΘw\mathrm{d}V - ∫_{V} βSw\mathrm{d}V\right)
+ρ₀\left(-∫_{V}αΘw\mathrm{d}V + ∫_{V} βSw\mathrm{d}V\right)
 ```
 we should also have good agreement, but do not.
 
@@ -601,8 +599,9 @@ There are still some dimension things going on that I have not sorted.
 
 # ╔═╡ 032c0b8b-1363-4966-a963-80c141f5de6c
 let
-	F_ρ_vol_integrated = ρ₀_model * (∫αΘw - ∫βSw)
-	interp_F_ρ_vol_integrated = 0.5 * (F_ρ_vol_integrated[1:end-1] .+ F_ρ_vol_integrated[2:end])
+	F_ρ_vol_integrated = -∫αΘw .+ ∫βSw
+	interp_F_ρ_vol_integrated = ρ₀_model * 0.5 * (F_ρ_vol_integrated[1:end-1] .+ F_ρ_vol_integrated[2:end])
+	
 	fig, ax = lines(cab_long_energetics["time"][1:200], ∫F_ρ_cab[1:200], label = "From sorted S, T fluxes")
 	lines!(ax, cab_long_energetics["time"][1:200], interp_F_ρ_vol_integrated[1:200], label = "ρ₀(∫αΘw - ∫βSw)")
 	ax.xlabel = "time (s)"
@@ -614,7 +613,52 @@ end
 # ╔═╡ 6162b2c8-bcba-466d-90fe-4911a6e17122
 md"""
 Not seeing these lineup even though now the density flux looks to be reasnable!
+
+Try computing only using salinity so I compare ``\mathrm{SA} \int_{z}ρ_{0}\left(βF_{S} \right) \mathrm{d}z`` to ``ρ₀\int_{V}βSw\mathrm{d}V``.
+The signal here is matching well but underestimating using the horizontally averaged salinity profile and flux computed from that.
+
+The difference is coming from the salinity more than the temperature but this difference does not account for the difference from the total density flux in the above figure.
+
+After computing with these quantities seperately all seems to work out after all so there must be an error above.
+
+This all boils down to **where negative signs are**.
+I need to match this up and get a dimensional diagnosis from Jan on this.
+
+The integrated temperature fluxes have the *same sign* but the salt fluxes have *alternate signs*.
+This could be where the issue is.
+The odd thing is the volume integrated tracers are out by a factor of about 15...
 """
+
+# ╔═╡ 867fe3cf-c1d6-4470-bfd6-f3381de73f21
+let
+	ρ_S_fluxes = 0.1^2 * ρ₀_model * sum(cab["β"] .* cab["Fₛ"], dims = 1) * Δz_cab[1]
+	ρ_S_vol_int = -0.5 * (ρ₀_model * (∫βSw[1:end-1] + ∫βSw[2:end]))
+	
+	fig, ax = lines(cab["time"][1:200], vec(ρ_S_fluxes)[1:200], label = "SAρ₀∫βFₛdz")
+	lines!(ax, cab["time"][1:200], ρ_S_vol_int[1:200], label = "-ρ₀∫βSwdV")
+	ax.title = "''Density'' from salinity"
+	ax.xlabel = "time (s)"
+	ax.ylabel = ""
+	axislegend(ax, position = :rt)
+	
+	ρ_T_fluxes = -0.1^2 * ρ₀_model * sum(cab["α"] .* cab["Fₜ"], dims = 1) * Δz_cab[1]
+	ρ_T_vol_int = -0.5 * (ρ₀_model * (∫αΘw[1:end-1] + ∫αΘw[2:end]))
+
+	ax2 = Axis(fig[2, 1], xlabel = "time (s)", title = "''Density'' from temperature")
+	lines!(ax2, cab["time"][1:200], vec(ρ_T_fluxes)[1:200], label = "-SAρ₀∫αFₜdz")
+	lines!(ax2, cab["time"][1:200], ρ_T_vol_int[1:200], label = "-ρ₀∫αΘwdV")
+	axislegend(ax2, position = :rb)
+
+	ρ_fluxes = ρ_T_fluxes .+ ρ_S_fluxes
+	ρvol_int = (ρ_T_vol_int .- ρ_S_vol_int)
+
+	ax3 = Axis(fig[:, 2], xlabel = "time (s)", title = "Density")
+	lines!(ax3, cab["time"][1:200], vec(ρ_fluxes)[1:200], label = "SAρ₀∫(αFₜ - βFₛ)dz")
+	lines!(ax3, cab["time"][1:200], interp_∫gρw[1:200] / cab_long_energetics["g"] ,label = "∫ρwdV")
+	lines!(ax3, cab["time"][1:200], ρvol_int[1:200], label = "ρ₀∫αΘwdV - ρ₀∫βSwdV")
+	axislegend(ax3, position = :rb)
+	fig
+end
 
 # ╔═╡ f1e195a5-ea3c-4898-9709-7bd9855bbdef
 begin
@@ -680,5 +724,6 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 # ╟─5d65a2c1-c535-43e0-92aa-e447c979ae9c
 # ╟─032c0b8b-1363-4966-a963-80c141f5de6c
 # ╟─6162b2c8-bcba-466d-90fe-4911a6e17122
+# ╟─867fe3cf-c1d6-4470-bfd6-f3381de73f21
 # ╟─f1e195a5-ea3c-4898-9709-7bd9855bbdef
 # ╟─cb752927-287f-4e57-b4fc-0a19777bf1e5
