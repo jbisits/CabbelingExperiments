@@ -34,5 +34,5 @@ for i ∈ eachindex(t)
     Eb[i] = (g / ρ₀) * sum(σᵢ_array .* z✶ * ΔV)
 end
 jldopen(cab_flux_path, "a+") do file
-    file["∫Ebz✶_corrected"] = Eb
+    file["∫Ebz✶"] = Eb
 end
