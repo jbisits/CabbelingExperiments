@@ -670,29 +670,58 @@ I now have everything to close the energy budget.
 # ╔═╡ 7b43d240-8e4b-4762-9bca-659e0012bf31
 begin
 	∫Ep = load("cabbeling_fluxes_and_diff_longer_run.jld2", "∫Ep")
+	∫Ebz✶ = -load("cabbeling_fluxes_and_diff_longer_run.jld2", "∫Ebz✶")
 	∫Eb = load("cabbeling_fluxes_and_diff_longer_run.jld2", "∫Eb") ./ ρ₀_model
 	∫Ea = ∫Ep .- ∫Eb 
+	∫Eaz✶ = ∫Ep .- ∫Ebz✶
 	t = load("cabbeling_fluxes_and_diff_longer_run.jld2", "time")
 	t_interp = 0.5 * (t[1:end-1] .+ t[2:end])
 	dₜ∫Eb = diff(∫Eb) ./ diff(t)
+	dₜ∫Ebz✶ = diff(∫Ebz✶) ./ diff(t)
 	dₜ∫Ep = diff(∫Ep) ./ diff(t)
 	dₜ∫Ea = diff(∫Ea) ./ diff(t)
+	dₜ∫Eaz✶ = diff(∫Eaz✶) ./ diff(t)
 	dₜ∫Ek = diff(∫Eₖ) ./ diff(t)
+	nothing
 end
 
+# ╔═╡ 7e297e02-5629-4f72-bb5a-e0f9a09f0353
+let
+	fig, ax = lines(∫Ebz✶, label = "z✶")
+	#lines!(ax, ∫Eb, label = "repeated_grid")
+	axislegend(ax)
+	fig
+end
+
+# ╔═╡ 97587f13-990a-45ed-a52c-af192b20d3d6
+md"""
+Large discrepancy here - why?
+"""
+
 # ╔═╡ 7d9c1960-844d-4362-aa56-d4790fb5d908
-@bind plot_window PlutoUI.Slider(2:length(∫Ep)-1, default=200)
+begin
+	energy_window = @bind plot_window PlutoUI.Slider(2:length(∫Ep)-1, default=200)
+	energy_method = @bind bpe_comp PlutoUI.Select(["z✶", "repeated_grid"])
+	md"""
+	Window over which to view energetics.
+	$(energy_window)
+	
+	Method used in the the BPE calculations$(energy_method). 
+	"""
+end
 
 # ╔═╡ 05fb4be9-c1f8-415c-b5a8-ceaf8853d818
 let
+	plot_dₜEb = bpe_comp == "z✶" ? dₜ∫Ebz✶ : dₜ∫Eb
+	plot_dₜEa = bpe_comp == "z✶" ? dₜ∫Eaz✶ : dₜ∫Ea
 	fig = Figure(size = (500, 900)) 
 	ax = Axis(fig[1, 1], xlabel = "time (s)", ylabel = "Watts", title = "Time change in potential energies", subtitle = "window = 0-$(t[plot_window] / 60)min")
 	lines!(ax, t_interp[1:plot_window], dₜ∫Ep[1:plot_window], label = "dₜ∫Ep")
-	lines!(ax, t_interp[1:plot_window], dₜ∫Eb[1:plot_window], label = "dₜ∫Eb")
+	lines!(ax, t_interp[1:plot_window], plot_dₜEb[1:plot_window], label = "dₜ∫Eb")
 	hidexdecorations!(ax, grid = false, ticks = false)
 	axislegend(ax, position = :rb)
 	ax2 = Axis(fig[2, 1], xlabel = "time (s)", ylabel = "Watts", title = "Time change in APE", subtitle = "window = 0-$(t[plot_window] / 60)min")
-	lines!(ax2, t_interp[1:plot_window], dₜ∫Ea[1:plot_window], color = :red, label = "dₜ∫Ea")
+	lines!(ax2, t_interp[1:plot_window], plot_dₜEa[1:plot_window], color = :red, label = "dₜ∫Ea")
 	lines!(ax2, t_interp[1:plot_window], dₜ∫Ek[1:plot_window], color = :green, label = "dₜ∫Ek")
 	axislegend(ax2)
 	fig
@@ -781,8 +810,10 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 # ╟─867fe3cf-c1d6-4470-bfd6-f3381de73f21
 # ╟─4b5d1c49-ca72-4f1a-9737-7a1f8d4411c9
 # ╟─7b43d240-8e4b-4762-9bca-659e0012bf31
+# ╠═7e297e02-5629-4f72-bb5a-e0f9a09f0353
+# ╟─97587f13-990a-45ed-a52c-af192b20d3d6
 # ╟─7d9c1960-844d-4362-aa56-d4790fb5d908
 # ╟─05fb4be9-c1f8-415c-b5a8-ceaf8853d818
-# ╠═4a328b42-45f6-4a03-87dc-6e8efd70a83d
+# ╟─4a328b42-45f6-4a03-87dc-6e8efd70a83d
 # ╟─f1e195a5-ea3c-4898-9709-7bd9855bbdef
 # ╟─cb752927-287f-4e57-b4fc-0a19777bf1e5

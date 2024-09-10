@@ -15,7 +15,7 @@ SA = 0.1 * 0.1
 ΔV = Δx * Δy * Δz
 ΔA = Δx * Δy
 
-V = cumsum(length(reshape(co_ds[:σ][:, :, :, 1], :)))* ΔV
+V = cumsum(ones(length(reshape(co_ds[:σ][:, :, :, 1], :)))) * ΔV
 z✶ = V / SA
 
 find_num = findfirst('k', co_ds.attrib["Reference density"]) - 1
@@ -34,5 +34,5 @@ for i ∈ eachindex(t)
     Eb[i] = (g / ρ₀) * sum(σᵢ_array .* z✶ * ΔV)
 end
 jldopen(cab_flux_path, "a+") do file
-    file["∫Ebz✶"] = Eb
+    file["∫Ebz✶_corrected"] = Eb
 end
