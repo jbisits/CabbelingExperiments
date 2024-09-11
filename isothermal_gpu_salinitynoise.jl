@@ -14,7 +14,7 @@ dns_model = DNSModel(architecture, DOMAIN_EXTENT, isothermal_resolution, diffusi
 ## set initial conditions
 @info "Setting initial conditions"
 T₀ᵘ = 0.5
-S₀ᵘ = 34.58
+S₀ᵘ = 34.69431424
 const interface_location = -0.5
 isothermal = IsothermalUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(isothermal)
