@@ -665,45 +665,159 @@ md"""
 ## Energy budget
 
 I now have everything to close the energy budget.
+First I check a few different ways to compute the energetics to make sure things are matching up.
+
+### Potential energy
+
+One version is computed from a `KernelFunctionOperation` I wrote for [`Oceanostics.jl`](https://github.com/tomchor/Oceanostics.jl/blob/51f477ed1e3d9d2ab0683c47609f2f8e2afd6243/src/PotentialEnergyEquationTerms.jl#L180) where I compute things on the fly and another is based off the saved output where I compute
+```math
+	E_{p} = g∫_{V}ρz\mathrm{d}V \tag{1}
+```
+I use potential density ``σ_{0}``.
+`∫Ep_alternate` is the method computed from the saved output using ``(1)``.
+From figures below can see there is a fairly consistent difference between the two --- which one is correct?
+
+More specifically which one should I use?
+Perhaps it does not matter as the time changing quantities are almost exactly equal.
 """
 
-# ╔═╡ 7b43d240-8e4b-4762-9bca-659e0012bf31
+# ╔═╡ 61770c4f-f8ca-46da-9ff0-73d5aadd2972
 begin
 	∫Ep = load("cabbeling_fluxes_and_diff_longer_run.jld2", "∫Ep")
-	∫Ebz✶ = -load("cabbeling_fluxes_and_diff_longer_run.jld2", "∫Ebz✶")
-	∫Eb = load("cabbeling_fluxes_and_diff_longer_run.jld2", "∫Eb") ./ ρ₀_model
-	∫Ea = ∫Ep .- ∫Eb 
-	∫Eaz✶ = ∫Ep .- ∫Ebz✶
+	∫Ep_alternate = load("cabbeling_fluxes_and_diff_longer_run.jld2", "∫Ep_alternate")
 	t = load("cabbeling_fluxes_and_diff_longer_run.jld2", "time")
 	t_interp = 0.5 * (t[1:end-1] .+ t[2:end])
-	dₜ∫Eb = diff(∫Eb) ./ diff(t)
-	dₜ∫Ebz✶ = diff(∫Ebz✶) ./ diff(t)
 	dₜ∫Ep = diff(∫Ep) ./ diff(t)
-	dₜ∫Ea = diff(∫Ea) ./ diff(t)
-	dₜ∫Eaz✶ = diff(∫Eaz✶) ./ diff(t)
+	dₜ∫Ep_alternate = diff(∫Ep_alternate) ./ diff(t)
 	dₜ∫Ek = diff(∫Eₖ) ./ diff(t)
 	nothing
+end
+
+# ╔═╡ c852c48d-a715-4a37-8456-e5a18fccf47b
+let
+	fig, ax = lines(t, ∫Ep, label = "Computed on fly")
+	ax.ylabel = "Joules"
+	ax.title = "Potential energy calculations"
+	hidexdecorations!(ax, grid=false, ticks=false)
+	axislegend(ax)
+	ax2 = Axis(fig[2, 1], ylabel = "Joules")
+	lines!(ax2, t, ∫Ep_alternate, label = "Computed post", color = :orange)
+	hidexdecorations!(ax2, grid=false, ticks=false)
+	axislegend(ax2)
+	RMSE = sqrt(mean(∫Ep .- ∫Ep_alternate).^2)
+	abs_err = abs.(∫Ep .- ∫Ep_alternate)
+	ax.subtitle = "RMSE = $(RMSE)"
+	ax3 = Axis(fig[3, 1], ylabel = "absolute error")
+	lines!(ax3, t, abs_err)
+	ax3.xlabel = "time (s)"
+	fig
+end
+
+# ╔═╡ 101a2635-1198-46b4-9595-87de587919fa
+let
+	fig, ax = lines(t_interp, dₜ∫Ep, label = "Computed on fly")
+	ax.ylabel = "Watts"
+	ax.title = "Time change potential energy calculations"
+	hidexdecorations!(ax, grid=false, ticks=false)
+	lines!(ax, t_interp, dₜ∫Ep_alternate, label = "Computed post", linestyle = :dash)
+	axislegend(ax)
+	RMSE = sqrt(mean(dₜ∫Ep .- dₜ∫Ep_alternate).^2)
+	abs_err = abs.(dₜ∫Ep .- dₜ∫Ep_alternate)
+	ax.subtitle = "RMSE = $(RMSE)"
+	ax2 = Axis(fig[2, 1], ylabel = "absolute error")
+	lines!(ax2, t_interp, abs_err)
+	ax2.xlabel = "time (s)"
+	fig
+end
+
+# ╔═╡ 6f3dc607-114a-4f7a-a51d-643fa8ad8fa6
+md"""
+### Background potential energy
+
+Again I compute this two ways.
+One way is defining
+```math
+z✶ = \frac{1}{SA}∫_{ρ_{\mathrm{min}}}^{ρ_{\mathrm{max}}}\mathrm{d}V
+```
+then
+```math
+E_{b} = g∫_{V}ρ✶z✶\mathrm{d}V
+```
+where ``ρ✶`` is the reshaped and sorted density profile.
+The other method I use is to create a vector of heights so that each element in the reshaped one d density profile is associated to a height.
+Then after the profile is sorted integrate over all depth.
+
+They end up with opposite signs but mathcing them have good agreement.
+"""
+
+# ╔═╡ 85773eb5-d727-4a73-88e7-ec0ee6c7eda2
+begin
+	∫Ebz✶ = -load("cabbeling_fluxes_and_diff_longer_run.jld2", "∫Ebz✶")
+	∫Eb = load("cabbeling_fluxes_and_diff_longer_run.jld2", "∫Eb") ./ ρ₀_model
+	dₜ∫Ebz✶ = diff(∫Ebz✶) ./ diff(t)
+	dₜ∫Eb = diff(∫Eb) ./ diff(t)
+	nothing
+end
+
+# ╔═╡ 1293f605-90ab-4f18-934c-4718a8eec6a9
+let
+	fig, ax = lines(t, ∫Eb, label = "∫Eb")
+	ax.ylabel = "Joules"
+	ax.title = "Background potential energy calculations"
+	hidexdecorations!(ax, grid=false, ticks=false)
+	lines!(ax, t, ∫Ebz✶, label = "∫Ebz✶", color = :orange)
+	axislegend(ax)
+	RMSE = sqrt(mean(∫Eb .- ∫Ebz✶).^2)
+	abs_err = abs.(∫Eb .- ∫Ebz✶)
+	ax.subtitle = "RMSE = $(RMSE)"
+	ax2 = Axis(fig[2, 1], ylabel = "absolute error")
+	lines!(ax2, t, abs_err)
+	ax2.xlabel = "time (s)"
+	fig
+end
+
+# ╔═╡ 467ed030-3e4f-4d80-a593-5205706ce633
+let
+	fig, ax = lines(t_interp[1:200], dₜ∫Eb[1:200], label = "dₜ∫Eb")
+	ax.ylabel = "Watts"
+	ax.title = "Background potential energy calculations"
+	hidexdecorations!(ax, grid=false, ticks=false)
+	lines!(ax, t_interp[1:200], dₜ∫Ebz✶[1:200], label = "dₜ∫Ebz✶", linestyle = :dash)
+	axislegend(ax)
+	RMSE = sqrt(mean(dₜ∫Eb .- dₜ∫Ebz✶).^2)
+	abs_err = abs.(dₜ∫Eb .- dₜ∫Ebz✶)
+	ax.subtitle = "RMSE = $(RMSE)"
+	ax2 = Axis(fig[2, 1], ylabel = "absolute error")
+	lines!(ax2, t_interp, abs_err)
+	ax2.xlabel = "time (s)"
+	fig
 end
 
 # ╔═╡ 7d9c1960-844d-4362-aa56-d4790fb5d908
 begin
 	energy_window = @bind plot_window PlutoUI.Slider(2:length(∫Ep)-1, default=200)
-	energy_method = @bind bpe_comp PlutoUI.Select(["z✶", "repeated_grid"])
+	pe_method = @bind pe_comp PlutoUI.Select(["On fly", "Post processing"])
+	bpe_method = @bind bpe_comp PlutoUI.Select(["z✶", "repeated_z"])
 	md"""
+	### Available potential energy
+	
 	Window over which to view energetics.
 	$(energy_window)
 	
-	Method used in the the BPE calculations$(energy_method). 
+	Method used for ``\frac{\mathrm{d}}{\mathrm{d}t}E_{p}``: $(pe_method).
+	
+	Method used for ``\frac{\mathrm{d}}{\mathrm{d}t}E_{b}``: $(bpe_method).
 	"""
 end
 
 # ╔═╡ 05fb4be9-c1f8-415c-b5a8-ceaf8853d818
 let
 	plot_dₜEb = bpe_comp == "z✶" ? dₜ∫Ebz✶ : dₜ∫Eb
-	plot_dₜEa = bpe_comp == "z✶" ? dₜ∫Eaz✶ : dₜ∫Ea
+	plot_dₜEp = pe_comp == "On fly" ? dₜ∫Ep : dₜ∫Ep_alternate
+	plot_dₜEa = plot_dₜEp .- plot_dₜEb
 	fig = Figure(size = (500, 900)) 
 	ax = Axis(fig[1, 1], xlabel = "time (s)", ylabel = "Watts", title = "Time change in potential energies", subtitle = "window = 0-$(t[plot_window] / 60)min")
-	lines!(ax, t_interp[1:plot_window], dₜ∫Ep[1:plot_window], label = "dₜ∫Ep")
+	lines!(ax, t_interp[1:plot_window], plot_dₜEp[1:plot_window], label = "dₜ∫Ep")
 	lines!(ax, t_interp[1:plot_window], plot_dₜEb[1:plot_window], label = "dₜ∫Eb")
 	hidexdecorations!(ax, grid = false, ticks = false)
 	axislegend(ax, position = :rb)
@@ -714,34 +828,24 @@ let
 	fig
 end
 
-# ╔═╡ 4a328b42-45f6-4a03-87dc-6e8efd70a83d
-let
+# ╔═╡ 5f322ee6-f974-4005-9acf-7a8078b2eca3
+begin
+	Φd = dₜEb = bpe_comp == "z✶" ? dₜ∫Ebz✶ : dₜ∫Eb
+	dₜEp = pe_comp == "On fly" ? dₜ∫Ep : dₜ∫Ep_alternate
+	dₜEa = dₜEp .- dₜEb
 	∫ϵ_interp = 0.5 * (∫ϵ[1:end-1] .+ ∫ϵ[2:end])
 	Φz = interp_∫gρw ./ ρ₀
-	Φi = dₜ∫Ep .- Φz
-	Φd = bpe_comp == "z✶" ? dₜ∫Ebz✶ : dₜ∫Eb
+	Φi = dₜ∫Ep .- Φz 
+end
+
+# ╔═╡ 4a328b42-45f6-4a03-87dc-6e8efd70a83d
+let
 	fig = Figure(size = (500, 500))
 	ax = Axis(fig[1, 1], xlabel = "time (s)", ylabel = "Watts", title = "Fluxes")
 	lines!(ax, t_interp[1:200], Φz[1:200], label = "Φz")
 	lines!(ax, t_interp[1:200], Φd[1:200], label = "Φd")
 	lines!(ax, t_interp[1:200], ∫ϵ_interp[1:200], label = "∫ϵ")
 	lines!(ax, t_interp[1:200], Φi[1:200], label = "Φi")
-	axislegend(ax, position = :rb)
-	fig
-end
-
-# ╔═╡ 33a29a85-4dbd-425a-b127-98fbd38444f8
-let
-	∫ϵ_interp = 0.5 * (∫ϵ[1:end-1] .+ ∫ϵ[2:end])
-	Φz = interp_∫gρw ./ ρ₀
-	Φi = dₜ∫Ep .- Φz
-	Φd = bpe_comp == "z✶" ? dₜ∫Ebz✶ : dₜ∫Eb
-	plot_dₜEa = bpe_comp == "z✶" ? dₜ∫Eaz✶ : dₜ∫Ea
-	dₜEa_est = Φz .- (Φd .- Φi)
-	fig = Figure(size = (500, 500))
-	ax = Axis(fig[1, 1], xlabel = "time (s)", ylabel = "Watts", title = "Fluxes")
-	lines!(ax, t_interp[1:200], dₜEa_est[1:200], label = "Φz - (Φd - Φi)")
-	lines!(ax, t_interp[1:200], plot_dₜEa[1:200], label = "dₜ∫Ea", linestyle = :dash)
 	axislegend(ax, position = :rb)
 	fig
 end
@@ -812,10 +916,16 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 # ╟─6162b2c8-bcba-466d-90fe-4911a6e17122
 # ╟─867fe3cf-c1d6-4470-bfd6-f3381de73f21
 # ╟─4b5d1c49-ca72-4f1a-9737-7a1f8d4411c9
-# ╟─7b43d240-8e4b-4762-9bca-659e0012bf31
+# ╟─61770c4f-f8ca-46da-9ff0-73d5aadd2972
+# ╟─c852c48d-a715-4a37-8456-e5a18fccf47b
+# ╟─101a2635-1198-46b4-9595-87de587919fa
+# ╟─6f3dc607-114a-4f7a-a51d-643fa8ad8fa6
+# ╟─85773eb5-d727-4a73-88e7-ec0ee6c7eda2
+# ╟─1293f605-90ab-4f18-934c-4718a8eec6a9
+# ╟─467ed030-3e4f-4d80-a593-5205706ce633
 # ╟─7d9c1960-844d-4362-aa56-d4790fb5d908
-# ╠═05fb4be9-c1f8-415c-b5a8-ceaf8853d818
-# ╠═4a328b42-45f6-4a03-87dc-6e8efd70a83d
-# ╠═33a29a85-4dbd-425a-b127-98fbd38444f8
+# ╟─05fb4be9-c1f8-415c-b5a8-ceaf8853d818
+# ╟─5f322ee6-f974-4005-9acf-7a8078b2eca3
+# ╟─4a328b42-45f6-4a03-87dc-6e8efd70a83d
 # ╟─f1e195a5-ea3c-4898-9709-7bd9855bbdef
 # ╟─cb752927-287f-4e57-b4fc-0a19777bf1e5
