@@ -2,28 +2,29 @@ using NCDatasets, JLD2, GibbsSeaWater
 
 tracers = "tracers.nc"
 velocities = "velocities.nc"
-bflux = "buoyancy_flux.jld2"
+bflux = "buoyancy_flux_interp_face.jld2"
 
 ds_tracers = NCDataset(tracers)
 time = ds_tracers[:time][:]
 ΔV = diff(ds_tracers[:xC][1:2])[1] * diff(ds_tracers[:yC][1:2])[1] * diff(ds_tracers[:zC][1:2])[1]
 ds_vel = NCDataset(velocities)
 
-∫βSw = similar(time)
-∫αΘw = similar(time)
+∫Sw = similar(time)
+∫Θw = similar(time)
 for t ∈ eachindex(time)
 
     S = ds_tracers[:S][:, :, :, t]
+    S1 = @view S[:, :, 1:end-1]
+    S2 = @view S[:, :, 2:end]
+    S_interp = cat(S[:, :, 1], 0.5 * (S1 .+ S2), S[:, :, end], dims = 3)
     T = ds_tracers[:T][:, :, :, t]
-    α = gsw_alpha.(S, T, 0)
-    β = gsw_beta.(S, T, 0)
+    T1 = @view T[:, :, 1:end-1]
+    T2 = @view T[:, :, 2:end]
+    T_interp = cat(T[:, :, 1], 0.5 * (T1 .+ T2), T[:, :, end], dims = 3)
     w = ds_vel[:w][:, :, :, t]
-    w1 = @view w[:, :, 1:end-1]
-    w2 = @view w[:, :, 2:end]
-    w_interp = (w1 .+ w2) / 2
 
-    ∫βSw[t] = sum(β .* S .* w_interp) * ΔV
-    ∫αΘw[t] = sum(α .* T .* w_interp) * ΔV
+    ∫Sw[t] = sum(S_interp .* w) * ΔV
+    ∫Θw[t] = sum(T_interp .* w) * ΔV
 
 end
 
@@ -31,7 +32,7 @@ close(ds_tracers)
 close(ds_vel)
 
 jldopen(bflux, "a+") do file
-    file["∫βSw"] = ∫βSw
-    file["∫αΘw"] = ∫αΘw
+    file["∫Sw"] = ∫βSw
+    file["∫Θw"] = ∫αΘw
     file["g"] = 9.81
 end

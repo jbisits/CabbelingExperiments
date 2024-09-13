@@ -2,7 +2,7 @@ using NCDatasets, JLD2
 
 co = "computed_output.nc"
 velocities = "velocities.nc"
-bflux = "buoyancy_flux.jld2"
+bflux = "buoyancy_flux_interp_face.jld2"
 
 ds_co = NCDataset(co)
 time = ds_co[:time][:]
@@ -14,12 +14,12 @@ g = 9.81
 for t ∈ eachindex(time)
 
     σ = ds_co[:σ][:, :, :, t]
+    σ1 = @view σ[:, :, 1:end-1]
+    σ2 = @view σ[:, :, 2:end]
+    σ_interp = cat(σ[:, :, 1], 0.5 * (σ1 .+ σ2), σ[:, :, end], dims = 3)
     w = ds_vel[:w][:, :, :, t]
-    w1 = @view w[:, :, 1:end-1]
-    w2 = @view w[:, :, 2:end]
-    w_interp = (w1 .+ w2) / 2
 
-    ∫gρw[t] = g * sum(σ .* w_interp) * ΔV
+    ∫gρw[t] = g * sum(σ_interp .* w) * ΔV
 
 end
 
