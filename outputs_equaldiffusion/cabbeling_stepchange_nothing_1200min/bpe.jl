@@ -30,7 +30,7 @@ for i ∈ eachindex(t)
             ds[:σ][:, :, :, i]
     end
     σᵢ_array = reshape(σᵢ, :)
-    sort!(σᵢ_array)
+    sort!(σᵢ_array, rev = true)
     Eb[i] = (g / ρ₀) * sum(σᵢ_array .* z✶ * ΔV)
 end
 jldopen(cab_flux_path, "a+") do file

@@ -332,8 +332,9 @@ The volume integrated density/buoyancy flux should be related to the kinetic ene
 # ╔═╡ 0a184e81-2d7a-483c-b223-adbac5aaa234
 md"""
 
-## Sanity checks
+# Sanity checks
 
+These are dons for the cabbeling experiment.
 I was having trouble figuring out closing the energy budget as per
 ```math
 \frac{\mathrm{d}}{\mathrm{d} t}E_{k} = -g\int_{V}ρw\mathrm{d}V - \epsilon.
@@ -850,6 +851,36 @@ let
 	fig
 end
 
+# ╔═╡ d97f661d-7133-423c-9dda-81bad26659e0
+md"""
+## Background potential energy from salinity and temperature
+
+The change in the background potential energy is due to a change in distribution of the density.
+In Winters (1995) they have linear (i.e. conserved) density so the only way this distribution changes is due to irreversible mixing.
+
+I want to know how the density distribution changes due linear and non-linear processes.
+A way to estimate the non-linear effect is to *subtract the linear change in BPE from the total BPE*,
+```math
+\begin{aligned}
+\frac{\mathrm{d}}{\mathrm{d} t}E_{b} &= \frac{\mathrm{d}}{\mathrm{d} t}E_{b}^{\mathrm{linear}} + \frac{\mathrm{d}}{\mathrm{d} t}E_{b}^{\mathrm{non-linear}} \\
+\implies \frac{\mathrm{d}}{\mathrm{d} t}E_{b}^{\mathrm{non-linear}} &= \frac{\mathrm{d}}{\mathrm{d} t}E_{b} -\frac{\mathrm{d}}{\mathrm{d} t}E_{b}^{\mathrm{linear}}
+\end{aligned}
+```
+
+I have the total BPE so just need the linear change in BPE (not sure if this is good terminology).
+"""
+
+# ╔═╡ 8d5c31ab-c16c-433e-bf74-655423595b84
+let
+	S_flux = 0.5 * (∫βSw[1:end-1] + ∫βSw[2:end])
+	T_flux = -0.5 * (∫αΘw[1:end-1] + ∫αΘw[2:end])
+	S_and_T_fluxes = S_flux .+ T_flux
+	fig, ax = lines(t_interp[1:200], S_and_T_fluxes[1:200], label = "S and T fluxes")
+	lines!(ax, t_interp[1:200], dₜ∫Ebz✶[1:200], label = "BPE")
+	axislegend(ax, position = :rb)
+	fig
+end
+
 # ╔═╡ f1e195a5-ea3c-4898-9709-7bd9855bbdef
 begin
 	cab_energy_path = "../outputs_equaldiffusion/cabbeling_stepchange_nothing_660min/cabbeling_energetics.jld2"
@@ -927,5 +958,7 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 # ╟─05fb4be9-c1f8-415c-b5a8-ceaf8853d818
 # ╟─5f322ee6-f974-4005-9acf-7a8078b2eca3
 # ╟─4a328b42-45f6-4a03-87dc-6e8efd70a83d
+# ╟─d97f661d-7133-423c-9dda-81bad26659e0
+# ╠═8d5c31ab-c16c-433e-bf74-655423595b84
 # ╟─f1e195a5-ea3c-4898-9709-7bd9855bbdef
 # ╟─cb752927-287f-4e57-b4fc-0a19777bf1e5
