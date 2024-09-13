@@ -32,7 +32,7 @@ close(ds_tracers)
 close(ds_vel)
 
 jldopen(bflux, "a+") do file
-    file["∫Sw"] = ∫βSw
-    file["∫Θw"] = ∫αΘw
+    file["∫Sw"] = ∫Sw
+    file["∫Θw"] = ∫Θw
     file["g"] = 9.81
 end
