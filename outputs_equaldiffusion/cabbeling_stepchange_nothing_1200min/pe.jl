@@ -17,8 +17,8 @@ z = co_ds[:zC][:]
 
 find_num = findfirst('k', co_ds.attrib["Reference density"]) - 1
 ρ₀ = parse(Float64, co_ds.attrib["Reference density"][1:find_num])
-∫ϵ = ds[:∫ϵ][:]
-∫Eₖ = ds[:∫Eₖ][:]
+∫ϵ = co_ds[:∫ϵ][:]
+∫Eₖ = co_ds[:∫Eₖ][:]
 
 close(co_ds)
 
