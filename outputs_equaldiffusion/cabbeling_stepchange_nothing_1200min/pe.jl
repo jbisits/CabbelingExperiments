@@ -1,9 +1,9 @@
 using NCDatasets, JLD2
 
 computed_output = "computed_output.nc"
-cab_flux_file = "cabbeling_fluxes_and_diff_longer_run.jld2"
+energetics_file = "cabbeling_energeitcs.jld2"
 notebook_path = "/g/data/e14/jb2381/CabbelingExperiments/notebooks"
-cab_flux_path = joinpath(notebook_path, cab_flux_file)
+energetics_path = joinpath(notebook_path, energetics_file)
 
 co_ds = NCDataset(computed_output)
 
@@ -17,10 +17,13 @@ z = co_ds[:zC][:]
 
 find_num = findfirst('k', co_ds.attrib["Reference density"]) - 1
 ρ₀ = parse(Float64, co_ds.attrib["Reference density"][1:find_num])
+∫ϵ = ds[:∫ϵ][:]
+∫Eₖ = ds[:∫Eₖ][:]
 
 close(co_ds)
 
-z_grid = reshape(repeat(z, inner= 124 * 124), (124, 124, 1400))
+z_ref0 = reverse(abs.(z))
+z_grid = reshape(repeat(z_ref0, inner = 124 * 124), (124, 124, 1400))
 Ep = similar(t)
 g = 9.81
 for i ∈ eachindex(t)
@@ -29,6 +32,10 @@ for i ∈ eachindex(t)
     end
     Ep[i] = (g / ρ₀) * sum(σᵢ .* z_grid * ΔV)
 end
-jldopen(cab_flux_path, "a+") do file
-    file["∫Ep_alternate"] = Ep
+
+jldopen(energetics_path, "a+") do file
+    file["∫Ep_zref0"] = Ep
+    file["ρ₀"] = ρ₀
+    file["∫ε"] = ∫ϵ
+    file["∫Ek"] = ∫Eₖ
 end

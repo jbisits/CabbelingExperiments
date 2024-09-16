@@ -350,6 +350,7 @@ begin
 	∫gρw = cab_long_energetics["∫gρw"]
 	∫αΘw = cab_long_energetics["∫αΘw"]
 	∫βSw = cab_long_energetics["∫βSw"]
+	# ∫gρw = load("buoyancy_flux_interp_face.jld2", "∫gρw")
 	ρ₀_string = cab_long_energetics["ρ₀"]
 	find_num = findfirst('k', cab_long_energetics["ρ₀"]) - 1
 	ρ₀_model = parse(Float64, cab_long_energetics["ρ₀"][1:find_num])
@@ -749,6 +750,11 @@ The other method I use is to create a vector of heights so that each element in 
 Then after the profile is sorted integrate over all depth.
 
 They end up with opposite signs but mathcing them have good agreement.
+
+**Currently the sign switching is actually a problem** I need to make usre I compute the BPE and the PE in the same manner ---  that is, in the APE calculation I have ``z✶`` going from 0...1, so densest water is at 0 and lightest water is at one, but in the potential energy case I compute with densest water at -1.
+This is why what I had as the previous version of BPE (with `rev = false` in `sort!`) worked but this current one, where I compute what I actually think I should is not correct.
+I think this boils down to offsetting the grid on which the PE is calculated.
+This will be better as then will see APE rising as time goes on (which is what the plot shows).
 """
 
 # ╔═╡ 85773eb5-d727-4a73-88e7-ec0ee6c7eda2
@@ -959,6 +965,6 @@ TableOfContents(title="Horizontally averaged fluxes and diff")
 # ╟─5f322ee6-f974-4005-9acf-7a8078b2eca3
 # ╟─4a328b42-45f6-4a03-87dc-6e8efd70a83d
 # ╟─d97f661d-7133-423c-9dda-81bad26659e0
-# ╠═8d5c31ab-c16c-433e-bf74-655423595b84
+# ╟─8d5c31ab-c16c-433e-bf74-655423595b84
 # ╟─f1e195a5-ea3c-4898-9709-7bd9855bbdef
 # ╟─cb752927-287f-4e57-b4fc-0a19777bf1e5
