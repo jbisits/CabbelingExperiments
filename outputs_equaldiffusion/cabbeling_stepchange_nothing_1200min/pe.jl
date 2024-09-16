@@ -1,7 +1,7 @@
 using NCDatasets, JLD2
 
 computed_output = "computed_output.nc"
-energetics_file = "cabbeling_energeitcs.jld2"
+energetics_file = "cabbeling_energetics.jld2"
 notebook_path = "/g/data/e14/jb2381/CabbelingExperiments/notebooks"
 energetics_path = joinpath(notebook_path, energetics_file)
 
