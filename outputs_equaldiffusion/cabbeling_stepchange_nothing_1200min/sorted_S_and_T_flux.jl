@@ -31,9 +31,9 @@ Fₜ = similar(Δt)
 
 for t ∈ eachindex(Δt)
 
-    S = ds_tracers[:S][:, :, :, t:t+1]
+    S = [reshape(ds_tracers[:S][:, :, :, t], :) reshape(ds_tracers[:S][:, :, :, t+1], :)]
     sort!(S, dims = 1, rev = true)
-    T = ds_tracers[:T][:, :, :, t:t+1]
+    T = [reshape(ds_tracers[:T][:, :, :, t], :) reshape(ds_tracers[:T][:, :, :, t+1], :)]
     sort!(T, dims = 1)
     α = gsw_alpha.(S, T, 0)
     β = gsw_beta.(S, T, 0)
@@ -50,12 +50,12 @@ for t ∈ eachindex(Δt)
 
     ## Temperature withour α
     ∫Tdz = cumsum(T * Δz✶, dims = 1)
-    dₜ∫Tdz = vec(diff(∫Tdz, dims = 2) / Δ[t])
+    dₜ∫Tdz = vec(diff(∫Tdz, dims = 2) / Δt[t])
     Fₜ[t] = g * sum(dₜ∫Tdz .* z✶ * ΔV)
 
     ## Overwrite for memory efficiency
     ∫Tdz = cumsum(α .* T * Δz✶, dims = 1)
-    dₜ∫Tdz = vec(diff(∫Tdz, dims = 2) / Δ[t])
+    dₜ∫Tdz = vec(diff(∫Tdz, dims = 2) / Δt[t])
     αFₜ[t] = g * sum(dₜ∫Tdz .* z✶ * ΔV)
 
 end
