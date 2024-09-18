@@ -31,9 +31,9 @@ Fₜ = similar(Δt)
 
 for t ∈ eachindex(Δt)
 
-    S = reshape(ds_tracers[:S][:, :, :, t:t+1], :)
+    S = ds_tracers[:S][:, :, :, t:t+1]
     sort!(S, dims = 1, rev = true)
-    T = reshape(ds_tracers[:T][:, :, :, t:t+1], :)
+    T = ds_tracers[:T][:, :, :, t:t+1]
     sort!(T, dims = 1)
     α = gsw_alpha.(S, T, 0)
     β = gsw_beta.(S, T, 0)
