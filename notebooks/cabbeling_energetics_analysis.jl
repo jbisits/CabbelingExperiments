@@ -165,14 +165,6 @@ md"""
 Computing ``Φ_{i} = \mathrm{d}_{t}PE - Φz`` as a residual seems questionable here.
 """
 
-# ╔═╡ 36f39ad2-df88-4700-a4f8-b211ec7afc73
-begin
-	A = rand(1:5, (3, 3))
-end
-
-# ╔═╡ 327d0aee-0461-4094-a305-2ddc957ca8f8
-sort(-1:4)
-
 # ╔═╡ b0efe882-59a1-4319-99f2-04fb59f062c4
 md"""
 ## Salinity and temperature fluxes
@@ -208,8 +200,6 @@ TableOfContents(title = "Energetics analysis")
 # ╟─8d4756a8-06a4-4436-9a27-e1702a65bc14
 # ╟─786f2208-39ff-4fd2-8363-b6aa41c42e7b
 # ╟─c3585182-3b5f-4a5d-8616-5c06f35c8811
-# ╠═36f39ad2-df88-4700-a4f8-b211ec7afc73
-# ╠═327d0aee-0461-4094-a305-2ddc957ca8f8
 # ╟─b0efe882-59a1-4319-99f2-04fb59f062c4
 # ╠═bea55bf5-05a7-4acd-8d26-01d029717ac5
 # ╟─ffd3a976-1234-4758-8ec2-643be78af3f7

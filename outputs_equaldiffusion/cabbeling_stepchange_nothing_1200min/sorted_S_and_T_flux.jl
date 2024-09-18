@@ -8,7 +8,7 @@ ds_tracers = NCDataset(tracers)
 ds_computed_output = NCDataset(computed_output)
 
 time = ds_tracers[:time][:]
-Δt = diff(t)
+Δt = diff(time)
 SA = 0.1 * 0.1
 Δx = diff(ds_computed_output[:xC][1:2])[1]
 Δy = diff(ds_computed_output[:yC][1:2])[1]
