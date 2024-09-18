@@ -105,7 +105,7 @@ end
 # ╔═╡ a2fb3348-1272-4860-b364-7c34782ff0a5
 let
 	fig, ax, hm = heatmap(iso["time"][1:end-1], iso["z"], log10.(abs.(iso["κₛ"]')),
-						colorrange = (log10(1e-8), log10(1)), colormap = :tempo, 
+						colorrange = (log10(1e-8), log10(1)), colormap = :tempo,
 						highclip = :red, lowclip = :orange)
 	ax.title = "Horizontally averaged effective diffusivity"
 	ax.xlabel = "time (s)"
@@ -389,7 +389,7 @@ end
 # ╔═╡ 62353120-49c2-4a2a-9ec0-d72249fd1280
 let
 	fig, ax, hm = heatmap(cab["time"][1:end-1], cab["z"], log10.(abs.(cab["κₛ"]')),
-						colorrange = (log10(1e-8), log10(1)), colormap = :tempo, 
+						colorrange = (log10(1e-8), log10(1)), colormap = :tempo,
 						#highclip = :red, lowclip = :orange
 	)
 	ax.title = "Horizontally averaged effective diffusivity"
@@ -526,7 +526,7 @@ end
 
 # ╔═╡ 11f01195-8bb0-4835-a722-b50e06efb314
 begin
-	
+
 	Ek = cab_long_energetics["∫Eₖ"]
 	dₜEk = diff(Ek ) ./ diff(cab_long_energetics["time"])
 	ϵ =  cab_long_energetics["∫ϵ"]
@@ -603,7 +603,7 @@ There are still some dimension things going on that I have not sorted.
 let
 	F_ρ_vol_integrated = -∫αΘw .+ ∫βSw
 	interp_F_ρ_vol_integrated = ρ₀_model * 0.5 * (F_ρ_vol_integrated[1:end-1] .+ F_ρ_vol_integrated[2:end])
-	
+
 	fig, ax = lines(cab_long_energetics["time"][1:200], ∫F_ρ_cab[1:200], label = "From sorted S, T fluxes")
 	lines!(ax, cab_long_energetics["time"][1:200], interp_F_ρ_vol_integrated[1:200], label = "ρ₀(∫αΘw - ∫βSw)")
 	ax.xlabel = "time (s)"
@@ -635,14 +635,14 @@ The odd thing is the volume integrated tracers are out by a factor of about 15..
 let
 	ρ_S_fluxes = 0.1^2 * ρ₀_model * sum(cab["β"] .* cab["Fₛ"], dims = 1) * Δz_cab[1]
 	ρ_S_vol_int = -0.5 * (ρ₀_model * (∫βSw[1:end-1] + ∫βSw[2:end]))
-	
+
 	fig, ax = lines(cab["time"][1:200], vec(ρ_S_fluxes)[1:200], label = "SAρ₀∫βFₛdz")
 	lines!(ax, cab["time"][1:200], ρ_S_vol_int[1:200], label = "-ρ₀∫βSwdV")
 	ax.title = "''Density'' from salinity"
 	ax.xlabel = "time (s)"
 	ax.ylabel = ""
 	axislegend(ax, position = :rt)
-	
+
 	ρ_T_fluxes = -0.1^2 * ρ₀_model * sum(cab["α"] .* cab["Fₜ"], dims = 1) * Δz_cab[1]
 	ρ_T_vol_int = -0.5 * (ρ₀_model * (∫αΘw[1:end-1] + ∫αΘw[2:end]))
 
@@ -807,12 +807,12 @@ begin
 	bpe_method = @bind bpe_comp PlutoUI.Select(["z✶", "repeated_z"])
 	md"""
 	### Available potential energy
-	
+
 	Window over which to view energetics.
 	$(energy_window)
-	
+
 	Method used for ``\frac{\mathrm{d}}{\mathrm{d}t}E_{p}``: $(pe_method).
-	
+
 	Method used for ``\frac{\mathrm{d}}{\mathrm{d}t}E_{b}``: $(bpe_method).
 	"""
 end
@@ -822,7 +822,7 @@ let
 	plot_dₜEb = bpe_comp == "z✶" ? dₜ∫Ebz✶ : dₜ∫Eb
 	plot_dₜEp = pe_comp == "On fly" ? dₜ∫Ep : dₜ∫Ep_alternate
 	plot_dₜEa = plot_dₜEp .- plot_dₜEb
-	fig = Figure(size = (500, 900)) 
+	fig = Figure(size = (500, 900))
 	ax = Axis(fig[1, 1], xlabel = "time (s)", ylabel = "Watts", title = "Time change in potential energies", subtitle = "window = 0-$(t[plot_window] / 60)min")
 	lines!(ax, t_interp[1:plot_window], plot_dₜEp[1:plot_window], label = "dₜ∫Ep")
 	lines!(ax, t_interp[1:plot_window], plot_dₜEb[1:plot_window], label = "dₜ∫Eb")
@@ -842,7 +842,7 @@ begin
 	dₜEa = dₜEp .- dₜEb
 	∫ϵ_interp = 0.5 * (∫ϵ[1:end-1] .+ ∫ϵ[2:end])
 	Φz = interp_∫gρw ./ ρ₀
-	Φi = dₜ∫Ep .- Φz 
+	Φi = dₜ∫Ep .- Φz
 end
 
 # ╔═╡ 4a328b42-45f6-4a03-87dc-6e8efd70a83d
