@@ -18,7 +18,7 @@ SA = 0.1 * 0.1
 
 V = cumsum(ones(length(reshape(ds_computed_output[:σ][:, :, :, 1], :)))) * ΔV
 z✶ = V / SA
-Δz✶ = diff(z✶)
+Δz✶ = diff(z✶)[1]
 
 find_num = findfirst('k', ds_computed_output.attrib["Reference density"]) - 1
 ρ₀ = parse(Float64, ds_computed_output.attrib["Reference density"][1:find_num])
