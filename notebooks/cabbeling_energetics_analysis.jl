@@ -171,7 +171,7 @@ begin
 end
 
 # ╔═╡ 327d0aee-0461-4094-a305-2ddc957ca8f8
-sort!(A, dims = 1, rev = true)
+sort(-1:4)
 
 # ╔═╡ b0efe882-59a1-4319-99f2-04fb59f062c4
 md"""
