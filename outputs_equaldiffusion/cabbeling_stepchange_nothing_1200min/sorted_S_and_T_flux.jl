@@ -35,37 +35,37 @@ for t ∈ eachindex(Δt)
     sort!(S, dims = 1, rev = true)
     T = [reshape(ds_tracers[:T][:, :, :, t], :) reshape(ds_tracers[:T][:, :, :, t+1], :)]
     sort!(T, dims = 1)
-    α = gsw_alpha.(S, T, 0)
+    # α = gsw_alpha.(S, T, 0)
     β = gsw_beta.(S, T, 0)
 
-    ## Salt without β
-    ∫Sdz = cumsum(S * Δz✶, dims = 1)
-    dₜ∫Sdz = vec(diff(∫Sdz, dims = 2) / Δt[t])
-    Fₛ[t] = g * sum(dₜ∫Sdz .* z✶ * ΔV)
+    # ## Salt without β
+    # ∫Sdz = cumsum(S * Δz✶, dims = 1)
+    # dₜ∫Sdz = vec(diff(∫Sdz, dims = 2) / Δt[t])
+    # Fₛ[t] = g * sum(dₜ∫Sdz .* z✶ * ΔV)
 
     ## Overwrite for memory efficieny
     ∫Sdz = cumsum(β .* S * Δz✶, dims = 1)
     dₜ∫Sdz = vec(diff(∫Sdz, dims = 2) / Δt[t])
-    βFₛ[t] = g * sum(∫Sdz .* z✶ * ΔV)
+    βFₛ[t] = g * sum(dₜ∫Sdz .* z✶ * ΔV)
 
-    ## Temperature withour α
-    ∫Tdz = cumsum(T * Δz✶, dims = 1)
-    dₜ∫Tdz = vec(diff(∫Tdz, dims = 2) / Δt[t])
-    Fₜ[t] = g * sum(dₜ∫Tdz .* z✶ * ΔV)
+    # ## Temperature withour α
+    # ∫Tdz = cumsum(T * Δz✶, dims = 1)
+    # dₜ∫Tdz = vec(diff(∫Tdz, dims = 2) / Δt[t])
+    # Fₜ[t] = g * sum(dₜ∫Tdz .* z✶ * ΔV)
 
-    ## Overwrite for memory efficiency
-    ∫Tdz = cumsum(α .* T * Δz✶, dims = 1)
-    dₜ∫Tdz = vec(diff(∫Tdz, dims = 2) / Δt[t])
-    αFₜ[t] = g * sum(dₜ∫Tdz .* z✶ * ΔV)
+    # ## Overwrite for memory efficiency
+    # ∫Tdz = cumsum(α .* T * Δz✶, dims = 1)
+    # dₜ∫Tdz = vec(diff(∫Tdz, dims = 2) / Δt[t])
+    # αFₜ[t] = g * sum(dₜ∫Tdz .* z✶ * ΔV)
 
 end
 close(ds_tracers)
 close(ds_computed_output)
 
 jldopen(bflux, "a+") do file
-    file["Fₛ"] = Fₛ
-    file["Fₜ"] = Fₜ
+    # file["Fₛ"] = Fₛ
+    # file["Fₜ"] = Fₜ
     file["βFₛ"] = βFₛ
-    file["αFₜ"] = αFₜ
-    file["ρ₀"] = ρ₀
+    # file["αFₜ"] = αFₜ
+    # file["ρ₀"] = ρ₀
 end

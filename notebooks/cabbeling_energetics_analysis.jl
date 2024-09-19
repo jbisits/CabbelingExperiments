@@ -43,6 +43,10 @@ begin
 	∫gρw = bflux["∫gρw"]
 	∫Sw = bflux["∫Sw"]
 	∫Θw = bflux["∫Θw"]
+	Fₛ = bflux["Fₛ"]
+	Fₜ = bflux["Fₜ"]
+	βFₛ = bflux["βFₛ"]
+	αFₜ = bflux["αFₜ"]
 	energetics = load("cabbeling_energetics.jld2")
 	pe = energetics["∫Ep_zref0"]
 	bpe = energetics["∫Ebz✶_zref0"]
@@ -172,15 +176,16 @@ md"""
 
 # ╔═╡ bea55bf5-05a7-4acd-8d26-01d029717ac5
 let
-	fig, ax = lines(time_interp, ∫Sw_interp, label = "∫Sw")
+	fig, ax = lines(time_interp, Fₛ, label = "Fₛ")
 	ax2 = Axis(fig[1, 2])
-	lines!(ax2, time_interp, ∫Θw_interp, label = "∫Θw")
+	lines!(ax2, time_interp, Fₜ, label = "Fₛ")
 	ax3 = Axis(fig[2, :])
-	S_and_T_fluxes = (-∫Sw_interp .+ ∫Θw_interp) / ρ₀
-	lines!(ax3, time_interp, S_and_T_fluxes, label = "∫Sw + ∫Θw")
-	# lines!(ax3, time_interp, ∫gρw_interp, label = "∫gρw")
+	S_and_T_fluxes = (Fₜ/3992 .- Fₛ) / ρ₀
+	lines!(ax3, time_interp, S_and_T_fluxes, label = "Fₛ - Fₛ")
 	lines!(ax3, time_interp, dₜbpe, label = "dₜbpe")
 	axislegend(ax3)
+	ax4 = Axis(fig[3, :])
+	lines!(ax4, time_interp, S_and_T_fluxes)
 	fig
 end
 
@@ -190,7 +195,7 @@ TableOfContents(title = "Energetics analysis")
 # ╔═╡ Cell order:
 # ╟─943cf012-755c-11ef-3493-99307e182e96
 # ╟─b2ed38aa-523a-4edf-897a-5cf8c5f0ce33
-# ╟─f0ebfa39-3959-4112-8575-e6238a73bfdc
+# ╠═f0ebfa39-3959-4112-8575-e6238a73bfdc
 # ╟─5bf45be1-f79d-48e2-a472-f6f1b8935bf3
 # ╟─38a60f55-3756-4554-9e09-08680e6cb8f5
 # ╟─2ad9595c-62e1-41e1-8905-20e208150629
