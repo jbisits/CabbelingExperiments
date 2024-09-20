@@ -24,7 +24,7 @@ z_xy_top = z[end] * ones(length(x), length(y))
 snapshot = 24
 slices = (density_xz   = file["σ/σ_xzslice/σ_$(60.0 * snapshot)"],
           velocity_yz  = file["w/w_yzslice/w_$(60.0 * snapshot)"][:, 1:end-1],
-          density_xy   = file["σ/σ_xyslice/σ_$(60.0 * snapshot)"])
+          velocity_zmean   = file["w/w_zmean/w_$(60.0 * snapshot)"][:, :, 1])
 
 close(file)
 
@@ -48,22 +48,13 @@ ax = Axis3(fig[1, 2],
            # persepectiveness = 0.1
            )
 
-# # Zonally-averaged desity
-# B = interior(B_timeseries[n], 1, :, :)
-
-# clims = 1.1 .* extrema(b_timeserieses.top[n][:])
-
-# kwargs = (colorrange=clims, colormap=:deep, shading=NoShading)
-
 sf_σ = surface!(ax, x_xz, y_xz_density, z_xz; color = slices.density_xz, colormap = :dense)
 sf_w = surface!(ax, x_xz_velocity, y_xz, z_yz; color = slices.velocity_yz, colormap = :balance, ambient = (0.85, 0.85, 0.85), backlight = 1f0)
-surface!(ax, x, y, z_xy_top; color = slices.density_xy, colormap = :dense)
+surface!(ax, x, y, z_xy_top; color = slices.velocity_zmean, colormap = :balance)
 
 # Contours
 c_σ = contour!(ax, y, z, slices.density_xz; levels = 4, linewidth = 1, transformation = (:xz, y[1]),
          transparency = true, color = :white, linestyle = :dash)
-contour!(ax, x, y, slices.density_xy; linewidth = 1, levels = 4, linestyle = :dash,
-         transparency = true, color = :white)
 
 
 Colorbar(fig[1, 3], sf_σ, label = "σ₀ (kgm⁻³)")

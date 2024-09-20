@@ -38,15 +38,23 @@ This seems reasonable to me but likely have to look at whether this makes sense 
 
 # ╔═╡ f0ebfa39-3959-4112-8575-e6238a73bfdc
 begin
-	bflux = load("buoyancy_flux_interp_face.jld2")
-	time = bflux["time"]
-	∫gρw = bflux["∫gρw"]
-	∫Sw = bflux["∫Sw"]
-	∫Θw = bflux["∫Θw"]
-	Fₛ = bflux["Fₛ"]
-	Fₜ = bflux["Fₜ"]
-	βFₛ = bflux["βFₛ"]
-	αFₜ = bflux["αFₜ"]
+
+	bflux = load("buoyancy_flux.jld2")
+	∫αΘw = bflux["∫αΘw"]
+	∫βSw = bflux["∫βSw"]
+	∫αΘw_interp = 0.5 * (∫αΘw[1:end-1] .+ ∫αΘw[2:end])
+	∫βSw_interp = 0.5 * (∫βSw[1:end-1] .+ ∫βSw[2:end])
+	bflux_keys = ["∫αΘw", "∫βSw"]
+	
+	bflux_face = load("buoyancy_flux_interp_face.jld2")
+	time = bflux_face["time"]
+	∫gρw = bflux_face["∫gρw"]
+	∫Sw = bflux_face["∫Sw"]
+	∫Θw = bflux_face["∫Θw"]
+	Fₛ = bflux_face["Fₛ"]
+	Fₜ = bflux_face["Fₜ"]
+	βFₛ = bflux_face["βFₛ"]
+	αFₜ = bflux_face["αFₜ"]
 	energetics = load("cabbeling_energetics.jld2")
 	pe = energetics["∫Ep_zref0"]
 	bpe = energetics["∫Ebz✶_zref0"]
@@ -67,12 +75,22 @@ begin
 	∫Θw_interp = 0.5 * (∫Θw[1:end-1] .+ ∫Θw[2:end])
 	ε_interp = 0.5 * (ε[1:end-1] .+ ε[2:end])
 	Φi = dₜpe .- Φz
+	ΔV = load("cabbeling_fluxes_and_diff_longer_run.jld2", "ΔV")
+	βFₛ = 0.01 * βFₛ / (g * ΔV) # Scale appropriately --- need to check!
+	αFₜ = 0.01 * αFₜ / (g * ΔV)
 	md"""
+
+	The data is currently saved across a few files so here is a breakdown of what is in which.
+	Where appropriate output has been interpolated in time.
 	Data loaded from `buoyancy_flux_interp_face.jld2`:
 	
+	$([string(k)*", " for k ∈ keys(bflux_face)])
+
+	data loaded from `buoyancy_flux.jld2`:
+
 	$([string(k)*", " for k ∈ keys(bflux)])
 
-	data loaded from `cabbelinge_energetics.jld2`:
+	data loaded from `cabbeling_energetics.jld2`:
 
 	$([string(k)*", " for k ∈ keys(energetics)]).
 	"""
@@ -176,18 +194,56 @@ md"""
 
 # ╔═╡ bea55bf5-05a7-4acd-8d26-01d029717ac5
 let
-	fig, ax = lines(time_interp, Fₛ, label = "Fₛ")
+	fig, ax = lines(time_interp, βFₛ, label = "Fₛ")
 	ax2 = Axis(fig[1, 2])
-	lines!(ax2, time_interp, Fₜ, label = "Fₛ")
+	lines!(ax2, time_interp, αFₜ, label = "Fₛ")
 	ax3 = Axis(fig[2, :])
-	S_and_T_fluxes = (Fₜ/3992 .- Fₛ) / ρ₀
-	lines!(ax3, time_interp, S_and_T_fluxes, label = "Fₛ - Fₛ")
+	S_and_T_fluxes = -(αFₜ .+ βFₛ)
+	lines!(ax3, time_interp, S_and_T_fluxes, label = "Fₜ - Fₛ")
 	lines!(ax3, time_interp, dₜbpe, label = "dₜbpe")
 	axislegend(ax3)
 	ax4 = Axis(fig[3, :])
-	lines!(ax4, time_interp, S_and_T_fluxes)
+	lines!(ax4, time_interp,  dₜbpe .- S_and_T_fluxes)
 	fig
 end
+
+# ╔═╡ f645130f-9b64-4dc2-871c-54f5a9d5dffc
+let
+	fig, ax = lines(time_interp, ∫Sw_interp, label = "Fₛ")
+	ax2 = Axis(fig[1, 2])
+	lines!(ax2, time_interp, ∫Θw_interp, label = "Fₛ")
+	ax3 = Axis(fig[2, :])
+	S_and_T_fluxes = (∫Θw_interp .- ∫Sw_interp) / (g * ρ₀)
+	lines!(ax3, time_interp, S_and_T_fluxes, label = "∫Θw - ∫Sw")
+	lines!(ax3, time_interp, dₜbpe, label = "dₜbpe")
+	axislegend(ax3)
+	ax4 = Axis(fig[3, :])
+	lines!(ax4, time_interp,  dₜbpe .- S_and_T_fluxes)
+	fig
+end
+
+# ╔═╡ c73bdae3-754c-405c-8599-7f0767fed5c9
+# ╠═╡ disabled = true
+#=╠═╡
+let
+	fig, ax = lines(time_interp, -∫βSw_interp, label = "-∫βSw", color = :blue)
+	ax.xlabel = "time"
+	axislegend(ax, position = :rb)
+	ax2 = Axis(fig[1, 2], xlabel = "time (s)")
+	lines!(ax2, time_interp, ∫αΘw_interp, label = "∫αΘw", color = :red)
+	axislegend(ax2)
+	ax3 = Axis(fig[2, :])
+	S_and_T_fluxes = (∫αΘw_interp .- ∫βSw_interp) * g
+	lines!(ax3, time_interp, S_and_T_fluxes, label = "∫αΘw - ∫βSw", color = :purple)
+	lines!(ax3, time_interp, dₜbpe, label = "dₜbpe", color = :orange)
+	axislegend(ax3)
+	hidexdecorations!(ax3, grid = false, ticks = false)
+	ax4 = Axis(fig[3, :], xlabel = "time (s)")
+	lines!(ax4, time_interp,  dₜbpe .- S_and_T_fluxes, color = :green, label = "dₜbpe - (∫αΘw - ∫βSw)", title = "Cabbeling contribution (?)")
+	axislegend(ax4)
+	fig
+end
+  ╠═╡ =#
 
 # ╔═╡ ffd3a976-1234-4758-8ec2-643be78af3f7
 TableOfContents(title = "Energetics analysis")
@@ -207,4 +263,6 @@ TableOfContents(title = "Energetics analysis")
 # ╟─c3585182-3b5f-4a5d-8616-5c06f35c8811
 # ╟─b0efe882-59a1-4319-99f2-04fb59f062c4
 # ╠═bea55bf5-05a7-4acd-8d26-01d029717ac5
+# ╠═f645130f-9b64-4dc2-871c-54f5a9d5dffc
+# ╠═c73bdae3-754c-405c-8599-7f0767fed5c9
 # ╟─ffd3a976-1234-4758-8ec2-643be78af3f7
