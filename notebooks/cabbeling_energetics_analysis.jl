@@ -51,8 +51,6 @@ begin
 	∫gρw = bflux_face["∫gρw"]
 	∫Sw = bflux_face["∫Sw"]
 	∫Θw = bflux_face["∫Θw"]
-	Fₛ = bflux_face["Fₛ"]
-	Fₜ = bflux_face["Fₜ"]
 	βFₛ = bflux_face["βFₛ"]
 	αFₜ = bflux_face["αFₜ"]
 	energetics = load("cabbeling_energetics.jld2")
@@ -190,50 +188,20 @@ Computing ``Φ_{i} = \mathrm{d}_{t}PE - Φz`` as a residual seems questionable h
 # ╔═╡ b0efe882-59a1-4319-99f2-04fb59f062c4
 md"""
 ## Salinity and temperature fluxes
+
+The goal here is to find the fluxes due the diffusive fluxes of salinity and temperature, use these as a proxy for density flux that should be conserved to isolate the non-linear contribution.
 """
 
-# ╔═╡ bea55bf5-05a7-4acd-8d26-01d029717ac5
-let
-	fig, ax = lines(time_interp, βFₛ, label = "Fₛ")
-	ax2 = Axis(fig[1, 2])
-	lines!(ax2, time_interp, αFₜ, label = "Fₛ")
-	ax3 = Axis(fig[2, :])
-	S_and_T_fluxes = -(αFₜ .+ βFₛ)
-	lines!(ax3, time_interp, S_and_T_fluxes, label = "Fₜ - Fₛ")
-	lines!(ax3, time_interp, dₜbpe, label = "dₜbpe")
-	axislegend(ax3)
-	ax4 = Axis(fig[3, :])
-	lines!(ax4, time_interp,  dₜbpe .- S_and_T_fluxes)
-	fig
-end
-
-# ╔═╡ f645130f-9b64-4dc2-871c-54f5a9d5dffc
-let
-	fig, ax = lines(time_interp, ∫Sw_interp, label = "Fₛ")
-	ax2 = Axis(fig[1, 2])
-	lines!(ax2, time_interp, ∫Θw_interp, label = "Fₛ")
-	ax3 = Axis(fig[2, :])
-	S_and_T_fluxes = (∫Θw_interp .- ∫Sw_interp) / (g * ρ₀)
-	lines!(ax3, time_interp, S_and_T_fluxes, label = "∫Θw - ∫Sw")
-	lines!(ax3, time_interp, dₜbpe, label = "dₜbpe")
-	axislegend(ax3)
-	ax4 = Axis(fig[3, :])
-	lines!(ax4, time_interp,  dₜbpe .- S_and_T_fluxes)
-	fig
-end
-
 # ╔═╡ c73bdae3-754c-405c-8599-7f0767fed5c9
-# ╠═╡ disabled = true
-#=╠═╡
 let
-	fig, ax = lines(time_interp, -∫βSw_interp, label = "-∫βSw", color = :blue)
+	fig, ax = lines(time_interp, βFₛ, label = "βFₛ", color = :blue)
 	ax.xlabel = "time"
 	axislegend(ax, position = :rb)
 	ax2 = Axis(fig[1, 2], xlabel = "time (s)")
-	lines!(ax2, time_interp, ∫αΘw_interp, label = "∫αΘw", color = :red)
+	lines!(ax2, time_interp, αFₜ, label = "αFₜ", color = :red)
 	axislegend(ax2)
 	ax3 = Axis(fig[2, :])
-	S_and_T_fluxes = (∫αΘw_interp .- ∫βSw_interp) * g
+	S_and_T_fluxes = (αFₜ .- βFₛ)
 	lines!(ax3, time_interp, S_and_T_fluxes, label = "∫αΘw - ∫βSw", color = :purple)
 	lines!(ax3, time_interp, dₜbpe, label = "dₜbpe", color = :orange)
 	axislegend(ax3)
@@ -243,7 +211,6 @@ let
 	axislegend(ax4)
 	fig
 end
-  ╠═╡ =#
 
 # ╔═╡ ffd3a976-1234-4758-8ec2-643be78af3f7
 TableOfContents(title = "Energetics analysis")
@@ -262,7 +229,5 @@ TableOfContents(title = "Energetics analysis")
 # ╟─786f2208-39ff-4fd2-8363-b6aa41c42e7b
 # ╟─c3585182-3b5f-4a5d-8616-5c06f35c8811
 # ╟─b0efe882-59a1-4319-99f2-04fb59f062c4
-# ╠═bea55bf5-05a7-4acd-8d26-01d029717ac5
-# ╠═f645130f-9b64-4dc2-871c-54f5a9d5dffc
-# ╠═c73bdae3-754c-405c-8599-7f0767fed5c9
+# ╟─c73bdae3-754c-405c-8599-7f0767fed5c9
 # ╟─ffd3a976-1234-4758-8ec2-643be78af3f7
