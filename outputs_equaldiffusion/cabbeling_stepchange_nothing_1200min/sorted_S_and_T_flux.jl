@@ -35,22 +35,24 @@ for t ∈ eachindex(Δt)
     sort!(S, dims = 1, rev = true)
     T = [reshape(ds_tracers[:T][:, :, :, t], :) reshape(ds_tracers[:T][:, :, :, t+1], :)]
     sort!(T, dims = 1)
-    α = gsw_alpha.(S, T, 0)
-    β = gsw_beta.(S, T, 0)
 
-    ∫Sdz = cumsum(β .* S * Δz✶, dims = 1)
+    ∫Sdz = cumsum(S * Δz✶, dims = 1)
     dₜ∫Sdz = vec(diff(∫Sdz, dims = 2) / Δt[t])
-    βFₛ[t] = sum(dₜ∫Sdz * Δz✶)
 
-    ∫Tdz = cumsum(α .* T * Δz✶, dims = 1)
+    ∫Tdz = cumsum(T * Δz✶, dims = 1)
     dₜ∫Tdz = vec(diff(∫Tdz, dims = 2) / Δt[t])
-    αFₜ[t] = sum(dₜ∫Tdz * Δz✶)
+
+    α = gsw_alpha.(dₜ∫Sdz, dₜ∫Tdz, 0)
+    β = gsw_beta.(dₜ∫Sdz, dₜ∫Tdz, 0)
+
+    βFₛ[t] = sum(β .* dₜ∫Sdz * Δz✶)
+    αFₜ[t] = sum(α .* dₜ∫Tdz * Δz✶)
 
 end
 close(ds_tracers)
 close(ds_computed_output)
 
 jldopen(bflux, "a+") do file
-    file["βFₛ"] = βFₛ
-    file["αFₜ"] = αFₜ
+    file["βFₛ_alt"] = βFₛ
+    file["αFₜ_alt"] = αFₜ
 end

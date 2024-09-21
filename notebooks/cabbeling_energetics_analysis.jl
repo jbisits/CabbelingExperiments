@@ -202,7 +202,7 @@ let
 	axislegend(ax2)
 	ax3 = Axis(fig[2, :])
 	S_and_T_fluxes = (αFₜ .- βFₛ)
-	lines!(ax3, time_interp, S_and_T_fluxes, label = "∫αΘw - ∫βSw", color = :purple)
+	lines!(ax3, time_interp, S_and_T_fluxes, label = "αFₜ - βFₛ", color = :purple)
 	lines!(ax3, time_interp, dₜbpe, label = "dₜbpe", color = :orange)
 	axislegend(ax3)
 	hidexdecorations!(ax3, grid = false, ticks = false)
