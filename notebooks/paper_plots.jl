@@ -20,8 +20,9 @@ z_yz = repeat(reshape(z, 1, length(z)), length(x), 1)
 x_xz_velocity = x[1] * ones(length(x), length(z))
 y_xz_density = y[1] * ones(length(x), length(z))
 z_xy_top = z[end] * ones(length(x), length(y))
+z_xy_mid = z[Int(length(z)/2)] * ones(length(x), length(y))
 
-snapshot = 24
+snapshot = 9
 slices = (density_xz   = file["σ/σ_xzslice/σ_$(60.0 * snapshot)"],
           velocity_yz  = file["w/w_yzslice/w_$(60.0 * snapshot)"][:, 1:end-1],
           velocity_zmean   = file["w/w_zmean/w_$(60.0 * snapshot)"][:, :, 1])
@@ -51,10 +52,11 @@ ax = Axis3(fig[1, 2],
 sf_σ = surface!(ax, x_xz, y_xz_density, z_xz; color = slices.density_xz, colormap = :dense)
 sf_w = surface!(ax, x_xz_velocity, y_xz, z_yz; color = slices.velocity_yz, colormap = :balance, ambient = (0.85, 0.85, 0.85), backlight = 1f0)
 surface!(ax, x, y, z_xy_top; color = slices.velocity_zmean, colormap = :balance)
+surface!(ax, x, y, z_xy_mid; color = slices.velocity_zmean, colormap = :balance, overdraw = true) # add somthing to middle of domain
 
 # Contours
-c_σ = contour!(ax, y, z, slices.density_xz; levels = 4, linewidth = 1, transformation = (:xz, y[1]),
-         transparency = true, color = :white, linestyle = :dash)
+# c_σ = contour!(ax, y, z, slices.density_xz; levels = 4, linewidth = 1, transformation = (:xz, y[1]),
+#          transparency = true, color = :white, linestyle = :dash)
 
 
 Colorbar(fig[1, 3], sf_σ, label = "σ₀ (kgm⁻³)")
@@ -70,3 +72,5 @@ fig
 
 ##
 save("dns_schematic.png", fig)
+
+##
