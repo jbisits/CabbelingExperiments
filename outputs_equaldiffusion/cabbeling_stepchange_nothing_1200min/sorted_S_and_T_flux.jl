@@ -42,8 +42,15 @@ for t ∈ eachindex(Δt)
     ∫Tdz = cumsum(T * Δz✶, dims = 1)
     dₜ∫Tdz = vec(diff(∫Tdz, dims = 2) / Δt[t])
 
-    α = gsw_alpha.(dₜ∫Sdz, dₜ∫Tdz, 0)
-    β = gsw_beta.(dₜ∫Sdz, dₜ∫Tdz, 0)
+    S1 = @view S[:, 1:end-1]
+    S2 = @view S[:, 2:end]
+    S_interp = 0.5 * (S1 .+ S2)
+    T1 = @view T[:, 1:end-1]
+    T2 = @view T[:, 2:end]
+    T_interp = 0.5 * (T1 .+ T2)
+
+    α = gsw_alpha.(S_interp, T_interp, 0)
+    β = gsw_beta.(S_interp, T_interp, 0)
 
     βFₛ[t] = sum(β .* dₜ∫Sdz * Δz✶)
     αFₜ[t] = sum(α .* dₜ∫Tdz * Δz✶)
@@ -53,6 +60,6 @@ close(ds_tracers)
 close(ds_computed_output)
 
 jldopen(bflux, "a+") do file
-    file["βFₛ_alt"] = βFₛ
-    file["αFₜ_alt"] = αFₜ
+    file["βFₛ_alt_2"] = βFₛ
+    file["αFₜ_alt_2"] = αFₜ
 end
