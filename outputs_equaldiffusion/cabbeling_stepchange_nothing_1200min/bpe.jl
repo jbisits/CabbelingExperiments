@@ -1,9 +1,9 @@
 using NCDatasets, JLD2
 
 computed_output = "computed_output.nc"
-cab_flux_file = "cabbeling_fluxes_and_diff_longer_run.jld2"
+energetics_file = "cabbeling_energetics.jld2"
 notebook_path = "/g/data/e14/jb2381/CabbelingExperiments/notebooks"
-cab_flux_path = joinpath(notebook_path, cab_flux_file)
+energetics_path = joinpath(notebook_path, energetics_file)
 
 co_ds = NCDataset(computed_output)
 
@@ -33,6 +33,6 @@ for i ∈ eachindex(t)
     sort!(σᵢ_array, rev = true)
     Eb[i] = (g / ρ₀) * sum(σᵢ_array .* z✶ * ΔV)
 end
-jldopen(cab_flux_path, "a+") do file
+jldopen(energetics_path, "a+") do file
     file["∫Eb′z✶"] = Eb
 end

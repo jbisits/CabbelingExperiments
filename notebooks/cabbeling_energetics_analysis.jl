@@ -55,7 +55,9 @@ begin
 	αFₜ = bflux_face["αFₜ"]
 	energetics = load("cabbeling_energetics.jld2")
 	pe = energetics["∫Ep_zref0"]
+	pe_anomaly = energetics["∫Ep_zref0_density_anomaly"]
 	bpe = energetics["∫Ebz✶_zref0"]
+	bpe_anomaly = energetics["∫Eb′z✶"]
 	ε = energetics["∫ε"]
 	ek = energetics["∫Ek"]
 	ρ₀ = energetics["ρ₀"]
@@ -63,10 +65,14 @@ begin
 	z = energetics["z"]
 
 	ape = pe .- bpe
+	ape_anomaly = pe_anomaly .- bpe_anomaly
 	dₜek = diff(ek) ./ diff(time)
 	dₜpe = diff(pe) ./ diff(time)
 	dₜbpe = Φd = diff(bpe) ./ diff(time)
 	dₜape = diff(ape) ./ diff(time)
+	dₜpe_anomaly = diff(pe_anomaly) ./ diff(time)
+	dₜbpe_anomaly = Φd = diff(bpe_anomaly) ./ diff(time)
+	dₜape_anomaly = diff(ape_anomaly) ./ diff(time)
 	time_interp = 0.5 * (time[1:end-1] .+ time[2:end])
 	∫gρw_interp = Φz = 0.5 * (∫gρw[1:end-1] .+ ∫gρw[2:end]) ./ ρ₀
 	∫Sw_interp = 0.5 * (∫Sw[1:end-1] .+ ∫Sw[2:end])
@@ -136,33 +142,51 @@ The only thing I do not understand is why initially ``BPE > PE``?
 There is a small amount of noise at the interface but sorting the density profile still looks different and, importantly, more stable.
 What is going on there?
 Otherwise this looks better referenced from ``z = 0``.
+
+The ``PE`` and ``BPE`` have been calculated using the in-situ density and a density anomaly ``ρ′ = ρ - ρ₀`` where ``ρ₀`` is the reference density used in the model run.
+**Note::** both calculations are divided by the reference density because the ``Ek`` and ``ε`` computations from Oceanostics.jl are scaled this way.
 """
+
+# ╔═╡ 6aae0fe0-38fa-41af-b4ce-ef2cea1583cd
+@bind anomaly Select(["In-situ density", "Density anomaly"])
+
+# ╔═╡ 354f86d4-0057-4160-ad29-8795a9f5f30b
+begin
+	pe_var = anomaly == "In-situ density" ? pe : pe_anomaly
+	bpe_var = anomaly == "In-situ density" ? bpe : bpe_anomaly
+	ape_var = anomaly == "In-situ density" ? ape : ape_anomaly
+	dₜpe_var = anomaly == "In-situ density" ? dₜpe : dₜpe_anomaly
+	dₜbpe_var = anomaly == "In-situ density" ? dₜbpe : dₜbpe_anomaly
+	dₜape_var = anomaly == "In-situ density" ? dₜape : dₜape_anomaly
+	nothing
+end
 
 # ╔═╡ e61e43f7-d9b8-4a8d-8a3d-68bdf41c517f
 @bind pe_window PlutoUI.Slider(2:length(time_interp), default=200)
 
 # ╔═╡ c26744ec-7f38-4ab3-b68f-c99ab313a53e
 let
-	fig, ax = lines(time[1:pe_window], pe[1:pe_window], label = "PE")
-	lines!(ax, time[1:pe_window], bpe[1:pe_window], label = "BPE")
+	fig, ax = lines(time[1:pe_window], pe_var[1:pe_window], label = "PE")
+	lines!(ax, time[1:pe_window], bpe_var[1:pe_window], label = "BPE")
 	ax.title = "Potential and background potential energies"
 	ax.ylabel = "Joules"
 	axislegend(ax, position = :rb)
 	ax2 = Axis(fig[2, 1], xlabel = "time", ylabel = "Joules", title = "Available potential energy")
-	lines!(time[1:pe_window], ape[1:pe_window], color = :red, label = "APE")
+	lines!(time[1:pe_window], ape_var[1:pe_window], color = :red, label = "APE")
 	axislegend(ax2, position = :rt)
 	fig
 end
 
 # ╔═╡ 8d4756a8-06a4-4436-9a27-e1702a65bc14
 let
-	fig, ax = lines(time_interp[1:pe_window], dₜpe[1:pe_window], label = "dₜPE")
-	lines!(ax, time_interp[1:pe_window], dₜbpe[1:pe_window], label = "dₜBPE")
+	fig, ax = lines(time_interp[1:pe_window], dₜpe_var[1:pe_window], label = "dₜPE")
+	lines!(ax, time_interp[1:pe_window], dₜbpe_var[1:pe_window], label = "dₜBPE")
 	ax.title = "Time derivatie of potential and background potential energies"
 	ax.ylabel = "Watts"
 	axislegend(ax, position = :rt)
 	ax2 = Axis(fig[2, 1], xlabel = "time", ylabel = "Watts", title = "Time derivative of available potential energy")
-	lines!(ax2, time_interp[1:pe_window], dₜape[1:pe_window], label = "dₜAPE", color = :red)
+	lines!(ax2, time_interp[1:pe_window], dₜape_var[1:pe_window], label = "dₜAPE", color = :red)
+	lines!(ax2, time_interp[1:pe_window], dₜek[1:pe_window], label = "dₜEk", color = :magenta)
 	axislegend(ax2, position = :rt)
 	fig
 end
@@ -223,6 +247,8 @@ TableOfContents(title = "Energetics analysis")
 # ╟─38a60f55-3756-4554-9e09-08680e6cb8f5
 # ╟─2ad9595c-62e1-41e1-8905-20e208150629
 # ╟─2ce30c05-8923-49df-ba80-945d85636507
+# ╟─6aae0fe0-38fa-41af-b4ce-ef2cea1583cd
+# ╟─354f86d4-0057-4160-ad29-8795a9f5f30b
 # ╟─e61e43f7-d9b8-4a8d-8a3d-68bdf41c517f
 # ╟─c26744ec-7f38-4ab3-b68f-c99ab313a53e
 # ╟─8d4756a8-06a4-4436-9a27-e1702a65bc14
