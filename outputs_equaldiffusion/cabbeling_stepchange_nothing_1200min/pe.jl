@@ -28,14 +28,14 @@ Ep = similar(t)
 g = 9.81
 for i ∈ eachindex(t)
     σᵢ = NCDataset(computed_output) do ds
-            ds[:σ][:, :, :, i]
+            ds[:σ][:, :, :, i] - ρ₀
     end
     Ep[i] = (g / ρ₀) * sum(σᵢ .* z_grid * ΔV)
 end
 
 jldopen(energetics_path, "a+") do file
-    file["∫Ep_zref0"] = Ep
-    file["ρ₀"] = ρ₀
-    file["∫ε"] = ∫ϵ
-    file["∫Ek"] = ∫Eₖ
+    file["∫Ep_zref0_density_anomaly"] = Ep
+    # file["ρ₀"] = ρ₀
+    # file["∫ε"] = ∫ϵ
+    # file["∫Ek"] = ∫Eₖ
 end

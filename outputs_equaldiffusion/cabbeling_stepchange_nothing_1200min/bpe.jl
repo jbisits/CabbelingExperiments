@@ -27,12 +27,12 @@ Eb = similar(t)
 g = 9.81
 for i ∈ eachindex(t)
     σᵢ = NCDataset(computed_output) do ds
-            ds[:σ][:, :, :, i]
+            ds[:σ][:, :, :, i] - ρ₀
     end
     σᵢ_array = reshape(σᵢ, :)
     sort!(σᵢ_array, rev = true)
     Eb[i] = (g / ρ₀) * sum(σᵢ_array .* z✶ * ΔV)
 end
 jldopen(cab_flux_path, "a+") do file
-    file["∫Ebz✶"] = Eb
+    file["∫Eb′z✶"] = Eb
 end

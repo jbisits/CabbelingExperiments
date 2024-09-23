@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -q normalbw
+#PBS -q normal
 #PBS -P e14
 #PBS -l ncpus=1
 #PBS -l mem=256GB
