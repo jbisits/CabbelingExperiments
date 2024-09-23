@@ -27,7 +27,7 @@ Eb = similar(t)
 g = 9.81
 for i ∈ eachindex(t)
     σᵢ = NCDataset(computed_output) do ds
-            ds[:σ][:, :, :, i] - ρ₀
+            ds[:σ][:, :, :, i] .- ρ₀
     end
     σᵢ_array = reshape(σᵢ, :)
     sort!(σᵢ_array, rev = true)
