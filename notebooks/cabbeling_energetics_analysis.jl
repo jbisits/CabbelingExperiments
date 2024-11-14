@@ -51,8 +51,8 @@ begin
 	∫gρw = bflux_face["∫gρw"]
 	∫Sw = bflux_face["∫Sw"]
 	∫Θw = bflux_face["∫Θw"]
-	βFₛ = bflux_face["βFₛ"]
-	αFₜ = bflux_face["αFₜ"]
+	βFₛ = bflux_face["βFₛ_alt"]
+	αFₜ = bflux_face["αFₜ_alt"]
 	energetics = load("cabbeling_energetics.jld2")
 	pe = energetics["∫Ep_zref0"]
 	pe_anomaly = energetics["∫Ep_zref0_density_anomaly"]
@@ -79,9 +79,6 @@ begin
 	∫Θw_interp = 0.5 * (∫Θw[1:end-1] .+ ∫Θw[2:end])
 	ε_interp = 0.5 * (ε[1:end-1] .+ ε[2:end])
 	Φi = dₜpe .- Φz
-	ΔV = load("cabbeling_fluxes_and_diff_longer_run.jld2", "ΔV")
-	βFₛ = 0.01 * βFₛ / (g * ΔV) # Scale appropriately --- need to check!
-	αFₜ = 0.01 * αFₜ / (g * ΔV)
 	md"""
 
 	The data is currently saved across a few files so here is a breakdown of what is in which.
@@ -152,10 +149,11 @@ The ``PE`` and ``BPE`` have been calculated using the in-situ density and a dens
 
 # ╔═╡ 354f86d4-0057-4160-ad29-8795a9f5f30b
 begin
+	ΔA = (0.1 / 124)^2
 	pe_var = anomaly == "In-situ density" ? pe : pe_anomaly
 	bpe_var = anomaly == "In-situ density" ? bpe : bpe_anomaly
 	ape_var = anomaly == "In-situ density" ? ape : ape_anomaly
-	dₜpe_var = anomaly == "In-situ density" ? dₜpe : dₜpe_anomaly
+	dₜpe_var = anomaly == "In-situ density" ? dₜpe : dₜpe_anomaly 
 	dₜbpe_var = anomaly == "In-situ density" ? dₜbpe : dₜbpe_anomaly
 	dₜape_var = anomaly == "In-situ density" ? dₜape : dₜape_anomaly
 	nothing
@@ -179,12 +177,15 @@ end
 
 # ╔═╡ 8d4756a8-06a4-4436-9a27-e1702a65bc14
 let
-	fig, ax = lines(time_interp[1:pe_window], dₜpe_var[1:pe_window], label = "dₜPE")
-	lines!(ax, time_interp[1:pe_window], dₜbpe_var[1:pe_window], label = "dₜBPE")
-	ax.title = "Time derivatie of potential and background potential energies"
-	ax.ylabel = "Watts"
-	axislegend(ax, position = :rt)
-	ax2 = Axis(fig[2, 1], xlabel = "time", ylabel = "Watts", title = "Time derivative of available potential energy")
+	# fig, ax = lines(time_interp[1:pe_window], dₜpe_var[1:pe_window], label = "dₜPE")
+	# lines!(ax, time_interp[1:pe_window], dₜbpe_var[1:pe_window], label = "dₜBPE")
+	# ax.title = "Time derivatie of potential and background potential energies"
+	# ax.ylabel = "Watts"
+	# axislegend(ax, position = :rt)
+	fig = Figure(size = (500, 500))
+	ax2 = Axis(fig[1, 1], xlabel = "time", ylabel = "Watts", title = "Time derivative of energetic quantities")
+	lines!(ax2, time_interp[1:pe_window], dₜpe_var[1:pe_window], label = "dₜPE")
+	lines!(ax2, time_interp[1:pe_window], dₜbpe_var[1:pe_window], label = "dₜBPE")
 	lines!(ax2, time_interp[1:pe_window], dₜape_var[1:pe_window], label = "dₜAPE", color = :red)
 	lines!(ax2, time_interp[1:pe_window], dₜek[1:pe_window], label = "dₜEk", color = :magenta)
 	axislegend(ax2, position = :rt)
@@ -201,6 +202,9 @@ let
 	ax.xlabel = "time (s)"
 	ax.ylabel = "Watts"
 	axislegend(ax, position = :rt)
+	# ax2 = Axis(fig[2, 1])
+	# dtAPE = Φz[1:pe_window] - Φd[1:pe_window] + Φi[1:pe_window]
+	# lines!(time_interp[1:pe_window], dtAPE[1:pe_window])
 	fig
 end
 
@@ -242,7 +246,7 @@ TableOfContents(title = "Energetics analysis")
 # ╔═╡ Cell order:
 # ╟─943cf012-755c-11ef-3493-99307e182e96
 # ╟─b2ed38aa-523a-4edf-897a-5cf8c5f0ce33
-# ╠═f0ebfa39-3959-4112-8575-e6238a73bfdc
+# ╟─f0ebfa39-3959-4112-8575-e6238a73bfdc
 # ╟─5bf45be1-f79d-48e2-a472-f6f1b8935bf3
 # ╟─38a60f55-3756-4554-9e09-08680e6cb8f5
 # ╟─2ad9595c-62e1-41e1-8905-20e208150629
@@ -252,7 +256,7 @@ TableOfContents(title = "Energetics analysis")
 # ╟─e61e43f7-d9b8-4a8d-8a3d-68bdf41c517f
 # ╟─c26744ec-7f38-4ab3-b68f-c99ab313a53e
 # ╟─8d4756a8-06a4-4436-9a27-e1702a65bc14
-# ╟─786f2208-39ff-4fd2-8363-b6aa41c42e7b
+# ╠═786f2208-39ff-4fd2-8363-b6aa41c42e7b
 # ╟─c3585182-3b5f-4a5d-8616-5c06f35c8811
 # ╟─b0efe882-59a1-4319-99f2-04fb59f062c4
 # ╟─c73bdae3-754c-405c-8599-7f0767fed5c9

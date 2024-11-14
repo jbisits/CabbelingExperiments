@@ -65,6 +65,7 @@ md"""
 
 # ╔═╡ 33a637d5-5357-4fdf-bdb7-268cd5999f5d
 begin
+	# iso = load("isothermal_fluxes_and_diff_longer_run.jld2")
 	iso = load("isothermal_fluxes_and_diff.jld2")
 	Δz_iso = diff(iso["z"])
 	replace!(iso["∂S∂z"], 0 => NaN)
@@ -169,7 +170,7 @@ Of course this could be written myself but I have seen this package before and h
 # ╔═╡ 93fb2ddb-9286-4969-845b-a27cf631a82c
 begin
 	being_ts = 1
-	times = Time(0, being_ts, 0):Minute(1):Time(11, 0, 0)
+	times = Time(0, being_ts, 0):Minute(1):Time(20, 0, 0)
 	# data = (times = times, ∫κₛ = iso["∫κₛ"][being_ts:end])
 	data = (times = times, ∫κₛ = test_κ_iso)
 	iso_ts = TimeArray(data, timestamp=:times)
@@ -187,7 +188,7 @@ end
 let
 	moving_μ = moving(mean, iso_ts, window_iso)
 	μ = vec(values(moving_μ))
-	μ_log10 = log10.(μ)
+	μ_log10 = log10.(abs.(μ))
 	moving_σ = moving(std, iso_ts, window_iso)
 	σ = vec(values(moving_σ))
 	σ_log10 = log10.(vec(values(moving_σ)))
