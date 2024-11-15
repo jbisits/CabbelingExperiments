@@ -10,7 +10,7 @@ eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 
 ## Setup the dns_model
 @info "Model setup"
-dns_model = DNSModel(architecture, DOMAIN_EXTENT, HIGH_RESOLUTION, diffusivities, eos)
+dns_model = DNSModel(architecture, domain_extent, resolution, diffusivities, eos)
 
 ## set initial conditions
 @info "Setting initial conditions in upper layer"
