@@ -63,7 +63,7 @@ S[mixing_interface] = fill(S_mix_profile, length(mixing_interface))
 Θ[mixing_interface] = fill(Θ_mix_profile, length(mixing_interface))
 σ₀_mix = gsw_sigma0.(S, Θ)
 
-fig = Figure(size = (1000, 1000))
+fig = Figure(size = (1000, 700))
 
 ax = Axis(fig[1, 1],
           title = "(a) Two layer profile",
@@ -246,18 +246,17 @@ for i ∈ eachindex(snapshots)
                     colorrange = density_colorrange
                     )
     sf_w = surface!(ax[i], x_xz_velocity, y_xz, z_yz; color = slices[i].velocity_yz_face1, colormap = :balance,
+                    colorrange = velocity_colorrange, backlight = 1f0, shading = FastShading)
+    sf_σ = surface!(ax[i], x_xz, y_xz_density_end, z_xz; color = fill(minimum(slices[i].density_xz_face1), size(slices[i].density_xz_faceend)),
+                    # color = slices[i].density_xz_faceend,
+                    colormap = :dense,
+                    colorrange = density_colorrange,
+                    )
+    sf_w = surface!(ax[i], x_xz_velocity_end, y_xz, z_yz;
+                    # color = slices[i].velocity_yz_faceend,
+                    colormap = :balance,
                     colorrange = velocity_colorrange,
                     ambient = (0.85, 0.85, 0.85), backlight = 1f0)
-    # sf_σ = surface!(ax[i], x_xz, y_xz_density_end, z_xz; color = fill(minimum(slices[i].density_xz_face1), size(slices[i].density_xz_faceend)),
-    #                 # color = slices[i].density_xz_faceend,
-    #                 colormap = :dense,
-    #                 colorrange = density_colorrange,
-    #                 )
-    # sf_w = surface!(ax[i], x_xz_velocity_end, y_xz, z_yz;
-    #                 # color = slices[i].velocity_yz_faceend,
-    #                 colormap = :balance,
-    #                 colorrange = velocity_colorrange,
-    #                 ambient = (0.85, 0.85, 0.85), backlight = 1f0)
     surface!(ax[i], x, y, z_xy_top; color = slices[i].velocity_zmean, colormap = :balance,
             colorrange = velocity_colorrange
             )
@@ -358,22 +357,15 @@ time_interp_mins = time_interp ./ 60
 time_ticks = (0:200:1200, string.(0:200:1200))
 # HA profile
 ρ_anomaly = 0
-snapshots = [1, 50, 100, 473] .+ 1
+snapshots = [1, 50, 100, 473, 1200] .+ 1
 ax1 = Axis(fig[1, 1], xlabel = "σ₀ (kgm⁻³) ", ylabel = "z (m)",
           title = "(a) Horizontally averaged density profile", subtitle = "Cabbeling")
-vlines!(ax1, ρ_max - ρ_anomaly, color = :grey, label = "Predicted maximum density")
 lines!(ax1, ha_σ[:, 1] .- ρ_anomaly, zC, label = "Initial profile", color = :black)
-# Optimally mixed
-N = length(zC)
-σ_optimally_mixed = vcat(fill(ρ_max - ρ_anomaly, N))
-not_mixed = Int(N/2 - 0.43 * N/2) # 0.43 from amount required calculated below
-σ_optimally_mixed[N-not_mixed:N] .= ha_σ[end, 1] - ρ_anomaly
-lines!(ax1, σ_optimally_mixed, zC, label = "Optimally mixed initial profile", color = :red,
-        linestyle = :dash)
+vlines!(ax1, ρ_max - ρ_anomaly, color = :red, linestyle = :dash, label = "Predicted maximum σ₀")
 for (i, t) ∈ enumerate(snapshots)
     lines!(ax1, ha_σ[:, t] .- ρ_anomaly, zC, label = "$(timestamps[t] / 60) mins", alpha = 0.75)
 end
-axislegend(ax1, position = :lb)
+axislegend(ax1, nbanks = 2, position = :lb, labelsize = 12)
 
 # Diffusivity
 ax2 = Axis(fig[1, 2], title = "(b) Horizontally averaged effective diffusivity", subtitle = "Cabbeling",

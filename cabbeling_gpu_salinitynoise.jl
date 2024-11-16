@@ -15,7 +15,7 @@ dns_model = DNSModel(architecture, domain_extent, resolution, diffusivities, eos
 ## set initial conditions
 @info "Setting initial conditions in upper layer"
 T₀ᵘ = -1.5
-S₀ᵘ = 34.58
+S₀ᵘ = 34.57
 const interface_location = -0.5
 cabbeling = CabbelingUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
 initial_conditions = TwoLayerInitialConditions(cabbeling)
@@ -35,8 +35,8 @@ set_two_layer_initial_conditions!(tldns)
 
 ## build the simulation
 Δt = 1e-3
-max_Δt = 5e-1
-stop_time = 10 * 60 * 60 # seconds
+max_Δt = 5e-2
+stop_time = 1 * 60 * 60 # seconds
 save_schedule = 60  # seconds
 checkpointer_time_interval = 60 * 60 # seconds
 output_path = joinpath(@__DIR__, "outputs_equaldiffusion/")
