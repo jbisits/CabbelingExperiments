@@ -4,8 +4,8 @@ restart = true
 
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
-domain_extent = (Lx = 0.075, Ly = 0.075, Lz = -1.0)
-resolution = (Nx = 130, Ny = 130, Nz = 1650)
+domain_extent = (Lx = 0.07, Ly = 0.07, Lz = -1.0)
+resolution = (Nx = 115, Ny = 115, Nz = 1650)
 eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 
 ## Setup the dns_model
@@ -35,8 +35,8 @@ set_two_layer_initial_conditions!(tldns)
 
 ## build the simulation
 Δt = 1e-3
-max_Δt = 5e-2
-stop_time = 0.5 * 60 * 60 # seconds
+max_Δt = 8e-2
+stop_time = 1 * 60 * 60 # seconds
 save_schedule = 60  # seconds
 checkpointer_time_interval = 60 * 60 # seconds
 output_path = joinpath(@__DIR__, "outputs_equaldiffusion/")
