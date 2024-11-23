@@ -7,9 +7,9 @@ close(file)
 t = eachindex(ε)
 
 fig, ax = lines(t, log10.(ε))
-ax.xlabel = "time (s)"
+ax.xlabel = "time (min)"
 ax.title = "Maximum in space ε"
-ax2 = Axis(fig[1, 2], xlabel = "time (s)", ylabel = "η",
+ax2 = Axis(fig[1, 2], xlabel = "time (min)", ylabel = "η",
            title = "Kolmogorov length")
 ν = 1e-6
 η = (ν^3 ./ ε).^(1/4)
