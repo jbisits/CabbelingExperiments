@@ -23,7 +23,6 @@ function save_computed_output_with_epsilon!(simulation, tldns, save_schedule, sa
         "ϵ_maximum" => Dict("longname" => "Maximum (in space) TKE dissipation"),
         "∫ϵ" => Dict("longname" => "Volume integrated turbulent kintetic energy dissipation"),
         "∫Eₖ" => Dict("longname" => "Volume integrated turbulent kinetic energy"),
-        "∫Eₚ" => Dict("longname" => "Volume integrated potential energy (g∫ᵥρzdV)"),
         "ϵ" => Dict("longname" => "TKE dissipation field")
     )
     simulation.output_writers[:computed_output] =
@@ -39,9 +38,6 @@ function save_computed_output_with_epsilon!(simulation, tldns, save_schedule, sa
                         dir = output_dir,
                         schedule = TimeInterval(save_schedule),
                         overwrite_existing = overwrite_saved_output)
-
-    TLDNS.non_dimensional_numbers!(simulation, tldns)
-    TLDNS.predicted_maximum_density!(simulation, tldns)
 
     return nothing
 
