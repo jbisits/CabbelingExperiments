@@ -15,7 +15,7 @@ function save_computed_output_with_epsilon!(simulation, tldns, save_schedule, sa
     ∫Eₖ = Integral(Eₖ)
 
     computed_outputs = Dict("σ" => σ, "∫ϵ" => ∫ϵ, "ϵ_maximum" => ϵ_maximum, "∫Eₖ" => ∫Eₖ,
-                            "∫Eₚ" => ∫Eₚ, "ϵ" => ϵ)
+                            "ϵ" => ϵ)
 
     oa = Dict(
         "σ" => Dict("longname" => "Seawater potential density calculated using TEOS-10 at $(reference_gp_height)dbar",
