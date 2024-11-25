@@ -22,10 +22,13 @@ for t ∈ eachindex(time)
     ∫gρw[t] = g * sum(σ_interp .* w) * ΔV
 
 end
-defVar(ds_co, "∫gρw", ∫gρw, ("time",),
-        attrib = Dict("longname" => "Volume integrated density flux in post processing"))
 close(ds_co)
 close(ds_vel)
+
+NCDataset(co, "a") do ds_co
+    defVar(ds_co, "∫gρw", ∫gρw, ("time",),
+            attrib = Dict("longname" => "Volume integrated density flux in post processing"))
+end
 
 jldopen(bflux, "w") do file
     file["time"] = time
