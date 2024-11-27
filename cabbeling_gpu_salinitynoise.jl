@@ -81,15 +81,15 @@ set_two_layer_initial_conditions!(tldns)
 
 ## build the simulation
 Δt = 1e-3
-max_Δt = 8e-2
-stop_time = 3 * 60 * 60 # seconds
+max_Δt = 2e-2
+stop_time = 2 * 60 * 60 # seconds
 save_schedule = 60  # seconds
 checkpointer_time_interval = 60 * 60 # seconds
 output_path = joinpath(@__DIR__, "outputs_equaldiffusion/")
 @info "Setting up simulation"
 
 simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule, save_computed_output_with_epsilon!,
-                                    TLDNS.save_vertical_velocities!;
+                                    TLDNS.save_all_velocities!;
                                     checkpointer_time_interval, output_path, max_Δt,
                                     overwrite_saved_output = restart)
 pickup = restart ? false : true
