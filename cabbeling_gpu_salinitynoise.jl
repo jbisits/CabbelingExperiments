@@ -42,7 +42,7 @@ checkpointer_time_interval = 60 * 60 # seconds
 output_path = joinpath(@__DIR__, "outputs_equaldiffusion/")
 @info "Setting up simulation"
 
-simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule, save_computed_output!,
+simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule, TLDNS.save_computed_output!,
                                     TLDNS.save_vertical_velocities!;
                                     checkpointer_time_interval, output_path, max_Δt,
                                     overwrite_saved_output = restart,
