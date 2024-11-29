@@ -1,50 +1,4 @@
 using TwoLayerDirectNumericalShenanigans
-using Oceanostics: KineticEnergyDissipationRate, KineticEnergy
-using Oceananigans: seawater_density
-
-"Temporary to save the full epsilon field"
-function save_computed_output_with_epsilon!(simulation, tldns, save_schedule, save_file, output_dir,
-                                            overwrite_saved_output, reference_gp_height)
-
-    model = tldns.model
-    σ = seawater_density(model, geopotential_height = reference_gp_height)
-    ϵ = KineticEnergyDissipationRate(model)
-    ∫ϵ = Integral(ϵ)
-    ϵ_maximum = Reduction(maximum!, ϵ, dims = (1, 2, 3))
-    Eₖ = KineticEnergy(model)
-    ∫Eₖ = Integral(Eₖ)
-
-    computed_outputs = Dict("σ" => σ, "∫ϵ" => ∫ϵ, "ϵ_maximum" => ϵ_maximum, "∫Eₖ" => ∫Eₖ,
-                            "ϵ" => ϵ)
-
-    oa = Dict(
-        "σ" => Dict("longname" => "Seawater potential density calculated using TEOS-10 at $(reference_gp_height)dbar",
-        "units" => "kgm⁻³"),
-        "ϵ_maximum" => Dict("longname" => "Maximum (in space) TKE dissipation"),
-        "∫ϵ" => Dict("longname" => "Volume integrated turbulent kintetic energy dissipation"),
-        "∫Eₖ" => Dict("longname" => "Volume integrated turbulent kinetic energy"),
-        "ϵ" => Dict("longname" => "TKE dissipation field")
-    )
-    simulation.output_writers[:computed_output] =
-    save_file == :netcdf ? NetCDFOutputWriter(model, computed_outputs;
-                        filename = "computed_output",
-                        dir = output_dir,
-                        overwrite_existing = overwrite_saved_output,
-                        schedule = TimeInterval(save_schedule),
-                        output_attributes = oa
-                        ) :
-        JLD2OutputWriter(model, computed_outputs;
-                        filename = "computed_output",
-                        dir = output_dir,
-                        schedule = TimeInterval(save_schedule),
-                        overwrite_existing = overwrite_saved_output)
-
-    return nothing
-
-end
-save_computed_output_with_epsilon!(simulation, tldns, save_info::Tuple; reference_gp_height = 0) =
-    save_computed_output_with_epsilon!(simulation, tldns, save_info..., reference_gp_height)
-
 
 restart = true
 
@@ -81,17 +35,19 @@ set_two_layer_initial_conditions!(tldns)
 
 ## build the simulation
 Δt = 1e-3
-max_Δt = 2e-2
-stop_time = 2 * 60 * 60 # seconds
+max_Δt = 7e-2
+stop_time = 1 * 60 * 60 # seconds
 save_schedule = 60  # seconds
 checkpointer_time_interval = 60 * 60 # seconds
 output_path = joinpath(@__DIR__, "outputs_equaldiffusion/")
 @info "Setting up simulation"
 
-simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule, save_computed_output_with_epsilon!,
-                                    TLDNS.save_all_velocities!;
+simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule, save_computed_output!,
+                                    TLDNS.save_vertical_velocities!;
                                     checkpointer_time_interval, output_path, max_Δt,
-                                    overwrite_saved_output = restart)
+                                    overwrite_saved_output = restart,
+                                    cfl = 0.2,
+                                    diffusive_cfl = 0.5)
 pickup = restart ? false : true
 ## Run the simulation
 run!(simulation; pickup)
