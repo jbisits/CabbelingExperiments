@@ -1,6 +1,6 @@
 using TwoLayerDirectNumericalShenanigans
 
-restart = true
+restart = false
 
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
@@ -36,7 +36,7 @@ set_two_layer_initial_conditions!(tldns)
 ## build the simulation
 Δt = 1e-3
 max_Δt = 7e-2
-stop_time = 1 * 60 * 60 # seconds
+stop_time = 2 * 60 * 60 # seconds
 save_schedule = 60  # seconds
 checkpointer_time_interval = 60 * 60 # seconds
 output_path = joinpath(@__DIR__, "outputs_equaldiffusion/")
@@ -48,6 +48,6 @@ simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule, TLDNS.
                                     overwrite_saved_output = restart,
                                     cfl = 0.2,
                                     diffusive_cfl = 0.5)
-pickup = restart ? false : true
+pickup = restart ? false : joinpath(simulation.output_writers[:tracers].filepath, "model_checkpoints/checkpoint_iteration72188.jld2")
 ## Run the simulation
 run!(simulation; pickup)
