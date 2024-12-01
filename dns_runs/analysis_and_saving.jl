@@ -42,7 +42,14 @@ function effective_diffusivity!(computed_output::AbstractString, tracers::Abstra
 
     # Save to computed output
     NCDataset(computed_output, "a") do ds
-        defVar()
+        defVar(ds, "Fₛ", κₛ, ("zC", diff_t),
+                attrib = ("longname" => "Horizontally averaged vertical salt flux"))
+        defVar(ds, "∂S∂z", κₛ, (diff_z, diff_t),
+                attrib = ("longname" => "Horizontally averaged vertical salt gradient"))
+        defVar(ds, "κₛ", κₛ, (diff_z, diff_t),
+                attrib = ("longname" => "Horizontally averaged effective diffusivity"))
+        defVar(ds, "∫κₛ", ∫κₛ, (diff_t,),
+                attrib = ("longname" => "Horizontally averaged depth integrated effective diffusivity"))
     end
 
     return nothing
