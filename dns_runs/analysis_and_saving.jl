@@ -123,6 +123,21 @@ Extract and save data needed for plots. The `saved_data` needs to be a `.jld2` f
 """
 function extract_and_save!(saved_data::AbstractString, computed_output::AbstractString, velocities::AbstractString)
 
+    jldopen(saved_data, "w") do file
+
+        NCDataset(computed_output) do ds
+
+            file["∫Eb"] = ds["∫Eb"][:]
+            file["∫Ep"] = ds["∫Ep"][:]
+            file["∫Ek"] = ds["∫Eₖ"][:]
+             file["∫ε"] = ds["∫ϵ"][:]
+            file["∫κₛ"] = ds["∫κₛ"][:]
+             file["κₛ"] = ds["κₛ"][:, :]
+
+        end
+
+    end
+
     return nothing
 end
 
