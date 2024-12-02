@@ -1,9 +1,5 @@
 using NCDatasets, StatsBase, JLD2, GibbsSeaWater
 
-tracers = "tracers.nc"
-computed_output = "computed_output.nc"
-velocities = "velocities.nc"
-
 """
     function effective_diffusivity!(computed_output::AbstractString, tracers::AbstractString)
 Compute the effective diffusivity for the salinity tracer `S` in `tracers`. The computed
@@ -14,6 +10,7 @@ function effective_diffusivity!(computed_output::AbstractString, tracers::Abstra
     ds = NCDataset(tracers)
 
     time = ds[:time][:]
+    Δt = 0.5 * (time[1:end-1] .+ time[2:end])
     Δt = diff(time)
     z = ds[:zC][:]
     Δz = diff(z)
@@ -47,16 +44,17 @@ function effective_diffusivity!(computed_output::AbstractString, tracers::Abstra
     # Save to computed output
     NCDataset(computed_output, "a") do ds
 
-        defDim(ds, "diff_z", length(Δz))
-        defDim(ds, "diff_t", length(Δt))
+        defDim(ds, "Δz", length(Δz))
+        defDim(ds, "Δt", length(Δt))
 
-        defVar(ds, "Fₛ", κₛ, ("zC", diff_t),
+        defVar(ds, "Δt", Δt, ("Δt",))
+        defVar(ds, "Fₛ", κₛ, ("zC", Δt),
                 attrib = ("longname" => "Horizontally averaged vertical salt flux"))
-        defVar(ds, "∂S∂z", ∂S∂z_save, (diff_z, diff_t),
+        defVar(ds, "∂S∂z", ∂S∂z_save, (Δz, Δt),
                 attrib = ("longname" => "Horizontally averaged vertical salt gradient"))
-        defVar(ds, "κₛ", κₛ_save, (diff_z, diff_t),
+        defVar(ds, "κₛ", κₛ_save, (Δz, Δt),
                 attrib = ("longname" => "Horizontally averaged effective diffusivity"))
-        defVar(ds, "∫κₛ", ∫κₛ, (diff_t,),
+        defVar(ds, "∫κₛ", ∫κₛ, (Δt,),
                 attrib = ("longname" => "Horizontally averaged depth integrated effective diffusivity"))
     end
 
@@ -118,22 +116,91 @@ function potential_and_background_potential_energy!(computed_output::AbstractStr
     return nothing
 end
 """
-    function extract_and_save!(saved_data::AbstractString, computed_output::AbstractString)
+    function buoyancy_flux!(computed_output::AbstractString, velocities::AbstractString)
+Compute the buoyancy flux from model density and vertical velocity fields.
+"""
+function buoyancy_flux!(computed_output::AbstractString, velocities::AbstractString)
+
+    ds_co = NCDataset(computed_output)
+    time = ds_co[:time][:]
+    ΔV = diff(ds_co[:xC][1:2])[1] * diff(ds_co[:yC][1:2])[1] * diff(ds_co[:zC][1:2])[1]
+    ds_vel = NCDataset(velocities)
+
+    g = 9.81
+    ∫gρw = similar(time)
+    for t ∈ eachindex(time)
+
+        σ = ds_co[:σ][:, :, :, t]
+        σ1 = @view σ[:, :, 1:end-1]
+        σ2 = @view σ[:, :, 2:end]
+        σ_interp = cat(σ[:, :, 1], 0.5 * (σ1 .+ σ2), σ[:, :, end], dims = 3)
+        w = ds_vel[:w][:, :, :, t]
+
+        ∫gρw[t] = g * sum(σ_interp .* w) * ΔV
+
+    end
+    defVar(ds_co, "∫gρw", ∫gρw, ("time",),
+            attrib = Dict("longname" => "Volume integrated density flux in post processing"))
+    close(ds_co)
+    close(ds_vel)
+
+    return nothing
+end
+"""
+    function extract_and_save!(saved_data::AbstractString, computed_output::AbstractString,
+                                velocities::AbstractString, snapshots::AbstractArray)
 Extract and save data needed for plots. The `saved_data` needs to be a `.jld2` file.
 """
-function extract_and_save!(saved_data::AbstractString, computed_output::AbstractString, velocities::AbstractString)
+function extract_and_save!(saved_data::AbstractString, computed_output::AbstractString,
+                            velocities::AbstractString, snapshots::AbstractArray,
+                            interface_depths::AbstractArray)
 
     jldopen(saved_data, "w") do file
 
         NCDataset(computed_output) do ds
 
-            file["∫Eb"] = ds["∫Eb"][:]
-            file["∫Ep"] = ds["∫Ep"][:]
-            file["∫Ek"] = ds["∫Eₖ"][:]
-             file["∫ε"] = ds["∫ϵ"][:]
-            file["∫κₛ"] = ds["∫κₛ"][:]
-             file["κₛ"] = ds["κₛ"][:, :]
+             file["dims/timestamps"] = ds["time"][:]
+              file["dims/snapshots"] = ds["time"][snapshots]
+                     file["dims/Δt"] = ds["Δt"][:]
+                      file["dims/x"] = ds["xC"][:]
+                      file["dims/y"] = ds["yC"][:]
+                      file["dims/z"] = ds["zC"][:]
 
+             file["energetics/∫Eb"] = ds["∫Eb"][:]
+             file["energetics/∫Ep"] = ds["∫Ep"][:]
+             file["energetics/∫Ek"] = ds["∫Eₖ"][:]
+              file["energetics/∫ε"] = ds["∫ϵ"][:]
+            file["energetics/∫gρw"] = ds["∫gρw"][:]
+
+            file["diffusivity/∫κₛ"] = ds["∫κₛ"][:]
+             file["diffusivity/κₛ"] = ds["κₛ"][:, :]
+
+            find_num = findfirst('k', ds.attrib["Reference density"]) - 1
+            ρ₀ = parse(Float64, ds.attrib["Reference density"][1:find_num])
+
+            file["attrib/ρ₀"] = ρ₀
+             file["attrib/g"] = 9.81
+
+            t = ds["time"][:]
+             for (i, t_) ∈ enumerate(t)
+                file["σ/σ_$(t_)"] = mean(ds["σ"][:, :, :, i], dims = (1, 2))
+            end
+
+            for i ∈ snapshots
+                file["σ/σ_xzslice/σ_$(t[i])"] = ds[:σ][:, 115, :, i]
+                file["σ/σ_xyslice/σ_$(t[i])"] = ds[:σ][:, :, interface_depths[i], i]
+            end
+        end
+
+    end
+
+    NCDataset(velocities) do ds
+
+        file["dims/zF"] = ds["zF"][:]
+
+        for i ∈ snapshots
+            file["w/w_yzslice/w_$(t[i])"] = ds[:w][115, :, :, i] # 115 = end of y domain
+            file["w/w_zmean/w_$(t[i])"] = mean(ds[:w][:, :, :, i], dims = 3)
         end
 
     end
@@ -141,8 +208,15 @@ function extract_and_save!(saved_data::AbstractString, computed_output::Abstract
     return nothing
 end
 
+tracers = "tracers.nc"
+computed_output = "computed_output.nc"
+velocities = "velocities.nc"
 
 effective_diffusivity!(computed_output, tracers)
 potential_and_background_potential_energy!(computed_output)
+buoyancy_flux!(computed_output, velocities)
 
 saved_data = "analysis_and_field_snapshots.jld2"
+snapshots = 1:25
+interface_depths = [825 925]
+extract_and_save!(saved_data, computed_output, velocities, snapshots, interface_depths)

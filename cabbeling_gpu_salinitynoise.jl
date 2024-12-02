@@ -1,11 +1,11 @@
 using TwoLayerDirectNumericalShenanigans
 
-restart = false
+restart = true
 
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
 domain_extent = (Lx = 0.07, Ly = 0.07, Lz = -1.0)
-resolution = (Nx = 130, Ny = 130, Nz = 1650)
+resolution = (Nx = 115, Ny = 115, Nz = 1650)
 eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 
 ## Setup the dns_model
