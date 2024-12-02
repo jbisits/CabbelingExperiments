@@ -8,7 +8,7 @@
 #PBS -l wd
 #PBS -M z5131023@unsw.edu.au
 
-cd /g/data/e14/jb2381/CabbelingExperiments/dns_runs
+cd /g/data/e14/jb2381/CabbelingExperiments/outputs_equaldiffusion/cabbeling_stepchange_nothing_180min
 
 # Julia
 export JULIA_DEPOT_PATH="/g/data/e14/jb2381/.julia"
