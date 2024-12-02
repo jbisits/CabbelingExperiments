@@ -94,24 +94,26 @@ function potential_and_background_potential_energy!(computed_output::AbstractStr
             Eb[i] = (g / ρ₀) * sum(σᵢ_array .* z✶ * ΔV)
         end
 
-        # save
-        defVar(ds, "∫Eb", Eb, (t,),
-                attrib = ("longname" => "Volume integrated background potential energy"))
-
         # potential energy
         z = ds[:zC]
+        Nx = ds.dim[:xC]
+        Ny = ds.dim[:yC]
+        Nz = ds.dim[:zC]
         z_ref0 = reverse(abs.(z))
-        z_grid = reshape(repeat(z_ref0, inner = 124 * 124), (124, 124, 1400))
+        z_grid = reshape(repeat(z_ref0, inner = Nx * Ny), (Nx, Ny, Nz))
         Ep = similar(t)
         for i ∈ eachindex(t)
             σᵢ = σ[:, :, :, i] .- ρ₀
             Ep[i] = (g / ρ₀) * sum(σᵢ .* z_grid * ΔV)
         end
 
-    end
 
+    # save
+    defVar(ds, "∫Eb", Eb, (t,),
+            attrib = ("longname" => "Volume integrated background potential energy"))
     defVar(ds, "∫Ep", Ep, (t,),
             attrib = ("longname" => "Volume integrated background potential energy"))
+    end
 
     return nothing
 end
@@ -121,8 +123,10 @@ Compute the buoyancy flux from model density and vertical velocity fields.
 """
 function buoyancy_flux!(computed_output::AbstractString, velocities::AbstractString)
 
-    ds_co = NCDataset(computed_output)
+    ds_co = NCDataset(computed_output, "a")
     time = ds_co[:time][:]
+    find_num = findfirst('k', ds_co.attrib["Reference density"]) - 1
+    ρ₀ = parse(Float64, ds_co.attrib["Reference density"][1:find_num])
     ΔV = diff(ds_co[:xC][1:2])[1] * diff(ds_co[:yC][1:2])[1] * diff(ds_co[:zC][1:2])[1]
     ds_vel = NCDataset(velocities)
 
@@ -136,7 +140,7 @@ function buoyancy_flux!(computed_output::AbstractString, velocities::AbstractStr
         σ_interp = cat(σ[:, :, 1], 0.5 * (σ1 .+ σ2), σ[:, :, end], dims = 3)
         w = ds_vel[:w][:, :, :, t]
 
-        ∫gρw[t] = g * sum(σ_interp .* w) * ΔV
+        ∫gρw[t] = (g / ρ₀) * sum(σ_interp .* w) * ΔV
 
     end
     defVar(ds_co, "∫gρw", ∫gρw, ("time",),
@@ -187,7 +191,7 @@ function extract_and_save!(saved_data::AbstractString, computed_output::Abstract
             end
 
             for i ∈ snapshots
-                file["σ/σ_xzslice/σ_$(t[i])"] = ds[:σ][:, 115, :, i]
+                file["σ/σ_xzslice/σ_$(t[i])"] = ds[:σ][:, 1, :, i]
                 file["σ/σ_xyslice/σ_$(t[i])"] = ds[:σ][:, :, interface_depths[i], i]
             end
         end
@@ -199,7 +203,7 @@ function extract_and_save!(saved_data::AbstractString, computed_output::Abstract
         file["dims/zF"] = ds["zF"][:]
 
         for i ∈ snapshots
-            file["w/w_yzslice/w_$(t[i])"] = ds[:w][115, :, :, i] # 115 = end of y domain
+            file["w/w_yzslice/w_$(t[i])"] = ds[:w][1, :, :, i] # 115 = end of y domain
             file["w/w_zmean/w_$(t[i])"] = mean(ds[:w][:, :, :, i], dims = 3)
         end
 
@@ -218,5 +222,7 @@ buoyancy_flux!(computed_output, velocities)
 
 saved_data = "analysis_and_field_snapshots.jld2"
 snapshots = 1:25
-interface_depths = [825 925]
+interface_depths = [821, 821, 821, 821, 821, 821, 821, 851, 841, 861,
+                    861, 861, 871, 881, 891, 891, 901, 901, 901, 911,
+                    920, 920, 925, 925, 925]
 extract_and_save!(saved_data, computed_output, velocities, snapshots, interface_depths)
