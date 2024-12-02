@@ -43,19 +43,20 @@ function effective_diffusivity!(computed_output::AbstractString, tracers::Abstra
     # Save to computed output
     NCDataset(computed_output, "a") do ds
 
-        defDim(ds, "Δz", length(Δz))
-        defDim(ds, "Δt", length(Δt))
+        haskey(ds.dim, "Δz") ? nothing : defDim(ds, "Δz", length(Δz))
+        haskey(ds.dim, "Δt") ? nothing : defDim(ds, "Δt", length(Δt))
 
-        Δt = 0.5 * (ds[:time][1:end-1] .+ ds[:time][2:end])
-        defVar(ds, "Δt", Δt, ("Δt",))
-        defVar(ds, "Fₛ", κₛ, ("zC", Δt),
-                attrib = ("longname" => "Horizontally averaged vertical salt flux"))
-        defVar(ds, "∂S∂z", ∂S∂z_save, (Δz, Δt),
-                attrib = ("longname" => "Horizontally averaged vertical salt gradient"))
-        defVar(ds, "κₛ", κₛ_save, (Δz, Δt),
-                attrib = ("longname" => "Horizontally averaged effective diffusivity"))
-        defVar(ds, "∫κₛ", ∫κₛ, (Δt,),
-                attrib = ("longname" => "Horizontally averaged depth integrated effective diffusivity"))
+        Δt_vals = 0.5 * (ds[:time][1:end-1] .+ ds[:time][2:end])
+
+          haskey(ds, "Δt") ? nothing : defVar(ds, "Δt", Δt_vals, ("Δt",))
+          haskey(ds, "Fₛ") ? nothing : defVar(ds, "Fₛ", Fₛ, ("zC", "Δt"),
+                                            attrib = ("longname" => "Horizontally averaged vertical salt flux"))
+        haskey(ds, "∂S∂z") ? nothing : defVar(ds, "∂S∂z", ∂S∂z_save, (Δz, Δt),
+                                            attrib = ("longname" => "Horizontally averaged vertical salt gradient"))
+          haskey(ds, "κₛ") ? nothing : defVar(ds, "κₛ", κₛ_save, (Δz, Δt),
+                                            attrib = ("longname" => "Horizontally averaged effective diffusivity"))
+         haskey(ds, "∫κₛ") ? nothing : defVar(ds, "∫κₛ", ∫κₛ, (Δt,),
+                                            attrib = ("longname" => "Horizontally averaged depth integrated effective diffusivity"))
     end
 
     return nothing
@@ -109,10 +110,10 @@ function potential_and_background_potential_energy!(computed_output::AbstractStr
 
 
     # save
-    defVar(ds, "∫Eb", Eb, (t,),
-            attrib = ("longname" => "Volume integrated background potential energy"))
-    defVar(ds, "∫Ep", Ep, (t,),
-            attrib = ("longname" => "Volume integrated background potential energy"))
+    haskey(ds, "∫Eb") ? nothing : defVar(ds, "∫Eb", Eb, (t,),
+                                        attrib = ("longname" => "Volume integrated background potential energy"))
+    haskey(ds, "∫Ep") ? nothing : defVar(ds, "∫Ep", Ep, (t,),
+                                        attrib = ("longname" => "Volume integrated background potential energy"))
     end
 
     return nothing
@@ -143,8 +144,8 @@ function buoyancy_flux!(computed_output::AbstractString, velocities::AbstractStr
         ∫gρw[t] = (g / ρ₀) * sum(σ_interp .* w) * ΔV
 
     end
-    defVar(ds_co, "∫gρw", ∫gρw, ("time",),
-            attrib = Dict("longname" => "Volume integrated density flux in post processing"))
+    haskey(ds_co, "∫gρw") ? nothing : defVar(ds_co, "∫gρw", ∫gρw, ("time",),
+                                            attrib = Dict("longname" => "Volume integrated density flux in post processing"))
     close(ds_co)
     close(ds_vel)
 
