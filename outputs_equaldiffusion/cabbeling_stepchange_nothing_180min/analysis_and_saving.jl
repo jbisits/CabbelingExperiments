@@ -1,4 +1,4 @@
-using NCDatasets, StatsBase, JLD2, GibbsSeaWater
+using NCDatasets, StatsBase, JLD2
 
 """
     function effective_diffusivity!(computed_output::AbstractString, tracers::AbstractString)
@@ -10,7 +10,6 @@ function effective_diffusivity!(computed_output::AbstractString, tracers::Abstra
     ds = NCDataset(tracers)
 
     time = ds[:time][:]
-    Δt = 0.5 * (time[1:end-1] .+ time[2:end])
     Δt = diff(time)
     z = ds[:zC][:]
     Δz = diff(z)
@@ -24,7 +23,7 @@ function effective_diffusivity!(computed_output::AbstractString, tracers::Abstra
 
         S = [reshape(mean(ds[:S][:, :, :, t], dims = (1, 2)), :) reshape(mean(ds[:S][:, :, :, t+1], dims = (1, 2)), :)]
         sort!(S, dims = 1)
-        ∫Sdz = cumsum(S * Δz, dims = 1)
+        ∫Sdz = cumsum(S * Δz[1], dims = 1)
         dₜ∫Sdz = diff(∫Sdz, dims = 2) ./ Δt[t]
         Fₛ[:, i] = dₜ∫Sdz
         ∂S∂z = diff(S, dims = 1) ./ Δz
@@ -34,7 +33,7 @@ function effective_diffusivity!(computed_output::AbstractString, tracers::Abstra
         replace!(κₛ, 0 => NaN)
         replace!(κₛ, -Inf => NaN)
         find_nan = findall(.!isnan.(κₛ))
-        κₛ_save[:, t] = κₛ
+        κₛ_save[:, t] .= κₛ
         ∫κₛ[i] = sum(κₛ[find_nan] .* Δz[find_nan]) / sum(Δz[find_nan])
 
     end
@@ -47,6 +46,7 @@ function effective_diffusivity!(computed_output::AbstractString, tracers::Abstra
         defDim(ds, "Δz", length(Δz))
         defDim(ds, "Δt", length(Δt))
 
+        Δt = 0.5 * (ds[:time][1:end-1] .+ ds[:time][2:end])
         defVar(ds, "Δt", Δt, ("Δt",))
         defVar(ds, "Fₛ", κₛ, ("zC", Δt),
                 attrib = ("longname" => "Horizontally averaged vertical salt flux"))
