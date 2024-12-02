@@ -48,7 +48,7 @@ simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule, TLDNS.
                                     overwrite_saved_output = restart,
                                     cfl = 0.2,
                                     diffusive_cfl = 0.5)
-pickup = restart ? false : "/g/data/e14/jb2381/CabbelingExperiments/checkpoint_check/cabbeling_stepchange_nothing_60min/model_checkpoints.checkpoint_iteration36250.jld2"
+pickup = restart ? false : "/g/data/e14/jb2381/CabbelingExperiments/checkpoint_check/cabbeling_stepchange_nothing_60min/model_checkpoints/checkpoint_iteration36250.jld2"
 simulation.stop_time = 2 * 60 * 60
 ## Run the simulation
 run!(simulation; pickup)
