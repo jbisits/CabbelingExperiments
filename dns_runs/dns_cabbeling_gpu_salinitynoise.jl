@@ -1,6 +1,6 @@
 using TwoLayerDirectNumericalShenanigans
 
-restart = true
+restart = false
 
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
@@ -48,6 +48,7 @@ simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule, TLDNS.
                                     overwrite_saved_output = restart,
                                     cfl = 0.2,
                                     diffusive_cfl = 0.5)
-pickup = restart ? false : true
+pickup = restart ? false : "/g/data/e14/jb2381/CabbelingExperiments/dns_runs/cabbeling_stepchange_nothing_780min/model_checkpoints/checkpoint_iteration671358.jld2"
+simulation.stop_time = 18 * 60 * 60
 ## Run the simulation
 run!(simulation; pickup)

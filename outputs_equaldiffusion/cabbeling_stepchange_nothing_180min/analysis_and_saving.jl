@@ -155,6 +155,8 @@ end
     function extract_and_save!(saved_data::AbstractString, computed_output::AbstractString,
                                 velocities::AbstractString, snapshots::AbstractArray)
 Extract and save data needed for plots. The `saved_data` needs to be a `.jld2` file.
+**Note:** all the saved energetics data is per unit volume (i.e. I have divided by the
+reference density).
 """
 function extract_and_save!(saved_data::AbstractString, computed_output::AbstractString,
                             velocities::AbstractString, snapshots::AbstractArray,
