@@ -200,17 +200,16 @@ function extract_and_save!(saved_data::AbstractString, computed_output::Abstract
             end
         end
 
-    end
+        NCDataset(velocities) do ds
 
-    NCDataset(velocities) do ds
+            file["dims/zF"] = ds["zF"][:]
 
-        file["dims/zF"] = ds["zF"][:]
+            for i ∈ snapshots
+                file["w/w_yzslice/w_$(t[i])"] = ds[:w][1, :, :, i] # 115 = end of y domain
+                file["w/w_zmean/w_$(t[i])"] = mean(ds[:w][:, :, :, i], dims = 3)
+            end
 
-        for i ∈ snapshots
-            file["w/w_yzslice/w_$(t[i])"] = ds[:w][1, :, :, i] # 115 = end of y domain
-            file["w/w_zmean/w_$(t[i])"] = mean(ds[:w][:, :, :, i], dims = 3)
         end
-
     end
 
     return nothing
