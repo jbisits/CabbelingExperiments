@@ -1,4 +1,5 @@
-using NCDatasets, StatsBase, JLD2, GibbsSeaWater
+using NCDatasets, StatsBase, JLD2, CairoMakie
+using TwoLayerDirectNumericalShenanigans: animate_density, animate_tracers
 
 """
     function effective_diffusivity!(computed_output::AbstractString, tracers::AbstractString)
@@ -220,6 +221,7 @@ tracers = "tracers.nc"
 computed_output = "computed_output.nc"
 velocities = "velocities.nc"
 
+@info "Computing diagnostics and saving to output"
 effective_diffusivity!(computed_output, tracers)
 potential_and_background_potential_energy!(computed_output)
 buoyancy_flux!(computed_output, velocities)
@@ -229,4 +231,12 @@ snapshots = 1:25
 interface_depths = [821, 821, 821, 821, 821, 821, 821, 851, 841, 861,
                     861, 861, 871, 881, 891, 891, 901, 901, 901, 911,
                     920, 920, 925, 925, 925]
+
+@info "Extracting and saving data required for plotting"
 extract_and_save!(saved_data, computed_output, velocities, snapshots, interface_depths)
+
+@info "Producing animations"
+xslice = 57
+yslice = 57
+animate_density(co, "σ"; xslice, yslice)
+animate_tracers(tracers;  xslice, yslice)
