@@ -24,7 +24,7 @@ function effective_diffusivity!(computed_output::AbstractString, tracers::Abstra
 
         S = [reshape(mean(ds[:S][:, :, :, t], dims = (1, 2)), :) reshape(mean(ds[:S][:, :, :, t+1], dims = (1, 2)), :)]
         sort!(S, dims = 1)
-        ∫Sdz = cumsum(S * Δz, dims = 1)
+        ∫Sdz = cumsum(S * Δz[1], dims = 1)
         dₜ∫Sdz = diff(∫Sdz, dims = 2) ./ Δt[t]
         Fₛ[:, i] = dₜ∫Sdz
         ∂S∂z = diff(S, dims = 1) ./ Δz
