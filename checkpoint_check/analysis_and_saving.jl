@@ -204,6 +204,7 @@ function extract_and_save!(saved_data::AbstractString, computed_output::Abstract
 
             file["dims/zF"] = ds["zF"][:]
 
+            t = ds["time"][:]
             for i ∈ snapshots
                 file["w/w_yzslice/w_$(t[i])"] = ds[:w][1, :, :, i] # 115 = end of y domain
                 file["w/w_zmean/w_$(t[i])"] = mean(ds[:w][:, :, :, i], dims = 3)
