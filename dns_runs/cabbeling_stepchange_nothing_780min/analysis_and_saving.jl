@@ -238,5 +238,5 @@ extract_and_save!(saved_data, computed_output, velocities, snapshots, interface_
 @info "Producing animations"
 xslice = 57
 yslice = 57
-animate_density(co, "σ"; xslice, yslice)
+animate_density(computed_output, "σ"; xslice, yslice)
 animate_tracers(tracers;  xslice, yslice)
