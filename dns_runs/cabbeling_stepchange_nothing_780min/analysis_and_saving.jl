@@ -74,7 +74,7 @@ function potential_and_background_potential_energy!(computed_output::AbstractStr
     NCDataset(computed_output, "a") do ds
 
         t = ds[:time][:]
-        SA = 0.1 * 0.1
+        SA = 0.07 * 0.07
         Δx = diff(ds[:xC][1:2])[1]
         Δy = diff(ds[:yC][1:2])[1]
         Δz = diff(ds[:zC][1:2])[1]
@@ -115,7 +115,7 @@ function potential_and_background_potential_energy!(computed_output::AbstractStr
     haskey(ds, "∫Eb") ? nothing : defVar(ds, "∫Eb", Eb, ("time",),
                                         attrib = ("longname" => "Volume integrated background potential energy"))
     haskey(ds, "∫Ep") ? nothing : defVar(ds, "∫Ep", Ep, ("time",),
-                                        attrib = ("longname" => "Volume integrated background potential energy"))
+                                        attrib = ("longname" => "Volume integrated potential energy"))
     end
 
     return nothing
