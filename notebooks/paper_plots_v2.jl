@@ -8,11 +8,11 @@ publication_theme = Theme(font="CMU Serif", fontsize = 20,
                                 xlabelsize = 20, ylabelsize = 20,
                                 xgridstyle = :dash, ygridstyle = :dash,
                                 xtickalign = 0, ytickalign = 0,
-                                yticksize = 7.5, xticksize = 7.5),
+                                yticksize = 6.5, xticksize = 6.5),
                           Legend=(framecolor = (:black, 0.5),
                                   backgroundcolor = (:white, 0.5),
                                   labelsize = 20),
-                          Colorbar=(ticksize=16,
+                          Colorbar=(ticksize=12,
                                     tickalign=1,
                                     spinewidth=0.5))
 set_theme!(publication_theme)
@@ -64,7 +64,7 @@ S[mixing_interface] = fill(S_mix_profile, length(mixing_interface))
 Θ[mixing_interface] = fill(Θ_mix_profile, length(mixing_interface))
 σ₀_mix = gsw_sigma0.(S, Θ)
 
-fig = Figure(size = (1000, 700))
+fig = Figure(size = (1400, 600), px_per_unit=16)
 
 ax = Axis(fig[1, 1],
           title = "(a) Two layer profile",
@@ -165,7 +165,7 @@ fig
 ##
 save("schematic_2panel.png", fig)
 
-## Figure two, DNS states multiple panels
+# Figure two, DNS states multiple panels
 ## Load data to create figure
 file = jldopen(dns_output)
 
@@ -202,7 +202,7 @@ slices = [(density_xz_face1 = file["σ"]["σ_xzslice/σ_$(60.0 * snapshot)"],
 close(file)
 
 ## One row
-fig = Figure(size = (1600, 800), fontsize = 18)
+fig = Figure(size = (1600, 700), px_per_unit = 16)
 
 ax = [Axis3(fig[1, i],
            aspect=(1/3, 1/3, 1),
@@ -212,12 +212,12 @@ ax = [Axis3(fig[1, i],
            xlabeloffset = 50,
            ylabeloffset = 50,
            zlabeloffset = 70,
-           xlabelsize = 14,
-           ylabelsize = 14,
-           zlabelsize = 14,
-           xticklabelsize = 13,
-           yticklabelsize = 13,
-           zticklabelsize = 13,
+           xlabelsize = 18,
+           ylabelsize = 18,
+           zlabelsize = 18,
+           xticklabelsize = 18,
+           yticklabelsize = 18,
+           zticklabelsize = 18,
            zlabelrotation = π / 2,
            limits = ((x[1], x[end]), (y[1], y[end]), (z[1], z[end])),
            elevation = π / 6.5,
@@ -262,7 +262,7 @@ end
 # colgap!(fig.layout, 1, Relative(0.1))
 # colgap!(fig.layout, 2, Relative(0.1))
 # colgap!(fig.layout, 3, Relative(0.1))
-rowgap!(fig.layout, 1, Relative(0.04))
+rowgap!(fig.layout, 1, Relative(0.08))
 fig
 ##
 save("dns_schematic_ts_horizontal.png", fig)
@@ -275,7 +275,7 @@ zC = file["dims/z"]
 
 # Horizontally averaged profile
 ha_σ = hcat([reshape(file["σ/σ_$(t)"], :) for t ∈ timestamps]...)
-ρ_max = maximum(ha_σ) # file["ρ_predicted_max"]
+ρ_max = file["attrib/ρ_max"]
 
 # Diffusivity
 κₛ = reverse(file["diffusivity/κₛ"], dims = 1)
@@ -320,9 +320,10 @@ end
 #  HA profile evolution, HA effective diffusivity, HA volume integrated effective diffusivity
 #  Energetics
 
-fig = Figure(size = (1200, 1200))
+fig = Figure(size = (1400, 1200), px_per_unit = 16)
 time_interp_mins = time_interp ./ 60
 time_ticks = (0:200:1080, string.(0:200:1080))
+restricted_time = 1:660
 # HA profile
 ρ_anomaly = 0
 snapshots = [1, 50, 100, 400, 1080] .+ 1
@@ -333,28 +334,30 @@ vlines!(ax1, ρ_max - ρ_anomaly, color = :red, linestyle = :dash, label = "Maxi
 for (i, t) ∈ enumerate(snapshots)
     lines!(ax1, ha_σ[:, t] .- ρ_anomaly, zC, label = "$(timestamps[t] / 60) mins", alpha = 0.75)
 end
-axislegend(ax1, nbanks = 2, position = :lb, labelsize = 12)
+axislegend(ax1, nbanks = 2, position = :lb, labelsize = 15)
 
 # Diffusivity
 ax2 = Axis(fig[1, 2], title = "(b) Horizontally averaged effective diffusivity", subtitle = "Cabbeling",
             xlabel = "time (mins)", ylabel = "z (m)", xticks = time_ticks)
-hm = heatmap!(ax2, time_interp_mins, z, log10.(abs.(κₛ')),
+hm = heatmap!(ax2, time_interp_mins[restricted_time], zC, log10.(abs.(κₛ[:, restricted_time]')),
                 colorrange = (log10(1e-8), log10(1)), colormap = :tempo )
 Colorbar(fig[1, 3], hm, label = "Effective diffusivity (m²s⁻¹, log10)")
 
 ax4 = Axis(fig[2, 2], xlabel = "time (mins)", ylabel = "Effective diffusivity (m²s⁻¹, log10)",
-            title = "(d) Depth integrated horizontally averaged effective diffusivity",
+            title = "(d) Depth integrated horizontally averaged\neffective diffusivity",
             xticks = time_ticks)
-lines!(ax4, time_interp_mins[1:660], log10.(abs.(κ_iso)), label = "Isothermal", color = :cyan)
-lines!(ax4, time_interp_mins, log10.(abs.(∫κₛ)), label = "Cabbeling", color = :pink)
-hlines!(ax4, log10(1e-7), label = "Parameterised salinity diffusivity", linestyle = :dash, color = :black)
+lines!(ax4, time_interp_mins[restricted_time], log10.(abs.(κ_iso[restricted_time])),
+        label = "Isothermal", color = :cyan)
+lines!(ax4, time_interp_mins[restricted_time], log10.(abs.(∫κₛ[restricted_time])),
+        label = "Cabbeling", color = :pink)
+hlines!(ax4, log10(1e-7), label = "Parameterised salinity diffusivity", linestyle = :dash,
+        color = :black)
 axislegend(ax4, position = :rt)
 
-xlims!(ax4, 1e-5, 1080)
+xlims!(ax4, 1e-5, restricted_time[end])
 linkxaxes!(ax2, ax4)
 hidexdecorations!(ax2, ticks = false)
 hideydecorations!(ax2, ticks = false)
-
 linkyaxes!(ax1, ax2)
 
 # Energetics
@@ -362,19 +365,23 @@ ax3 = Axis(fig[2, 1], xlabel = "time (mins)", ylabel = "Watts",
           title = "(c) Time derivative of energetic quantities",
           subtitle = "Cabbeling")
 energy_scale = 1e8
-lines!(ax3, time_interp_mins[1:400],  dₜpe[1:400] .* energy_scale, label = "dₜPE")
-lines!(ax3, time_interp_mins[1:400], dₜbpe[1:400] .* energy_scale, label = "dₜBPE")
-lines!(ax3, time_interp_mins[1:400], dₜape[1:400] .* energy_scale, label = "dₜAPE", color = :red)
+lines!(ax3, time_interp_mins[restricted_time],  dₜpe[restricted_time] .* energy_scale,
+        label = "dₜPE")
+lines!(ax3, time_interp_mins[restricted_time], dₜbpe[restricted_time] .* energy_scale,
+        label = "dₜBPE")
+lines!(ax3, time_interp_mins[restricted_time], dₜape[restricted_time] .* energy_scale,
+        label = "dₜAPE", color = :red)
 # lines!(ax3, time_interp_mins[1:400],  dₜek[1:400] .* energy_scale, label = "dₜEk", color = :green)
-Label(fig[2, 1, Top()], halign = :left, L"\times 10^{-8}")
+Label(fig[2, 1, Top()], halign = :left, L"\times 10^{-8}", fontsize = 16)
 axislegend(ax3, position = :rt, orientation = :horizontal)
+# ylims!(ax3, -0.05, 0.4)
 
 topspinecolor = leftspinecolor = rightspinecolor = bottomspinecolor = :gray
-zoom_window = 1:50
+zoom_window = 1:100
 
 ax_inset = Axis(fig[2, 1],
     width=Relative(0.7),
-    height=Relative(0.57),
+    height=Relative(0.572),
     halign=0.85,
     valign=0.6,
     backgroundcolor=:white,
@@ -382,13 +389,15 @@ ax_inset = Axis(fig[2, 1],
     yticklabelsize = 12;
     topspinecolor, leftspinecolor, rightspinecolor, bottomspinecolor
     )
-ylims!(ax_inset, -0.1, 2)
+# ylims!(ax_inset, -0.1, 0.4)
+# ylims!(ax_inset, -0.05, 1e-1)
 lines!(ax_inset, time_interp_mins[zoom_window],  dₜpe[zoom_window] .* energy_scale)
 lines!(ax_inset, time_interp_mins[zoom_window], dₜbpe[zoom_window] .* energy_scale)
 lines!(ax_inset, time_interp_mins[zoom_window], dₜape[zoom_window] .* energy_scale, color = :red)
 # lines!(ax_inset, time_interp_mins[zoom_window],  dₜek[zoom_window] .* energy_scale, color = :green)
 hlines!(ax_inset, 0, linestyle = :dash, color = :grey)
-text!(ax3, 88, 3.8, text = L"\times 10^{-8}", fontsize = 12)
+text!(ax3, 148, 3.85, text = L"\times 10^{-8}", fontsize = 12)
+# text!(ax3, 148, 0.5, text = L"\times 10^{-8}", fontsize = 12)
 translate!(ax_inset.scene, 0, 0, 10)
 # this needs separate translation as well, since it's drawn in the parent scene
 translate!(ax_inset.elements[:background], 0, 0, 9)

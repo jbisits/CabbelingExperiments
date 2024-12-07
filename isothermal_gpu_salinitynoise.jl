@@ -4,12 +4,13 @@ restart = true
 
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
+domain_extent = (Lx = 0.07, Ly = 0.07, Lz = -1.0)
+resolution = (Nx = 35, Ny = 35, Nz = 500)
 eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 
 ## Setup the dns_model
 @info "Model setup"
-isothermal_resolution = (Nx = 100, Ny = 100, Nz = 1000)
-dns_model = DNSModel(architecture, DOMAIN_EXTENT, isothermal_resolution, diffusivities, eos)
+dns_model = DNSModel(architecture, domain_extent, resolution, diffusivities, eos)
 
 ## set initial conditions
 @info "Setting initial conditions"
@@ -34,8 +35,8 @@ set_two_layer_initial_conditions!(tldns)
 
 ## build the simulation
 Δt = 1e-2
-max_Δt = 0.1
-stop_time = 20 * 60 * 60 # seconds
+max_Δt = 7e-2
+stop_time = 13 * 60 * 60 # seconds
 save_schedule = 60  # seconds
 checkpointer_time_interval = 60 * 60 # seconds
 output_path = joinpath(@__DIR__, "outputs_equaldiffusion/")
