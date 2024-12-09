@@ -1,7 +1,7 @@
 using GLMakie, JLD2, GibbsSeaWater
 cd(@__DIR__)
 dns_output = "../dns_runs/cabbeling_stepchange_nothing_780min/analysis_and_field_snapshots.jld2"
-
+isothermal_output = "../outputs_equaldiffusion/isothermal_stepchange_nothing_780min/isothermal_analysis_and_field_snapshots.jld2"
 ## Figure theme
 publication_theme = Theme(font="CMU Serif", fontsize = 20,
                           Axis=(titlesize = 22,
@@ -148,7 +148,6 @@ arrows!(ax2, [S_range[10]], [Θ_range[5]], [1], [0], lengthscale = 0.15)
 arrows!(ax2, [S_range[10]], [Θ_range[5]], [0], [1], lengthscale = 2.8)
 arrows!(ax2, [S_mix[40000]], [Θ_mix[20000]], [0], [1], lengthscale = 0.30, color = :purple)
 arrows!(ax2, [34.605], [-1.5], [-1], [0], lengthscale = 0.018, color = :red)
-# Legend(fig[2, 2], ax2, orientation = :horizontal, nbanks = 3, tellheight = false)
 text!(ax2, S_star-0.002, Θ_star, align = (:right, :bottom), text = "Deep water", color = :red)
 text!(ax2, S₀ᵘ-0.001, Θ₀ᵘ, align = (:right, :bottom),text = "Shallow water", color = :blue)
 text!(ax2, S_mix[40000], Θ_mix[20000], align = (:center, :top), text = "Mixed water", color = :purple)
@@ -193,10 +192,7 @@ z_xy_interface = [zmid, zmid + 3, 875, 925] # Need to save these midsections whe
 
 snapshots = [0, 3, 13, 24]
 slices = [(density_xz_face1 = file["σ"]["σ_xzslice/σ_$(60.0 * snapshot)"],
-        #   density_xz_faceend = file["σ/σ_xzslice_faceend/σ_$(60.0 * snapshot)"],
-        #   density_xz_mid = file["σ/σ_xzslice/σ_$(60.0 * snapshot)"],
           density_middle_slice = file["σ"]["σ_xyslice/σ_$(60.0 * snapshot)"],
-        #   density_middle_slice = file["σ/σ_xyslice/σ_$(60.0 * snapshot)"],
           velocity_yz = file["w"]["w_yzslice/w_$(60.0 * snapshot)"][:, 1:end-1],
           velocity_zmean = file["w"]["w_zmean/w_$(60.0 * snapshot)"][:, :, 1]) for snapshot ∈ snapshots]
 close(file)
@@ -229,11 +225,7 @@ ax = [Axis3(fig[1, i],
            protrusions = 20
            ) for i ∈ 1:4]
 
-# velocity_colorrange = maximum([maximum(abs.(extrema(slices[i].velocity_yz_face1))) for i ∈ 1:4])  * [-1, 1]
 velocity_colorrange = maximum(abs.(extrema(slices[4].velocity_yz)))  * [-1, 1]
-# velocity_colorrange = maximum(abs.(extrema(slices[4].velocity_zmean)))  * [-1, 1]
-# density_colorrange = [minimum([minimum(slices[i].density_xz_face1) for i ∈ 1:4]),
-#                       maximum([maximum(slices[i].density_xz_face1) for i ∈ 1:4])]
 density_colorrange = extrema(slices[2].density_xz_face1)
 
 for i ∈ eachindex(snapshots)
@@ -259,9 +251,6 @@ for i ∈ eachindex(snapshots)
         hidezdecorations!(ax[i], ticks = false)
     end
 end
-# colgap!(fig.layout, 1, Relative(0.1))
-# colgap!(fig.layout, 2, Relative(0.1))
-# colgap!(fig.layout, 3, Relative(0.1))
 rowgap!(fig.layout, 1, Relative(0.08))
 fig
 ##
@@ -297,25 +286,15 @@ dₜek = diff(ek) ./ Δt
 dₜpe = diff(pe) ./ Δt
 dₜbpe = Φd = diff(bpe) ./ Δt
 dₜape = diff(ape) ./ Δt
-time_interp = 0.5 * (times[1:end-1] .+ times[2:end])
+time_interp = 0.5 * (timestamps[1:end-1] .+ timestamps[2:end])
 
 close(file)
 
-# iso = load("isothermal_fluxes_and_diff_longer_run.jld2")
-iso = load("isothermal_fluxes_and_diff.jld2")
-Δz_iso = diff(iso["z"])
-replace!(iso["κₛ"], Inf => NaN)
-replace!(iso["κₛ"], 0 => NaN)
-replace!(iso["κₛ"], -Inf => NaN)
-reverse!(iso["κₛ"], dims = 1)
-κ_iso = similar(iso["∫κₛ"])
-i = 1
-for c ∈ eachcol(iso["κₛ"])
-    find = findall(.!isnan.(c))
-    κ_iso[i] = sum(c[find] .* Δz_iso[find]) / sum(Δz_iso[find])
-    i += 1
-end
-
+# isothermal output
+file = jldopen(isothermal_output)
+κₛ_isothermal = file["diffusivity"]["κₛ"]
+∫κₛ_isothermal = file["diffusivity"]["∫κₛ"]
+close(file)
 ## Results figure:
 #  HA profile evolution, HA effective diffusivity, HA volume integrated effective diffusivity
 #  Energetics
@@ -323,7 +302,7 @@ end
 fig = Figure(size = (1400, 1200), px_per_unit = 16)
 time_interp_mins = time_interp ./ 60
 time_ticks = (0:200:1080, string.(0:200:1080))
-restricted_time = 1:660
+restricted_time = 1:600
 # HA profile
 ρ_anomaly = 0
 snapshots = [1, 50, 100, 400, 1080] .+ 1
@@ -334,25 +313,25 @@ vlines!(ax1, ρ_max - ρ_anomaly, color = :red, linestyle = :dash, label = "Maxi
 for (i, t) ∈ enumerate(snapshots)
     lines!(ax1, ha_σ[:, t] .- ρ_anomaly, zC, label = "$(timestamps[t] / 60) mins", alpha = 0.75)
 end
-axislegend(ax1, nbanks = 2, position = :lb, labelsize = 15)
+axislegend(ax1, nbanks = 2, position = :lb, labelsize = 16)
 
 # Diffusivity
-ax2 = Axis(fig[1, 2], title = "(b) Horizontally averaged effective diffusivity", subtitle = "Cabbeling",
+ax2 = Axis(fig[1, 2], title = "(b) Horizontally averaged salinity effective diffusivity", subtitle = "Cabbeling",
             xlabel = "time (mins)", ylabel = "z (m)", xticks = time_ticks)
 hm = heatmap!(ax2, time_interp_mins[restricted_time], zC, log10.(abs.(κₛ[:, restricted_time]')),
                 colorrange = (log10(1e-8), log10(1)), colormap = :tempo )
 Colorbar(fig[1, 3], hm, label = "Effective diffusivity (m²s⁻¹, log10)")
 
 ax4 = Axis(fig[2, 2], xlabel = "time (mins)", ylabel = "Effective diffusivity (m²s⁻¹, log10)",
-            title = "(d) Depth integrated horizontally averaged\neffective diffusivity",
+            title = "(d) Depth integrated horizontally averaged\nsalinity effective diffusivity",
             xticks = time_ticks)
-lines!(ax4, time_interp_mins[restricted_time], log10.(abs.(κ_iso[restricted_time])),
+lines!(ax4, time_interp_mins[restricted_time], log10.(abs.(∫κₛ_isothermal[restricted_time])),
         label = "Isothermal", color = :cyan)
 lines!(ax4, time_interp_mins[restricted_time], log10.(abs.(∫κₛ[restricted_time])),
         label = "Cabbeling", color = :pink)
 hlines!(ax4, log10(1e-7), label = "Parameterised salinity diffusivity", linestyle = :dash,
         color = :black)
-axislegend(ax4, position = :rt)
+axislegend(ax4, position = :rt, labelsize = 17)
 
 xlims!(ax4, 1e-5, restricted_time[end])
 linkxaxes!(ax2, ax4)
@@ -380,7 +359,7 @@ topspinecolor = leftspinecolor = rightspinecolor = bottomspinecolor = :gray
 zoom_window = 1:100
 
 ax_inset = Axis(fig[2, 1],
-    width=Relative(0.7),
+    width=Relative(0.68),
     height=Relative(0.572),
     halign=0.85,
     valign=0.6,
@@ -389,15 +368,12 @@ ax_inset = Axis(fig[2, 1],
     yticklabelsize = 12;
     topspinecolor, leftspinecolor, rightspinecolor, bottomspinecolor
     )
-# ylims!(ax_inset, -0.1, 0.4)
-# ylims!(ax_inset, -0.05, 1e-1)
+ylims!(ax_inset, -0.05, 0.4)
 lines!(ax_inset, time_interp_mins[zoom_window],  dₜpe[zoom_window] .* energy_scale)
 lines!(ax_inset, time_interp_mins[zoom_window], dₜbpe[zoom_window] .* energy_scale)
 lines!(ax_inset, time_interp_mins[zoom_window], dₜape[zoom_window] .* energy_scale, color = :red)
-# lines!(ax_inset, time_interp_mins[zoom_window],  dₜek[zoom_window] .* energy_scale, color = :green)
 hlines!(ax_inset, 0, linestyle = :dash, color = :grey)
 text!(ax3, 148, 3.85, text = L"\times 10^{-8}", fontsize = 12)
-# text!(ax3, 148, 0.5, text = L"\times 10^{-8}", fontsize = 12)
 translate!(ax_inset.scene, 0, 0, 10)
 # this needs separate translation as well, since it's drawn in the parent scene
 translate!(ax_inset.elements[:background], 0, 0, 9)

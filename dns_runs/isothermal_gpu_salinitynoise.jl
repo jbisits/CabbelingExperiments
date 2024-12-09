@@ -1,11 +1,11 @@
 using TwoLayerDirectNumericalShenanigans
 
-restart = false
+restart = true
 
 architecture = GPU()
 diffusivities = (ν = 1e-6, κ = (S = 1e-7, T = 1e-7))
 domain_extent = (Lx = 0.07, Ly = 0.07, Lz = -1.0)
-resolution = (Nx = 75, Ny = 75, Nz = 800)
+resolution = (Nx = 35, Ny = 35, Nz = 500)
 eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 
 ## Setup the dns_model
@@ -13,12 +13,12 @@ eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 dns_model = DNSModel(architecture, domain_extent, resolution, diffusivities, eos)
 
 ## set initial conditions
-@info "Setting initial conditions in upper layer"
-T₀ᵘ = -1.5
-S₀ᵘ = 34.58
+@info "Setting initial conditions"
+T₀ᵘ = 0.5
+S₀ᵘ = 34.69431424
 const interface_location = -0.5
-cabbeling = CabbelingUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
-initial_conditions = TwoLayerInitialConditions(cabbeling)
+isothermal = IsothermalUpperLayerInitialConditions(S₀ᵘ, T₀ᵘ)
+initial_conditions = TwoLayerInitialConditions(isothermal)
 depth = find_depth(dns_model, interface_location)
 profile_function = StepChange(depth)
 
@@ -34,21 +34,18 @@ tldns = TwoLayerDNS(dns_model, profile_function, initial_conditions; initial_noi
 set_two_layer_initial_conditions!(tldns)
 
 ## build the simulation
-Δt = 1e-3
-max_Δt = 1e-1
-stop_time = 1 * 60 * 60 # seconds
+Δt = 1e-2
+max_Δt = 7e-2
+stop_time = 13 * 60 * 60 # seconds
 save_schedule = 60  # seconds
 checkpointer_time_interval = 60 * 60 # seconds
 output_path = @__DIR__
 @info "Setting up simulation"
-
 simulation = TLDNS_simulation_setup(tldns, Δt, stop_time, save_schedule, TLDNS.save_computed_output!,
                                     TLDNS.save_vertical_velocities!;
                                     checkpointer_time_interval, output_path, max_Δt,
-                                    overwrite_saved_output = restart,
-                                    cfl = 0.2,
-                                    diffusive_cfl = 0.5)
-pickup = restart ? false : "/g/data/e14/jb2381/CabbelingExperiments/checkpoint_check/cabbeling_stepchange_nothing_60min/model_checkpoints/checkpoint_iteration36250.jld2"
-simulation.stop_time = 2 * 60 * 60
+                                    overwrite_saved_output = restart)
+
+pickup = restart ? false : true
 ## Run the simulation
 run!(simulation; pickup)
