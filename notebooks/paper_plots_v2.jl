@@ -1,7 +1,7 @@
 using GLMakie, JLD2, GibbsSeaWater
 cd(@__DIR__)
 dns_output = "../dns_runs/cabbeling_stepchange_nothing_780min/analysis_and_field_snapshots.jld2"
-isothermal_output = "../outputs_equaldiffusion/isothermal_stepchange_nothing_780min/isothermal_analysis_and_field_snapshots.jld2"
+isothermal_output = "../dns_runs/isothermal_stepchange_nothing_780min/isothermal_analysis_and_field_snapshots.jld2"
 ## Figure theme
 publication_theme = Theme(font="CMU Serif", fontsize = 20,
                           Axis=(titlesize = 22,
@@ -307,7 +307,7 @@ restricted_time = 1:600
 ρ_anomaly = 0
 snapshots = [1, 50, 100, 400, 1080] .+ 1
 ax1 = Axis(fig[1, 1], xlabel = "σ₀ (kgm⁻³) ", ylabel = "z (m)",
-          title = "(a) Horizontally averaged density profile", subtitle = "Cabbeling")
+          title = "(a) Horizontally averaged density profile")
 lines!(ax1, ha_σ[:, 1] .- ρ_anomaly, zC, label = "Initial profile", color = :black)
 vlines!(ax1, ρ_max - ρ_anomaly, color = :red, linestyle = :dash, label = "Maximum σ₀")
 for (i, t) ∈ enumerate(snapshots)
@@ -316,7 +316,7 @@ end
 axislegend(ax1, nbanks = 2, position = :lb, labelsize = 16)
 
 # Diffusivity
-ax2 = Axis(fig[1, 2], title = "(b) Horizontally averaged salinity effective diffusivity", subtitle = "Cabbeling",
+ax2 = Axis(fig[1, 2], title = "(b) Horizontally averaged salinity effective diffusivity",
             xlabel = "time (mins)", ylabel = "z (m)", xticks = time_ticks)
 hm = heatmap!(ax2, time_interp_mins[restricted_time], zC, log10.(abs.(κₛ[:, restricted_time]')),
                 colorrange = (log10(1e-8), log10(1)), colormap = :tempo )
@@ -341,8 +341,7 @@ linkyaxes!(ax1, ax2)
 
 # Energetics
 ax3 = Axis(fig[2, 1], xlabel = "time (mins)", ylabel = "Watts",
-          title = "(c) Time derivative of energetic quantities",
-          subtitle = "Cabbeling")
+          title = "(c) Time derivative of energetic quantities")
 energy_scale = 1e8
 lines!(ax3, time_interp_mins[restricted_time],  dₜpe[restricted_time] .* energy_scale,
         label = "dₜPE")
@@ -415,140 +414,54 @@ fig, ax = lines(time_interp, dₜpe)
 lines!(ax, time_interp, dₜbpe)
 fig
 
-## Optimally mixed profile
+## Graphical abstract
+fig = Figure(size = (1600, 700), px_per_unit = 16)
 
-## Horizontally averaged hovmollers, vertical velocity look suspicious
-using Printf
-file = jldopen("ha_profile_snapshots.jld2")
-timestamps = file["time"]
-zF = file["zF"]
-zC = file["zC"]
-ρ_max = file["ρ_predicted_max"]
+ax = [Axis3(fig[1, i],
+           aspect=(1/3, 1/3, 1),
+           xlabel = "x (m)",
+           ylabel = "y (m)",
+           zlabel = "z (m)",
+           xlabeloffset = 50,
+           ylabeloffset = 50,
+           zlabeloffset = 70,
+           xlabelsize = 18,
+           ylabelsize = 18,
+           zlabelsize = 18,
+           xticklabelsize = 18,
+           yticklabelsize = 18,
+           zticklabelsize = 18,
+           zlabelrotation = π / 2,
+           limits = ((x[1], x[end]), (y[1], y[end]), (z[1], z[end])),
+           elevation = π / 6.5,
+           azimuth = 1.25π,
+           xspinesvisible = false,
+           yspinesvisible = false,
+           zspinesvisible = false,
+           zgridvisible = false,
+           protrusions = 20
+           ) for i ∈ 1:4]
 
-ha_σ = hcat([reshape(file["σ/σ_$(t)"], :) for t ∈ timestamps]...)
-close(file)
+velocity_colorrange = maximum(abs.(extrema(slices[4].velocity_yz)))  * [-1, 1]
+density_colorrange = extrema(slices[2].density_xz_face1)
 
-n = Observable(1)
-σ_ha_plot = @lift ha_σ[:, $n] .- 1000
-σ_ha_sorted_plot = @lift sort(ha_σ[:, $n], rev = true) .- 1000
-time_title = @lift @sprintf("t=%1.2f minutes", timestamps[$n] / 60)
-
-##
-fig = Figure(size = (500, 500))
-ax = Axis(fig[1, 1], title = time_title, xlabel = "σ₀ (kgm⁻³)", ylabel = "z (m)")
-lines!(ax, ha_σ[:, 1].-1000, zC, label = "Initial density profile", color = :grey)
-fig
-
-N = length(zC)
-σ_optimally_mixed = vcat(fill(ρ_max, N))
-not_mixed = round(Int, N/2 - upper_proportion * N/2) # `upper_proportion` from amount required calculated below
-σ_optimally_mixed[N-not_mixed:N] .= ha_σ[end, 1]
-lines!(ax, σ_optimally_mixed, zC, label = "Optimally mixed", color = :black)
-
-fig
-
-ẑ = upper_proportion / lower_proportion - 1
-hlines!(ax, ẑ, color = :orange)
-## animate the ha profile onto the axis
-
-lines!(ax, σ_ha_plot, zC, label = "In situ profile")
-lines!(ax, σ_ha_sorted_plot, zC, label = "Sorted profile")
-
-axislegend(ax, position = :lb)
-
-frames = eachindex(timestamps)
-record(fig, joinpath(pwd(), "ha_profiles.mp4"), frames, framerate=8) do i
-    msg = string("Plotting frame ", i, " of ", frames[end])
-    print(msg * " \r")
-    n[] = i
+for i ∈ eachindex(snapshots)
+    sf_σ = surface!(ax[i], x_xz, y_xz_density, z_xz; color = slices[i].density_xz_face1,
+                    colormap = :dense,
+                    colorrange = density_colorrange
+                    )
+    sf_w = surface!(ax[i], x_xz_velocity, y_xz, z_yz; color = slices[i].velocity_yz, colormap = :balance,
+                    colorrange = velocity_colorrange, backlight = 1f0, shading = FastShading)
+    surface!(ax[i], x, y, z_xy_top; color = slices[i].velocity_zmean, colormap = :balance,
+            colorrange = velocity_colorrange
+            )
+    z_xy_mid = z[z_xy_interface[i]] * ones(length(x), length(y))
+    surface!(ax[i], x, y, z_xy_mid; color = slices[i].density_middle_slice, colormap = :dense,
+           colorrange = i == 1 ? extrema(slices[i].density_middle_slice) : density_colorrange,
+            overdraw = true)
+    hidedecorations!(ax[i])
 end
-
-## Hovmoller
-fig, ax, hm = heatmap(timestamps ./ 60, zC, ha_σ', colormap = :dense)
-Colorbar(fig[1, 2], hm)
+# rowgap!(fig.layout, 1, Relative(0.08))
 fig
-
-ẑ = (upper_proportion * 0.5 + 0.5) - 1
-ẑ = upper_proportion / lower_proportion - 1
-hlines!(ax, ẑ, color = :orange)
-fig
-
-## Compare the PE values, proportional to g
-ẑ = reverse(abs.(zC))
-fig, ax = lines(ha_σ[:, 1], ẑ, label = "Initial profile")
-lines!(ax, σ_optimally_mixed, ẑ, label = "Optimally mixed")
-axislegend(ax)
-fig
-Ep = sum(ha_σ[:, 1] .* ẑ) * Δz
-Ep_cabbeling_stable = sum(σ_optimally_mixed .* ẑ) * Δz
-Ep < Ep_cabbeling_stable
-
-## Optimally mixed
-using SeawaterPolynomials.TEOS10
-using SeawaterPolynomials: ρ
-M = 5000
-Sᵤ, Sₗ = 34.58, 34.7
-Θᵤ, Θₗ = -1.5, 0.5
-S_range = range(Sᵤ, Sₗ, length = M)
-slope = (Θₗ - Θᵤ) / (Sₗ - Sᵤ)
-Θ_linear =  @. Θₗ + slope * (S_range - Sₗ)
-
-eos_vec = fill(TEOS10EquationOfState(reference_density = ρ₀), length(Θ_linear))
-ρ_mix = ρ.(Θ_linear, S_range, 0, eos_vec)
-ρmax, idx_ρmax = findmax(ρ_mix)
-Smax, Θmax = S_range[idx_ρmax], Θ_linear[idx_ρmax]
-
-initial_S_T = [Sᵤ Sₗ; Θᵤ Θₗ]
-upper_proportion, lower_proportion = initial_S_T \ [Smax, Θmax]
-
-N = 700
-Sₗmix = fill(Smax, N)
-Θₗmix = fill(Θmax, N)
-upper_amount_mixed = round(Int, N * upper_proportion)
-Sᵤmix = fill(Smax, upper_amount_mixed)
-Θᵤmix = fill(Θmax, upper_amount_mixed)
-Sᵤ_reduced = fill(34.58, N-upper_amount_mixed)
-Θᵤ_reduced = fill(-1.5, N-upper_amount_mixed)
-
-S_optimally_mixed = vcat(Sₗmix, Sᵤmix, Sᵤ_reduced)
-Θ_optimally_mixed = vcat(Θₗmix, Θᵤmix, Θᵤ_reduced)
-
-ρ_optimally_mixed = gsw_rho.(S_optimally_mixed, Θ_optimally_mixed, 0)
-
-lines!(ax, ρ_optimally_mixed, zC)
-
-## Where does dₜape remain less than zero
-start_time = 472
-fig, ax = lines(time_interp[start_time:end], dₜape_anomaly[start_time:end])
-@info "After t = $(time_interp[start_time+1] ./60) dₜape < 0."
-
-# Better way
-dt_sign_idx = findfirst(reverse(dₜape_anomaly) .> 0)
-reverse(time_interp)[dt_sign_idx-1] ./60
-
-## Compare optimally mixed profile with profile when APE is negative definite
-N = length(zC)
-σ_optimally_mixed = vcat(fill(ρ_max - 1020, N))
-not_mixed = round(Int, 0.57 * N/2)
-σ_optimally_mixed[N-not_mixed:N] .= ha_σ[end, 1] .- 1020
-
-fig, ax = lines(σ_optimally_mixed, zC)
-lines!(ax, ha_σ[:, 473] .- 1020, zC)
-fig
-
-## And the same profile but Sorted, somthing like this could be useful
-N = length(zC)
-σ_optimally_mixed = vcat(fill(ρ_max, N))
-not_mixed = round(Int, 0.57 * N/2)
-σ_optimally_mixed[N-not_mixed:N] .= ha_σ[end, 1]
-
-fig, ax = lines(σ_optimally_mixed, zC)
-lines!(ax, sort(ha_σ[:, 473], rev = true), zC)
-fig
-
-
-## lengths for resolution
-# η                    = 0.0019484207282447232
-# λ_b                  = 0.0006161447341537292
-# Δz                   = 0.0007142857142857784
-# Δx                   = 0.0008064516129032279
+##
+save("graphical_abstract.png", fig)
