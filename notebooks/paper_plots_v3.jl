@@ -1,7 +1,16 @@
-using GLMakie, JLD2, GibbsSeaWater
+# This version is the plots that have been updated during first revisions of the MS.
+# Figures 1 and 2 are unchanged (except for labels). Figure 3, the previous results figure,
+# will be broken up (likely into density evolution, diffusivity and energetics) as the longer
+# format allows more pages.
+
+using GLMakie, JLD2, GibbsSeaWater, ColorSchemes
+
 cd(@__DIR__)
-dns_output = "../dns_runs/cabbeling_stepchange_nothing_780min/analysis_and_field_snapshots.jld2"
+stable_output = "../dns_runs/stable_stepchange_nothing_600min/stable_analysis_and_field_snapshots.jld2"
+lesscabbeling_output = "../dns_runs/lesscabbeling_stepchange_nothing_600min/lesscabbeling_analysis_and_field_snapshots.jld2"
+cabbeling_output = "../dns_runs/cabbeling_stepchange_nothing_780min/cabbeling_analysis_and_field_snapshots.jld2"
 isothermal_output = "../dns_runs/isothermal_stepchange_nothing_780min/isothermal_analysis_and_field_snapshots.jld2"
+all_output = (isothermal_output, stable_output, lesscabbeling_output, cabbeling_output)
 ## Figure theme
 publication_theme = Theme(font="CMU Serif", fontsize = 20,
                           Axis=(titlesize = 22,
@@ -166,7 +175,7 @@ save("schematic_2panel.png", fig)
 
 # Figure two, DNS states multiple panels
 ## Load data to create figure
-file = jldopen(dns_output)
+file = jldopen(cabbeling_output)
 
 x = file["dims/x"]
 y = file["dims/y"]
@@ -253,26 +262,119 @@ for i ∈ eachindex(snapshots)
 end
 rowgap!(fig.layout, 1, Relative(0.08))
 fig
-##
-save("dns_schematic_ts_horizontal.png", fig)
 
-## Extract dns ouput
-file = jldopen(dns_output)
-timestamps = file["dims/timestamps"]
-zF = file["dims/zF"]
-zC = file["dims/z"]
+###########################################################################################
+## New figures + replacing figure 3 with multiple figures
+###########################################################################################
 
-# Horizontally averaged profile
-ha_σ = hcat([reshape(file["σ/σ_$(t)"], :) for t ∈ timestamps]...)
-ρ_max = file["attrib/ρ_max"]
+# Not exactly sure how where these will go so for now I will just make the figures
 
-# Diffusivity
-κₛ = reverse(file["diffusivity/κₛ"], dims = 1)
-∫κₛ = file["diffusivity/∫κₛ"]
+## S-Θ initial dns initial conditions.
+# These should go in a table but maybe seeing them on S-Θ diagram will help. Much of this is
+# the same as figure one so make sure that is run first.
 
-# Energetics
+haline_grad = get(ColorSchemes.haline, range(0, 1, length = 4))
+fig = Figure(size = (1200, 500))
+ax = Axis(fig[1, 1], xlabel = "S (gkg⁻¹)", ylabel = "Θ (°C)", title = "DNS initial conditions")
+
+N = 1000
+S_range, Θ_range = range(34.535, 34.705, length = N), range(-1.75, 0.75, length = N)
+Θ_linear_initial = @. Θ_star + m_initial * (S_range - S_star)
+S_grid, Θ_grid = ones(N) .* S_range', ones(N)' .* Θ_range
+ρ = gsw_rho.(S_grid, Θ_grid, 0)
+Θ_freezing = gsw_ct_freezing.(S_range, 0, 1)
+
+S₀ᵘ = [34.69431424, 34.551, 34.568, 34.58]
+Θ₀ᵘ = vcat(0.5, fill(-1.5, 3))
+S_max = similar(S₀ᵘ)
+Θ_max = similar(Θ₀ᵘ)
+ρ_max_pred = Vector{Float64}(undef, 4)
+for i ∈ eachindex(ρ_max)
+    slope = (Θ₀ᵘ[i] - Θ_star) / (S₀ᵘ[i] - S_star)
+    S_mix = range(S₀ᵘ[i], S_star, step = 0.000001)
+    Θ_mix = @. Θ₀ᵘ[i] + (slope) * (S_mix - S₀ᵘ[i])
+    ρ_mix = gsw_rho.(S_mix, Θ_mix, 0)
+    ρ_max_pred[i], ρ_max_idx = findmax(ρ_mix)
+    S_max[i], Θ_max[i] = S_mix[ρ_max_idx], Θ_mix[ρ_max_idx]
+end
+contour!(ax, S_range, Θ_range, ρ'; levels = [ρ_star],
+         color = :grey, linewidth = 1,
+         labelsize = 18, label = "Isopycnal at deep water")
+lines!(ax, S_range, Θ_linear_initial,
+        color = :grey, label = "Tangent at deep water", linestyle = :dashdot)
+scatter!(ax, [S_star], [Θ_star], color = :red, label = "Deep water")
+scatter!(ax, S₀ᵘ, Θ₀ᵘ, color = haline_grad, label = "Shallow water", marker = :rect)
+# for i ∈ eachindex(S₀ᵘ)
+#     lines!(ax, [S₀ᵘ[i], S_star], [Θ₀ᵘ[i], Θ_star], color = haline_grad[i], linewidth = 0.5,
+#             linestyle = :dash, label = i == 3 ? "Mixing line" : nothing)
+# end
+# scatter!(ax, S_max[2:end], Θ_max[2:end], color = haline_grad[2:end], label = "Density maximum", marker = :utriangle)
+# scatter!(ax, S_max[2:end], Θ_max[2:end], color = haline_grad[2:end], label = "Density maximum", marker = :cross)
+# lines!(ax, S_range, Θ_freezing, label = "Freezing point", color = :blue)
+Legend(fig[1, 2], ax)
+fig
+
+## Density evolution, perhaps pair this with figure 3 panel (a).
+ρ_max = Vector{Float64}(undef, length(all_output))
+ha_σ = Vector{Array}(undef, length(all_output))
+zC = Vector{Array}(undef, length(all_output))
+timestamps = Vector{Array}(undef, length(all_output))
+for (i, file) ∈ enumerate(all_output)
+
+    f = jldopen(file)
+    timestamps[i] = f["dims/timestamps"]
+    zC[i] = f["dims/z"]
+
+    # Horizontally averaged profile
+    ha_σ[i] = hcat([reshape(f["σ/σ_$(t)"], :) for t ∈ timestamps[i]]...)
+    ρ_max[i] = f["attrib/ρ_max"]
+
+    close(f)
+end
+ρ_max_model = [maximum(ha_σ[i][:, 2]) for i ∈ 1:4]
+scatter_position = [1, 2, 3, 4]
+expts = ["iso", "stable", "lesscab", "cab"]
+
+fig = Figure(size = (500, 500))
+ax = Axis(fig[1, 1], xlabel = "Experiment", xticks = (scatter_position, expts), ylabel = "σ₀ (kgm⁻³)")
+scatter!(ax, scatter_position, ρ_max .- 1000, color = :steelblue, markersize = 15, label = "Theoretical predicted\nmaximum")
+scatter!(ax, scatter_position, ρ_max_model .- 1000, color = :orange, marker = :xcross, markersize = 15, label = "HA maximum after\nmixing at intreface")
+axislegend(ax, position = :lt)
+fig
+
+## Diffusivity, new panel for all depth integrated diffusivities but keep other colourmap
+∫κₛ = Vector{Array}(undef, length(all_output))
+for (i, file) ∈ enumerate(all_output)
+
+    f = jldopen(file)
+    ∫κₛ[i] = f["diffusivity"]["∫κₛ"]
+
+    close(f)
+end
+
+restricted_time = 1:600
+fig = Figure(size = (1000, 500))
+expts = ["isothermal", "stable", "less cabbeling", "cabeling"]
+ax = Axis(fig[1, 1], xlabel = "time (mins)", ylabel = "κ̅_eff (m²s⁻¹, log10)",
+            title = "Depth integrated horizontally averaged salinity effective diffusivity",
+            # xticks = time_ticks
+            )
+for (i, file) ∈ enumerate(∫κₛ)
+    lines!(ax, timestamps[i][restricted_time] ./ 60, log10.(abs.(∫κₛ[i][restricted_time])),
+            color = haline_grad[i], label = expts[i])
+end
+hlines!(ax, log10(1e-7), label = "Parameterised salinity diffusivity", linestyle = :dash,
+        color = :black)
+axislegend(ax, position = :rt, labelsize = 17)
+xlims!(ax, (0, 600))
+fig
+
+## Energetics
+
+file = jldopen(cabbeling_output)
 ρ₀ = file["attrib/ρ₀"]
 g = file["attrib/g"]
+timestamps = file["dims/timestamps"]
  # the correction is due to incorrect scaling by area in the original computation
  bpe = file["energetics"]["∫Eb"]  * ρ₀ * (0.1^2 / 0.07^2)
   pe = file["energetics"]["∫Ep"]  * ρ₀
@@ -286,116 +388,11 @@ dₜek = diff(ek) ./ Δt
 dₜpe = diff(pe) ./ Δt
 dₜbpe = Φd = diff(bpe) ./ Δt
 dₜape = diff(ape) ./ Δt
-time_interp = 0.5 * (timestamps[1:end-1] .+ timestamps[2:end])
+time_interp_mins = 0.5 * (timestamps[1:end-1] .+ timestamps[2:end]) / 60
 
 close(file)
 
-# isothermal output
-file = jldopen(isothermal_output)
-κₛ_isothermal = file["diffusivity"]["κₛ"]
-∫κₛ_isothermal = file["diffusivity"]["∫κₛ"]
-close(file)
-## Results figure:
-#  HA profile evolution, HA effective diffusivity, HA volume integrated effective diffusivity
-#  Energetics
-
-fig = Figure(size = (1400, 1200), px_per_unit = 16)
-time_interp_mins = time_interp ./ 60
-time_ticks = (0:200:1080, string.(0:200:1080))
-restricted_time = 1:600
-# HA profile
-ρ_anomaly = 0
-snapshots = [1, 50, 100, 400, 1080] .+ 1
-ax1 = Axis(fig[1, 1], xlabel = "σ₀ (kgm⁻³) ", ylabel = "z (m)",
-          title = "(a) Horizontally averaged density profile")
-lines!(ax1, ha_σ[:, 1] .- ρ_anomaly, zC, label = "Initial profile", color = :black)
-vlines!(ax1, ρ_max - ρ_anomaly, color = :red, linestyle = :dash, label = "Maximum σ₀")
-for (i, t) ∈ enumerate(snapshots)
-    lines!(ax1, ha_σ[:, t] .- ρ_anomaly, zC, label = "$(timestamps[t] / 60) mins", alpha = 0.75)
-end
-axislegend(ax1, nbanks = 2, position = :lb, labelsize = 16)
-
-# Diffusivity
-ax2 = Axis(fig[1, 2], title = "(b) Horizontally averaged salinity effective diffusivity",
-            xlabel = "time (mins)", ylabel = "z (m)", xticks = time_ticks)
-hm = heatmap!(ax2, time_interp_mins[restricted_time], zC, log10.(abs.(κₛ[:, restricted_time]')),
-                colorrange = (log10(1e-8), log10(1)), colormap = :tempo )
-Colorbar(fig[1, 3], hm, label = "Effective diffusivity (m²s⁻¹, log10)")
-
-ax4 = Axis(fig[2, 2], xlabel = "time (mins)", ylabel = "Effective diffusivity (m²s⁻¹, log10)",
-            title = "(d) Depth integrated horizontally averaged\nsalinity effective diffusivity",
-            xticks = time_ticks)
-lines!(ax4, time_interp_mins[restricted_time], log10.(abs.(∫κₛ_isothermal[restricted_time])),
-        label = "Isothermal", color = :cyan)
-lines!(ax4, time_interp_mins[restricted_time], log10.(abs.(∫κₛ[restricted_time])),
-        label = "Cabbeling", color = :pink)
-hlines!(ax4, log10(1e-7), label = "Parameterised salinity diffusivity", linestyle = :dash,
-        color = :black)
-axislegend(ax4, position = :rt, labelsize = 17)
-
-xlims!(ax4, 1e-5, restricted_time[end])
-linkxaxes!(ax2, ax4)
-hidexdecorations!(ax2, ticks = false)
-hideydecorations!(ax2, ticks = false)
-linkyaxes!(ax1, ax2)
-
-# Energetics
-ax3 = Axis(fig[2, 1], xlabel = "time (mins)", ylabel = "Watts",
-          title = "(c) Time derivative of energetic quantities")
-energy_scale = 1e8
-lines!(ax3, time_interp_mins[restricted_time],  dₜpe[restricted_time] .* energy_scale,
-        label = "dₜPE")
-lines!(ax3, time_interp_mins[restricted_time], dₜbpe[restricted_time] .* energy_scale,
-        label = "dₜBPE")
-lines!(ax3, time_interp_mins[restricted_time], dₜape[restricted_time] .* energy_scale,
-        label = "dₜAPE", color = :red)
-# lines!(ax3, time_interp_mins[1:400],  dₜek[1:400] .* energy_scale, label = "dₜEk", color = :green)
-Label(fig[2, 1, Top()], halign = :left, L"\times 10^{-8}", fontsize = 16)
-axislegend(ax3, position = :rt, orientation = :horizontal)
-# ylims!(ax3, -0.05, 0.4)
-
-topspinecolor = leftspinecolor = rightspinecolor = bottomspinecolor = :gray
-zoom_window = 1:100
-
-ax_inset = Axis(fig[2, 1],
-    width=Relative(0.68),
-    height=Relative(0.572),
-    halign=0.85,
-    valign=0.6,
-    backgroundcolor=:white,
-    xticklabelsize = 12,
-    yticklabelsize = 12;
-    topspinecolor, leftspinecolor, rightspinecolor, bottomspinecolor
-    )
-ylims!(ax_inset, -0.05, 0.4)
-lines!(ax_inset, time_interp_mins[zoom_window],  dₜpe[zoom_window] .* energy_scale)
-lines!(ax_inset, time_interp_mins[zoom_window], dₜbpe[zoom_window] .* energy_scale)
-lines!(ax_inset, time_interp_mins[zoom_window], dₜape[zoom_window] .* energy_scale, color = :red)
-hlines!(ax_inset, 0, linestyle = :dash, color = :grey)
-text!(ax3, 148, 3.85, text = L"\times 10^{-8}", fontsize = 12)
-translate!(ax_inset.scene, 0, 0, 10)
-# this needs separate translation as well, since it's drawn in the parent scene
-translate!(ax_inset.elements[:background], 0, 0, 9)
-
-using GLMakie.GeometryBasics
-ϵ = 1e-12
-rectangle_corners = Point2f[(0, minimum(dₜape)*energy_scale - ϵ),
-                            (time_interp_mins[zoom_window[end]], minimum(dₜape)*energy_scale-ϵ),
-                            (time_interp_mins[zoom_window[end]], maximum(dₜpe)*energy_scale+ϵ),
-                            (0, maximum(dₜpe)*energy_scale + ϵ)]
-poly!(ax3, rectangle_corners, strokecolor = :grey, strokewidth = 1, color = :transparent)
-xs = [time_interp_mins[310]]
-ys = [1]
-us = [time_interp_mins[zoom_window[end]+10] - time_interp_mins[315]]
-vs = [0]
-arrows!(ax3, xs, ys, us, vs, color = :gray)
-fig
-
-##
-save("results.png", fig)
-
-
-## Energy budget
+## (In) sanity check of energy budget
 ε_interp = 0.5 * (ε[1:end-1] .+ ε[2:end])
 ∫gρw_interp = 0.5 * (∫gρw[1:end-1] .+ ∫gρw[2:end])
 RHS = -ε_interp .- ∫gρw_interp
@@ -403,15 +400,68 @@ fig, ax = lines(time_interp, dₜek)
 lines!(ax, time_interp, RHS)
 fig
 
-## energetic quantites
-fig, ax = lines(timestamps, pe)
-lines!(ax, timestamps, bpe)
-fig
+## I will still only show the energetics for the most active (i.e. cabbeling) case.
+fig = Figure(size = (1000, 500))
+ax = Axis(fig[1, 1], xlabel = "time (mins)", ylabel = "Joules", title = "(a) Energy reservoirs")
+energy_scale = 1e5
+lines!(ax, timestamps[restricted_time],  pe[restricted_time] .* energy_scale,
+        label = "PE")
+lines!(ax, timestamps[restricted_time], bpe[restricted_time] .* energy_scale,
+        label = "BPE")
+lines!(ax, timestamps[restricted_time], ape[restricted_time] .* energy_scale,
+        label = "APE", color = :red)
+axislegend(ax, position = :rb, orientation = :horizontal)
+hidexdecorations!(ax, ticks = false, grid = false)
+Label(fig[1, 1, Top()], halign = :left, L"\times 10^{-5}", fontsize = 16)
+# time derivatives
+ax2 = Axis(fig[2, 1], xlabel = "time (mins)", ylabel = "Watts",
+          title = "(b) Time derivative of energy reservoirs")
+dₜenergy_scale = 1e8
+lines!(ax2, time_interp_mins[restricted_time],  dₜpe[restricted_time] .* dₜenergy_scale,
+        label = "dₜPE")
+lines!(ax2, time_interp_mins[restricted_time], dₜbpe[restricted_time] .* dₜenergy_scale,
+        label = "dₜBPE")
+lines!(ax2, time_interp_mins[restricted_time], dₜape[restricted_time] .* dₜenergy_scale,
+        label = "dₜAPE", color = :red)
+# lines!(ax3, time_interp_mins[1:400],  dₜek[1:400] .* energy_scale, label = "dₜEk", color = :green)
+Label(fig[2, 1, Top()], halign = :left, L"\times 10^{-8}", fontsize = 16)
+axislegend(ax2, position = :rt, orientation = :horizontal)
 
-lines(dₜape[3:100])
-findlast(dₜape[1:400] .> 0)
-fig, ax = lines(time_interp, dₜpe)
-lines!(ax, time_interp, dₜbpe)
+# topspinecolor = leftspinecolor = rightspinecolor = bottomspinecolor = :gray
+# zoom_window = 1:100
+
+# ax_inset = Axis(fig[2, 1],
+#     width=Relative(0.68),
+#     height=Relative(0.572),
+#     halign=0.85,
+#     valign=0.6,
+#     backgroundcolor=:white,
+#     xticklabelsize = 12,
+#     yticklabelsize = 12;
+#     topspinecolor, leftspinecolor, rightspinecolor, bottomspinecolor
+#     )
+# ylims!(ax_inset, -0.05, 0.4)
+# lines!(ax_inset, time_interp_mins[zoom_window],  dₜpe[zoom_window] .* dₜenergy_scale)
+# lines!(ax_inset, time_interp_mins[zoom_window], dₜbpe[zoom_window] .* dₜenergy_scale)
+# lines!(ax_inset, time_interp_mins[zoom_window], dₜape[zoom_window] .* dₜenergy_scale, color = :red)
+# hlines!(ax_inset, 0, linestyle = :dash, color = :grey)
+# text!(ax2, 148, 3.85, text = L"\times 10^{-8}", fontsize = 12)
+# translate!(ax_inset.scene, 0, 0, 10)
+# # this needs separate translation as well, since it's drawn in the parent scene
+# translate!(ax_inset.elements[:background], 0, 0, 9)
+
+# using GLMakie.GeometryBasics
+# ϵ = 1e-12
+# rectangle_corners = Point2f[(0, minimum(dₜape)*energy_scale - ϵ),
+#                             (time_interp_mins[zoom_window[end]], minimum(dₜape)*energy_scale-ϵ),
+#                             (time_interp_mins[zoom_window[end]], maximum(dₜpe)*energy_scale+ϵ),
+#                             (0, maximum(dₜpe)*energy_scale + ϵ)]
+# poly!(ax2, rectangle_corners, strokecolor = :grey, strokewidth = 1, color = :transparent)
+# xs = [time_interp_mins[310]]
+# ys = [1]
+# us = [time_interp_mins[zoom_window[end]+10] - time_interp_mins[315]]
+# vs = [0]
+# arrows!(ax2, xs, ys, us, vs, color = :gray)
 fig
 
 ## Graphical abstract

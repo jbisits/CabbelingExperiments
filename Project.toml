@@ -1,5 +1,6 @@
 [deps]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+ColorSchemes = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
 GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 GibbsSeaWater = "9a22fb26-0b63-4589-b28e-8f9d0b5c3d05"
 Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
