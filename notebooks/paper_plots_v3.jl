@@ -27,16 +27,16 @@ publication_theme = Theme(font="CMU Serif", fontsize = 20,
 set_theme!(publication_theme)
 
 ## Figure one, schematic
-S_star, Θ_star = 34.7, 0.5
+S✶, Θ✶ = 34.7, 0.5
 S₀ᵘ = 34.58
 Θ₀ᵘ = -1.5
-slope = (Θ₀ᵘ - Θ_star) / (S₀ᵘ - S_star)
-S_mix = range(S₀ᵘ, S_star, step = 0.000001)
+slope = (Θ₀ᵘ - Θ✶) / (S₀ᵘ - S✶)
+S_mix = range(S₀ᵘ, S✶, step = 0.000001)
 Θ_mix = @. Θ₀ᵘ + (slope) * (S_mix - S₀ᵘ)
 ρ_mix = gsw_rho.(S_mix, Θ_mix, 0)
 ρ_max, ρ_max_idx = findmax(ρ_mix)
 S_max, Θ_max = S_mix[ρ_max_idx], Θ_mix[ρ_max_idx]
-Δρ_mix = ρ_max - gsw_rho(S_star, Θ_star, 0)
+Δρ_mix = ρ_max - gsw_rho(S✶, Θ✶, 0)
 
 N = 1000
 plotting_offset = 10
@@ -44,15 +44,15 @@ S_range, Θ_range = range(34.55, 34.705, length = N), range(-2, 1, length = N)
 S_grid, Θ_grid = ones(N-(plotting_offset - 1)) .* S_range[plotting_offset:end]',
                  ones(N-(plotting_offset - 1))' .* Θ_range[plotting_offset:end]
 ρ = gsw_rho.(S_grid, Θ_grid, 0)
-ρ_star = gsw_rho(S_star, Θ_star, 0)
+ρ✶ = gsw_rho(S✶, Θ✶, 0)
 ρ_s = gsw_rho(S₀ᵘ, Θ₀ᵘ, 0)
 find_Θ = findfirst(Θ_range .> -1.5)
-find_S = findfirst(ρ[find_Θ, :] .> ρ_star)
+find_S = findfirst(ρ[find_Θ, :] .> ρ✶)
 S_iso, Θ_iso = S_range[find_S], Θ_range[find_Θ]
 gsw_rho(S_iso, Θ_iso, 0)
-αₗ, βₗ = gsw_alpha(S_star, Θ_star, 0), gsw_beta(S_star, Θ_star, 0)
+αₗ, βₗ = gsw_alpha(S✶, Θ✶, 0), gsw_beta(S✶, Θ✶, 0)
 m_initial = βₗ / αₗ
-Θ_linear_initial = @. Θ_star + m_initial * (S_range - S_star)
+Θ_linear_initial = @. Θ✶ + m_initial * (S_range - S✶)
 αₘ, βₘ = gsw_alpha(S_max, Θ_max, 0), gsw_beta(S_max, Θ_max, 0)
 m = βₘ / αₘ
 Θ_linear = @. Θ_max + m * (S_range - S_max)
@@ -61,7 +61,7 @@ m = βₘ / αₘ
 Nz = 200
 z = range(-10, 0, length = 2*Nz)
 
-Sˡ, Θˡ = fill(S_star, Nz), fill(Θ_star, Nz)
+Sˡ, Θˡ = fill(S✶, Nz), fill(Θ✶, Nz)
 Sᵘ, Θᵘ = fill(S₀ᵘ, Nz), fill(Θ₀ᵘ, Nz)
 S, Θ = vcat(Sˡ, Sᵘ), vcat(Θˡ, Θᵘ)
 σ₀ = gsw_sigma0.(S, Θ)
@@ -126,20 +126,20 @@ ax2 = Axis(fig[1, 2];
 hidespines!(ax2)
 
 # isopycnals and points
-contour!(ax2, S_range[plotting_offset:end], Θ_range[plotting_offset:end], ρ'; levels = [ρ_s, ρ_star, ρ_max],
+contour!(ax2, S_range[plotting_offset:end], Θ_range[plotting_offset:end], ρ'; levels = [ρ_s, ρ✶, ρ_max],
          color = [:blue, :red, :magenta], linestyle = :dot, linewidth = 2,
          labelsize = 18, label = "Isopycnals")
 lines!(ax2, S_mix, Θ_mix, color = :purple, label = "Mixed water", linewidth = 0.8)
-scatter!(ax2, [S_star], [Θ_star], color = :red, label = "Deep water")
+scatter!(ax2, [S✶], [Θ✶], color = :red, label = "Deep water")
 scatter!(ax2, [S₀ᵘ], [Θ₀ᵘ], color = :blue, label = "Shallow water")
 lines!(ax2, S_range[plotting_offset:end], Θ_linear_initial[plotting_offset:end],
         color = (:red, 0.5), label = "Tangent at\ndeep water", linestyle = :dashdot)
 scatter!(ax2, S_max, Θ_max, color = :magenta, label = "Maximum\ndensity")
 
 # wedge fill in
-ρ_star_isopycnal = findall(ρ' .≈ ρ_star)
-S_idx = [ρ_star_isopycnal[i][1] for i ∈ eachindex(ρ_star_isopycnal)]
-Θ_idx = [ρ_star_isopycnal[i][2] for i ∈ eachindex(ρ_star_isopycnal)]
+ρ✶_isopycnal = findall(ρ' .≈ ρ✶)
+S_idx = [ρ✶_isopycnal[i][1] for i ∈ eachindex(ρ✶_isopycnal)]
+Θ_idx = [ρ✶_isopycnal[i][2] for i ∈ eachindex(ρ✶_isopycnal)]
 band_1_range = plotting_offset:S_idx[1]
 S_band_1 = S_range[band_1_range]
 Θ_lower_band_1 = fill(Θ_range[plotting_offset-1], length(band_1_range))
@@ -157,7 +157,7 @@ arrows!(ax2, [S_range[10]], [Θ_range[5]], [1], [0], lengthscale = 0.15)
 arrows!(ax2, [S_range[10]], [Θ_range[5]], [0], [1], lengthscale = 2.8)
 arrows!(ax2, [S_mix[40000]], [Θ_mix[20000]], [0], [1], lengthscale = 0.30, color = :purple)
 arrows!(ax2, [34.605], [-1.5], [-1], [0], lengthscale = 0.018, color = :red)
-text!(ax2, S_star-0.002, Θ_star, align = (:right, :bottom), text = "Deep water", color = :red)
+text!(ax2, S✶-0.002, Θ✶, align = (:right, :bottom), text = "Deep water", color = :red)
 text!(ax2, S₀ᵘ-0.001, Θ₀ᵘ, align = (:right, :bottom),text = "Shallow water", color = :blue)
 text!(ax2, S_mix[40000], Θ_mix[20000], align = (:center, :top), text = "Mixed water", color = :purple)
 text!(ax2, S_max, Θ_max, align = (:left, :top), text = "Maximum density", color = :magenta)
@@ -273,39 +273,44 @@ fig
 # These should go in a table but maybe seeing them on S-Θ diagram will help. Much of this is
 # the same as figure one so make sure that is run first.
 
-haline_grad = get(ColorSchemes.haline, range(0, 1, length = 4))
 fig = Figure(size = (1200, 500))
 ax = Axis(fig[1, 1], xlabel = "S (gkg⁻¹)", ylabel = "Θ (°C)", title = "DNS initial conditions")
 
 N = 1000
 S_range, Θ_range = range(34.535, 34.705, length = N), range(-1.75, 0.75, length = N)
-Θ_linear_initial = @. Θ_star + m_initial * (S_range - S_star)
+Θ_linear_initial = @. Θ✶ + m_initial * (S_range - S✶)
 S_grid, Θ_grid = ones(N) .* S_range', ones(N)' .* Θ_range
 ρ = gsw_rho.(S_grid, Θ_grid, 0)
+ρ✶ = gsw_rho(S✶, Θ✶, 0)
+find_Θ = findfirst(Θ_range .> -1.5)
+find_S = findfirst(ρ[find_Θ, :] .> ρ✶)
+S_iso = round(S_range[find_S], digits = 3)
 Θ_freezing = gsw_ct_freezing.(S_range, 0, 1)
 
-S₀ᵘ = [34.69431424, 34.551, 34.568, 34.58]
-Θ₀ᵘ = vcat(0.5, fill(-1.5, 3))
+S₀ᵘ = [34.69431424, 34.551, 34.568, 34.58, S_iso, 34.59]
+Θ₀ᵘ = vcat(0.5, fill(-1.5, 5))
 S_max = similar(S₀ᵘ)
 Θ_max = similar(Θ₀ᵘ)
-ρ_max_pred = Vector{Float64}(undef, 4)
+ρ_max_pred = Vector{Float64}(undef, length(Θ_max ))
 for i ∈ eachindex(ρ_max)
-    slope = (Θ₀ᵘ[i] - Θ_star) / (S₀ᵘ[i] - S_star)
-    S_mix = range(S₀ᵘ[i], S_star, step = 0.000001)
+    slope = (Θ₀ᵘ[i] - Θ✶) / (S₀ᵘ[i] - S✶)
+    S_mix = range(S₀ᵘ[i], S✶, step = 0.000001)
     Θ_mix = @. Θ₀ᵘ[i] + (slope) * (S_mix - S₀ᵘ[i])
     ρ_mix = gsw_rho.(S_mix, Θ_mix, 0)
     ρ_max_pred[i], ρ_max_idx = findmax(ρ_mix)
     S_max[i], Θ_max[i] = S_mix[ρ_max_idx], Θ_mix[ρ_max_idx]
 end
-contour!(ax, S_range, Θ_range, ρ'; levels = [ρ_star],
+contour!(ax, S_range, Θ_range, ρ'; levels = [ρ✶],
          color = :grey, linewidth = 1,
          labelsize = 18, label = "Isopycnal at deep water")
 lines!(ax, S_range, Θ_linear_initial,
         color = :grey, label = "Tangent at deep water", linestyle = :dashdot)
-scatter!(ax, [S_star], [Θ_star], color = :red, label = "Deep water")
-scatter!(ax, S₀ᵘ, Θ₀ᵘ, color = haline_grad, label = "Shallow water", marker = :rect)
+markersize = 15
+haline_grad = get(ColorSchemes.haline, range(0, 1, length = length(S₀ᵘ)))
+scatter!(ax, [S✶], [Θ✶], color = :red, label = "Deep water"; markersize)
+scatter!(ax, S₀ᵘ, Θ₀ᵘ, color = haline_grad, label = "Shallow water", marker = :rect; markersize)
 # for i ∈ eachindex(S₀ᵘ)
-#     lines!(ax, [S₀ᵘ[i], S_star], [Θ₀ᵘ[i], Θ_star], color = haline_grad[i], linewidth = 0.5,
+#     lines!(ax, [S₀ᵘ[i], S✶], [Θ₀ᵘ[i], Θ✶], color = haline_grad[i], linewidth = 0.5,
 #             linestyle = :dash, label = i == 3 ? "Mixing line" : nothing)
 # end
 # scatter!(ax, S_max[2:end], Θ_max[2:end], color = haline_grad[2:end], label = "Density maximum", marker = :utriangle)
@@ -331,42 +336,86 @@ for (i, file) ∈ enumerate(all_output)
 
     close(f)
 end
+ρ₀ = jldopen(all_output[1]) do f
+        f["attrib/ρ₀"]
+end
 ρ_max_model = [maximum(ha_σ[i][:, 2]) for i ∈ 1:4]
 scatter_position = [1, 2, 3, 4]
 expts = ["iso", "stable", "lesscab", "cab"]
 
+function compute_R_ρ(S, Θ, interface_depth::Number=0)
+
+    S_u = S_g = S[1]
+    S_l = S_f = S[2]
+    Θ_u = Θ_f = Θ[1]
+    Θ_l = Θ_g = Θ[2]
+
+    ρ_u = gsw_rho(S_u, Θ_u, interface_depth)
+    ρ_l = gsw_rho(S_l, Θ_l, interface_depth)
+    ρ_f = gsw_rho(S_f, Θ_f, interface_depth)
+    ρ_g = gsw_rho(S_g, Θ_g, interface_depth)
+
+    return (0.5 * (ρ_f - ρ_u) + 0.5 * (ρ_l - ρ_g)) / (0.5 * (ρ_f - ρ_l) + 0.5 * (ρ_u - ρ_g))
+end
+R_ρ = Vector{Float64}(undef, length(all_output))
+Δρ = Vector{Float64}(undef, length(all_output))
+for i ∈ eachindex(R_ρ)
+    S = (S₀ᵘ[i], S✶)
+    Θ = (Θ₀ᵘ[i], Θ✶)
+    R_ρ[i] = compute_R_ρ(S, Θ)
+    Δρ[i] = gsw_rho(S[1], Θ[1], 0) - gsw_rho(S[2], Θ[2], 0)
+end
+
 fig = Figure(size = (500, 500))
-ax = Axis(fig[1, 1], xlabel = "Experiment", xticks = (scatter_position, expts), ylabel = "σ₀ (kgm⁻³)")
-scatter!(ax, scatter_position, ρ_max .- 1000, color = :steelblue, markersize = 15, label = "Theoretical predicted\nmaximum")
-scatter!(ax, scatter_position, ρ_max_model .- 1000, color = :orange, marker = :xcross, markersize = 15, label = "HA maximum after\nmixing at intreface")
-axislegend(ax, position = :lt)
+ax = Axis(fig[1, 1],
+            # xlabel = "Δρ (kgm⁻³)",
+            xlabel = "R_ρ ",
+            # xticks = (scatter_position, expts)
+            ylabel = "σ₀ (kgm⁻³)",
+            )
+# scatter!(ax, scatter_position, ρ_max .- 1000, color = :steelblue, markersize = 15, label = "Theoretical predicted\nmaximum")
+# scatter!(ax, scatter_position, ρ_max_model .- 1000, color = :orange, marker = :xcross, markersize = 15, label = "HA maximum after\nmixing at intreface")
+scatterlines!(ax, R_ρ[2:4], ρ_max[2:4] .- 1000, color = :orange, markersize = 15, label = "Theoretical predicted\nmaximum")
+scatterlines!(ax, R_ρ[2:4], ρ_max_model[2:4] .- 1000, color = haline_grad[2:4], marker = :xcross, markersize = 15, label = "HA maximum after\nmixing at intreface")
+# scatter!(ax, Δρ, ρ_max .- 1000, color = :orange, markersize = 15, label = "Theoretical predicted\nmaximum")
+# scatter!(ax, Δρ, ρ_max_model .- 1000, color = haline_grad, marker = :xcross, markersize = 15, label = "HA maximum after\nmixing at intreface")
+axislegend(ax, position = :rt)
 fig
 
 ## Diffusivity, new panel for all depth integrated diffusivities but keep other colourmap
 ∫κₛ = Vector{Array}(undef, length(all_output))
+κₛ = Array{Float64}(undef, 1650, 781)
 for (i, file) ∈ enumerate(all_output)
 
     f = jldopen(file)
+
     ∫κₛ[i] = f["diffusivity"]["∫κₛ"]
+    i == 4 ? κₛ = reverse(f["diffusivity/κₛ"], dims = 1) : nothing
 
     close(f)
 end
 
 restricted_time = 1:600
-fig = Figure(size = (1000, 500))
-expts = ["isothermal", "stable", "less cabbeling", "cabeling"]
-ax = Axis(fig[1, 1], xlabel = "time (mins)", ylabel = "κ̅_eff (m²s⁻¹, log10)",
+fig = Figure(size = (1000, 1000))
+ax = Axis(fig[1, 1], xlabel = "time (mins)", ylabel = "z(m)", title = "Cabbeling experiment")
+hm = heatmap!(ax, timestamps[3][restricted_time] ./60, zC[3], log10.(abs.(κₛ[:, restricted_time]')),
+                colorrange = (log10(1e-8), log10(1)), colormap = :tempo)
+Colorbar(fig[1, 2], hm, label = "κ_eff (m²s⁻¹, log10)")
+hidexdecorations!(ax, ticks = false, grid = false)
+expts = ["isothermal", "stable", "less cabbeling", "cabbeling"]
+ax2 = Axis(fig[2, 1], xlabel = "time (mins)", ylabel = "κ̅_eff (m²s⁻¹, log10)",
             title = "Depth integrated horizontally averaged salinity effective diffusivity",
             # xticks = time_ticks
             )
 for (i, file) ∈ enumerate(∫κₛ)
-    lines!(ax, timestamps[i][restricted_time] ./ 60, log10.(abs.(∫κₛ[i][restricted_time])),
+    lines!(ax2, timestamps[i][restricted_time] ./ 60, log10.(abs.(∫κₛ[i][restricted_time])),
             color = haline_grad[i], label = expts[i])
 end
-hlines!(ax, log10(1e-7), label = "Parameterised salinity diffusivity", linestyle = :dash,
+hlines!(ax2, log10(1e-7), label = "Parameterised salinity diffusivity", linestyle = :dash,
         color = :black)
-axislegend(ax, position = :rt, labelsize = 17)
-xlims!(ax, (0, 600))
+axislegend(ax2, position = :rt, labelsize = 17)
+xlims!(ax2, (0, 600))
+linkxaxes!(ax, ax2)
 fig
 
 ## Energetics
