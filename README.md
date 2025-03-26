@@ -11,4 +11,4 @@ They are currently configured to run on a GPU but can be configured to run on CP
 ## Analysis and reproducing figures
 
 Saved copies of the analysis files can be accessed through figshare, DOI: [10.6084/m9.figshare.28012616.v2](https://doi.org/10.6084/m9.figshare.28012616.v2) (they can also be computed by running the analysis scripts in located in the experiment folders).
-Figures can then be reproduced by running `notebooks/paper_plots_v3.jl` provided paths the data have been set correctly.
+Figures from the manuscript can then be reproduced by running `notebooks/paper_plots_v3.jl` provided paths to the analysis files have been set correctly.
