@@ -1,13 +1,9 @@
-# This version is the plots that have been updated during first revisions of the MS.
-# Figures 1 and 2 are unchanged (except for labels). Figure 3, the previous results figure,
-# will be broken up (likely into density evolution, diffusivity and energetics) as the longer
-# format allows more pages.
-
 using GLMakie, JLD2, GibbsSeaWater, ColorSchemes, StatsBase
 using SeawaterPolynomials: TEOS10EquationOfState, total_density, haline_contraction, thermal_expansion
 using TwoLayerDirectNumericalShenanigans: REFERENCE_DENSITY
 eos = TEOS10EquationOfState(reference_density = REFERENCE_DENSITY)
 
+# Load output
 cd(@__DIR__)
 stable_output = "../dns_runs/stable_stepchange_nothing_600min/stable_analysis_and_field_snapshots.jld2"
 lesscabbeling_output = "../dns_runs/lesscabbeling_stepchange_nothing_600min/lesscabbeling_analysis_and_field_snapshots.jld2"
@@ -38,15 +34,7 @@ publication_theme = Theme(font="CMU Serif", fontsize = 20,
 new_theme = merge(theme_latexfonts(), publication_theme)
 set_theme!(new_theme)
 
-## Print out lenght scales
-for file ∈ all_output
-    jldopen(file) do f
-        η, Ba = f["attrib/η"], f["attrib/Ba"]
-        println("η = $(round(η, digits = 5) * 1e3), Ba = $(round(Ba, digits = 5) * 1e3)")
-    end
-end
-
-## Figure one, schematic
+## Figure 1: schematic
 S✶, Θ✶ = 34.7, 0.5
 S₀ᵘ = 34.58
 Θ₀ᵘ = -1.5
@@ -201,8 +189,8 @@ fig
 ##
 save("schematic_2panel.png", fig)
 
-# Figure two, DNS states multiple panels
-## Load data to create figure
+## Figure 2: DNS flow evolution
+# Load data to create figure
 file = jldopen(cabbeling_output)
 
 x = file["dims/x"]
@@ -295,16 +283,8 @@ rowgap!(fig.layout, 2, Relative(0.08))
 fig
 ##
 save("dns_schematic_ts_horizontal.png", fig)
-###########################################################################################
-## New figures + replacing figure 3 with multiple figures
-###########################################################################################
 
-# Not exactly sure how where these will go so for now I will just make the figures
-
-## S-Θ initial dns initial conditions.
-# These should go in a table but maybe seeing them on S-Θ diagram will help. Much of this is
-# the same as figure one so make sure that is run first.
-
+## Figure 3 S-Θ initial conditions
 fig = Figure(size = (1000, 500))
 ax = Axis(fig[1, 1], xlabel = "S (gkg⁻¹)", ylabel = "Θ (°C)", title = "Experiment initial conditions")
 
@@ -349,7 +329,7 @@ fig
 ##
 save("ics.png", fig)
 
-## Density evolution, perhaps pair this with figure 3 panel (a).
+## Figure 4: maximum density + density evolution
 timestamps = Vector{Array}(undef, length(all_output))
 zC = Vector{Array}(undef, length(all_output))
 ha_σ = Vector{Array}(undef, length(all_output))
@@ -392,7 +372,6 @@ for i ∈ eachindex(Δρ)
 end
 ΔS_xaxis = range(34.52, 34.6, length = N) .- S✶
 ΔS_ics = S₀ᵘ .- S✶
-## Or just single figure for experiment four
 snapshots = [1, 50, 100, 400, 600] .+ 1
 expt = 4
 σ_anomaly = 1000
@@ -410,9 +389,6 @@ for i ∈ 2:length(Δρ)
             colorrange = (1, 5), label = rmn_label_stability[i],
             marker = markers[i], markersize)
 end
-# scatter!(ax, ΔS_ics[2:end], ρ_max_model[2:end] .- σ_anomaly; marker = markers[2:end],
-#         color = haline_grad[2:end], #label = "Mixed water density at\nmodel interface, t = 1 min",
-#         markersize)
 axislegend(ax, position = :lt)
 
 ax2 = Axis(fig[1, 2], xlabel = L"$σ_{0}'$ (kgm$^{-3}$)", ylabel = "z (m)")
@@ -430,7 +406,7 @@ fig
 ##
 save("density_evolution.png", fig)
 
-## Diffusivity, new panel for all depth integrated diffusivities but keep other colourmap
+## Figure 5: effective diffusivity
 ∫κₛ = Vector{Array}(undef, length(all_output))
 κₛ = Array{Float64}(undef, 1650, 781)
 zC = Vector{Array}(undef, length(all_output))
@@ -471,21 +447,6 @@ linkxaxes!(ax, ax2)
 fig
 ##
 save("diffusivity.png", fig)
-##
-# Time mean during different periods
-last_time = 600
-mean(∫κₛ[1][10:last_time]) # isothermal
-mean(∫κₛ[2][10:last_time]) # stable
-# cabbeling 1
-mean(∫κₛ[3][10:last_time])
-mean(∫κₛ[3][10:100])
-mean(∫κₛ[3][300:last_time])
-# cabbeling 2
-mean(∫κₛ[4][10:last_time])
-mean(∫κₛ[4][10:200])
-mean(∫κₛ[4][500:last_time])
-# unstable
-mean(∫κₛ[5][10:last_time])
 
 ## Energetics
 pe = Vector{Array}(undef, length(all_output))
@@ -532,11 +493,27 @@ for (i, file) ∈ enumerate(all_output)
     end
 end
 
-## (In) sanity check of energy budget
-expt = 4
-ε_interp = 0.5 * (ε[expt][1:end-1] .+ ε[expt][2:end])
-∫gρw_interp = 0.5 * (∫gρw[expt][1:end-1] .+ ∫gρw[expt][2:end])
-RHS = ε_interp .- ∫gρw_interp
+## Figure A1: Batchelor sacle for expt 5
+# Batchelor scale for unstable
+Ba_unstable = Array{Float64}(undef, length(timestamps[5]))
+jldopen(unstable_output) do file
+    Ba_unstable .= file["attrib/Ba_array"] * 1e3
+end
+find_under_Ba = findall(Ba_unstable .< 0.6)
+fig = Figure(size = (600, 400))
+ax = Axis(fig[1, 1], title = "Batchelor length in Experiment V",
+            xlabel = "time (mins)", ylabel = "Ba (mm)")
+hlines!(ax, 0.6, color = :red, linestyle = :dash, label = "Model resolution")
+lines!(ax, timestamps[5][1:50] ./ 60, Ba_unstable[1:50], label = "Minimum local Batchelor scale in space")
+scatter!(ax, timestamps[5][find_under_Ba] ./ 60, Ba_unstable[find_under_Ba], color = :orange,
+         markersize = 8, label = "Batachelor resolution not resolved")
+ylims!(ax, 0, 1)
+axislegend(ax, position = :rb)
+fig
+##
+save("batch_length_V.png", fig)
+
+## Figure A2: energy budget
 restricted_time = 1:600
 fig = Figure(size = (900, 1800))
 ax = [Axis(fig[i, 1], ylabel = "") for i ∈ 1:5]
@@ -562,56 +539,40 @@ Legend(fig[6, :], ax[1], orientation = :horizontal)
 fig
 ##
 save("energy_budgets.png", fig)
-##
-# Batchelor scale for unstable
-Ba_unstable = Array{Float64}(undef, length(timestamps[5]))
-jldopen(unstable_output) do file
-    Ba_unstable .= file["attrib/Ba_array"] * 1e3
-end
-find_under_Ba = findall(Ba_unstable .< 0.6)
-fig = Figure(size = (600, 400))
-ax = Axis(fig[1, 1], title = "Batchelor length in Experiment V",
-            xlabel = "time (mins)", ylabel = "Ba (mm)")
-hlines!(ax, 0.6, color = :red, linestyle = :dash, label = "Model resolution")
-lines!(ax, timestamps[5][1:50] ./ 60, Ba_unstable[1:50], label = "Minimum local Batchelor scale in space")
-scatter!(ax, timestamps[5][find_under_Ba] ./ 60, Ba_unstable[find_under_Ba], color = :orange,
-         markersize = 8, label = "Batachelor resolution not resolved")
-ylims!(ax, 0, 1)
-axislegend(ax, position = :rb)
-fig
-##
-save("batch_length_V.png", fig)
-##
-# fig, ax = lines(time_interp_mins[expt], dₜek[expt])
-# lines!(ax, time_interp_mins[expt], RHS)
-# ax2 = Axis(fig[2, 1])
-# lines!(ax2, time_interp_mins[expt], abs.(dₜek[expt] - RHS))
-# fig
 
-## I will still only show the energetics for the most active (i.e. cabbeling) case.
-expt = 3
+## Figure 6: cabbeling APE
+expts = (4)
 restricted_time = 1:600
 fig = Figure(size = (1000, 500))
 ax = Axis(fig[1, 1], xlabel = "time (mins)", ylabel = "Non-dimensional energy",
         title = "(a) Energy reservoirs")
-lines!(ax, timestamps[expt][restricted_time] / 60,  pe[expt][restricted_time],
-        label = L"\mathcal{PE}")
-lines!(ax, timestamps[expt][restricted_time] / 60, bpe[expt][restricted_time],
-        label = L"\mathcal{BPE}")
-lines!(ax, timestamps[expt][restricted_time] / 60, ape[expt][restricted_time],
-        label = L"\mathcal{APE}", color = :red)
+linestyles = [:solid, :dash]
+for (i, expt) ∈ enumerate(expts)
+    if i < 2
+    lines!(ax, timestamps[expt][restricted_time] / 60,  pe[expt][restricted_time],
+            label = L"\mathcal{PE}", color = Makie.wong_colors()[1], linestyle = linestyles[i])
+    lines!(ax, timestamps[expt][restricted_time] / 60, bpe[expt][restricted_time],
+            label = L"\mathcal{BPE}", color = Makie.wong_colors()[2], linestyle = linestyles[i])
+    end
+    lines!(ax, timestamps[expt][restricted_time] / 60, ape[expt][restricted_time];
+            label = L"\mathcal{APE}", color = :red, linestyle = linestyles[i])
+end
 axislegend(ax, position = :rc, orientation = :horizontal)
 hidexdecorations!(ax, ticks = false, grid = false)
 
 # time derivatives
 ax2 = Axis(fig[2, 1], xlabel = "time (mins)", ylabel = L"Rate $(s^{-1})$",
           title = "(b) Time derivative of energy reservoirs")
-lines!(ax2, time_interp_mins[expt][restricted_time],  dₜpe[expt][restricted_time],
-        label = L"\mathrm{d}_{t}\mathcal{PE}")
-lines!(ax2, time_interp_mins[expt][restricted_time], dₜbpe[expt][restricted_time],
-        label = L"\mathrm{d}_{t}\mathcal{BPE}")
-lines!(ax2, time_interp_mins[expt][restricted_time], dₜape[expt][restricted_time],
-        label = L"\mathrm{d}_{t}\mathcal{APE}", color = :red)
+for (i, expt) ∈ enumerate(expts)
+    if i < 2
+    lines!(ax2, time_interp_mins[expt][restricted_time],  dₜpe[expt][restricted_time],
+            label = L"\mathrm{d}_{t}\mathcal{PE}", color = Makie.wong_colors()[1], linestyle = linestyles[i])
+    lines!(ax2, time_interp_mins[expt][restricted_time], dₜbpe[expt][restricted_time],
+            label = L"\mathrm{d}_{t}\mathcal{BPE}", color = Makie.wong_colors()[2], linestyle = linestyles[i])
+    end
+    lines!(ax2, time_interp_mins[expt][restricted_time], dₜape[expt][restricted_time],
+            label = L"\mathrm{d}_{t}\mathcal{APE}", color = :red, linestyle = linestyles[i])
+end
 axislegend(ax2, position = :rt, orientation = :horizontal)
 
 linkxaxes!(ax, ax2)
@@ -620,57 +581,41 @@ fig
 ##
 save("cabbeling_ape.png", fig)
 
-## Only APE as that is what we care about?
-# restricted_time = 1:600
-fig = Figure(size = (1000, 500))
-ax = Axis(fig[1, 1], xlabel = "t̂", ylabel = "Non-dimensional energy",
-        title = "(a) APE reservoir")
-ax2 = Axis(fig[2, 1], xlabel = "t̂", ylabel = "Non-dimensional rate",
-          title = "(b) Time derivative of APE reservoir")
-for i ∈ eachindex(all_output[1:4])
-    lines!(ax, timestamps[i], ape[i],
-          color = haline_grad[i], label = rmn_label[i])
-    lines!(ax2, time_interp_mins[i], dₜape[i],
-        color = haline_grad[i], label = rmn_label[i])
-end
-axislegend(ax, position = :rc, orientation = :horizontal)
-hidexdecorations!(ax, ticks = false, grid = false)
-axislegend(ax2, position = :rt, orientation = :horizontal)
-
-linkxaxes!(ax, ax2)
-
-fig
-
-## Diffusivity from different experiments
-# Time mean over 10-100minutes so noise is dissipated
-mean_∫κₛ = Vector{Float64}(undef, length(all_output))
-mean_time = 300
-for i ∈ eachindex(mean_∫κₛ)
-    mean_∫κₛ[i] = mean(abs.(∫κₛ[i][11:mean_time]))
-end
-α✶, β✶ = gsw_alpha(S✶, Θ✶, 0), gsw_beta(S✶, Θ✶, 0)
-ΔΘ = -2
-Δρ_cab = total_density(Θ✶ + ΔΘ, S✶ + (α✶/β✶)*ΔΘ, 0, eos) - model_ρ✶
-Δρ_mix_upper = ρ_max_model .- model_ρ✶
+## Figure 7: close up of energy and diffusivity for IV
+expt = 4
+restricted_time = 250:400
+∫gρw_interp = 0.5 * (∫gρw[expt][1:end-1] .+ ∫gρw[expt][2:end])
 fig = Figure(size = (800, 400))
-ax = Axis(fig[1, 1],
-            xlabel = "Initial Δσ₀ (kgm⁻³)",
-            ylabel = L"$\langle\overline{κ_{eff}}\rangle_{t=11:%$(mean_time)}$ (m²s$^{-1}$, log10)",
-            )
-vlines!(ax, 0, label = "Static instability threshold", color = :grey)
-vlines!(ax, Δρ_cab, label = "Cabbeling instability threshold", color = :red)
-for i ∈ 2:length(Δρ)
-    scatter!(ax, Δρ[i], log10(mean_∫κₛ[i]); color = haline_grad[i],
-            marker = :rect, markersize, label = rmn_label_stability[i])
-end
-Legend(fig[1, 2], ax)
+ax = Axis(fig[1, 1], xlabel = "time (mins)", ylabel = L"Rate $(s^{-1})$",
+          title = "Experiment IV, t = $(restricted_time[1])-$(restricted_time[end])mins",
+          yaxisposition = :left,
+          rightspinevisible = false)
+l1 = lines!(ax, time_interp_mins[expt][restricted_time], dₜape[expt][restricted_time],
+            color = :red)
+l2 = lines!(ax, time_interp_mins[expt][restricted_time], dₜpe[expt][restricted_time],
+            color = Makie.wong_colors()[1])
+l3 = lines!(ax, time_interp_mins[expt][restricted_time], dₜbpe[expt][restricted_time],
+            color = Makie.wong_colors()[2])
+ax2 = Axis(fig[1, 1], ylabel = L"$\overline{κ_{eff}}$ (m²s$^{-1}$, log10)",
+            yaxisposition = :right,
+            yticklabelcolor = haline_grad[expt],
+            rightspinecolor = haline_grad[expt],
+            ytickcolor = haline_grad[expt],
+            ylabelcolor = haline_grad[expt],
+            leftspinevisible = false)
+l4 = lines!(ax2, time_interp_mins[expt][restricted_time], log10.(abs.(∫κₛ[expt][restricted_time])),
+            color = haline_grad[expt], label = rmn_label_stability[expt])
+Legend(fig[2, 1], [l1, l2, l3, l4],
+        [L"\mathrm{d}_{t}\mathcal{APE}", L"\mathrm{d}_{t}\mathcal{PE}",
+        L"\mathrm{d}_{t}\mathcal{BPE}", L"$\overline{κ_{eff}}$"], orientation = :horizontal)
 fig
 ##
-save("eff_diff_instability.png", fig)
-## Two panel
+save("ape_effdiff_IV.png", fig)
+
+## Figure 9: density difference vs mixing rate
 fig = Figure(size = (900, 700))
 ylimits = (log10(1e-8), log10(1e-2))
-ax = Axis(fig[1, 1], title = "(a) Static density difference",
+ax = Axis(fig[1, 1], title = "(a) Static density difference vs mixing rate",
             xlabel = L"Intial $\Delta \rho$ (kgm$^{-3}$)",
             ylabel = L"$\langle\overline{κ_{eff}}\rangle_{t}$ (m²s$^{-1}$, log10)",
             limits = ((-0.035, 0.0089), ylimits),
@@ -683,9 +628,8 @@ for i ∈ 1:length(Δρ)
             marker = markers[i], markersize)
 end
 axislegend(ax, position = :lt)
-# Legend(fig[1, 2], ax)
 
-ax2 = Axis(fig[2, 1], title = "(b) Cabbeling density difference",
+ax2 = Axis(fig[2, 1], title = "(b) Cabbeling density difference vs mixing rate",
             xlabel = L"Intial $\Delta\rho'$ (kgm$^{-3}$)",
             ylabel = L"$\langle\overline{κ_{eff}}\rangle_{t}$ (m²s$^{-1}$, log10)",
             limits = ((nothing, 0.011) , ylimits)
@@ -704,6 +648,7 @@ Legend(fig[3, :], marker_label, rmn_label_stability, orientation = :horizontal, 
 fig
 ##
 save("eff_diff_instability_2panel.png", fig)
+
 ## Graphical abstract
 fig = Figure(size = (1600, 700), px_per_unit = 16)
 
@@ -814,3 +759,147 @@ for i ∈ eachindex(all_output)
     println(round.(compute_Ra(S₀ᵘ[i], Θ₀ᵘ[i], eos)))
 end
 rayleigh_numbers = [compute_Ra(S₀ᵘ[i], Θ₀ᵘ[i], eos) for i ∈ eachindex(S₀ᵘ)]
+
+## Old
+# ## ha σ heatmap
+# f = jldopen(cabbeling_output)
+
+# timestamps = f["dims"]["timestamps"]
+# z = f["dims"]["z"]
+# σ = [reshape(f["σ"]["σ_$(t)"], :) for t ∈ f["dims"]["timestamps"]]
+# σ = hcat(σ...)
+# close(f)
+# ##
+# time_length = 200:400
+# fig, ax, hm = heatmap(timestamps[time_length] ./ 60, z, σ[:, time_length]',
+#                         colormap = :dense)
+# Colorbar(fig[1, 2], hm)
+# fig
+# ##
+# lines(σ[:, 340], z)
+# ## ha vertical velocity
+# f = jldopen(cabbeling_output)
+
+# timestamps = f["dims"]["timestamps"]
+# w = f["w"]["w_ha_avg"]
+# zF = f["dims"]["zF"]
+
+# close(f)
+# ##
+# time_length = 200:400
+# w = sqrt.(w.^2) ./ maximum(w[:, time_length])
+# fig, ax, hm = heatmap(timestamps[time_length] ./ 60, zF, w[:, time_length]',
+#                         colormap = :speed)
+# Colorbar(fig[1, 2], hm)
+# ax2 = Axis(fig[2, 1])
+# hm2 = heatmap!(ax2, time_interp_mins[expt][time_length], zF[1:end-2], log10.(abs.(κₛ[:, time_length]')),
+#         colormap = :tempo, label = rmn_label_stability[expt], colorrange = (log10(1e-8), log10(1)))
+# Colorbar(fig[2, 2], hm2)
+# fig
+
+# ## Only APE as that is what we care about?
+# # restricted_time = 1:600
+# fig = Figure(size = (1000, 500))
+# ax = Axis(fig[1, 1], xlabel = "t̂", ylabel = "Non-dimensional energy",
+#         title = "(a) APE reservoir")
+# ax2 = Axis(fig[2, 1], xlabel = "t̂", ylabel = "Non-dimensional rate",
+#           title = "(b) Time derivative of APE reservoir")
+# for i ∈ eachindex(all_output[1:4])
+#     lines!(ax, timestamps[i], ape[i],
+#           color = haline_grad[i], label = rmn_label[i])
+#     lines!(ax2, time_interp_mins[i], dₜape[i],
+#         color = haline_grad[i], label = rmn_label[i])
+# end
+# axislegend(ax, position = :rc, orientation = :horizontal)
+# hidexdecorations!(ax, ticks = false, grid = false)
+# axislegend(ax2, position = :rt, orientation = :horizontal)
+
+# linkxaxes!(ax, ax2)
+
+# fig
+# ## with kinetic energy
+# expt = 4
+# restricted_time = 250:400
+# ∫gρw_interp = 0.5 * (∫gρw[expt][1:end-1] .+ ∫gρw[expt][2:end])
+# fig = Figure(size = (800, 400))
+# ax = Axis(fig[1, 1], xlabel = "time (mins)", ylabel = L"Rate $(s^{-1})$",
+#           title = "Experiment IV, t = $(restricted_time[1])-$(restricted_time[end])mins",
+#           yaxisposition = :left,
+#         #   yticklabelcolor = :red,
+#         #   leftspinecolor = :red,
+#         #   ytickcolor = :red,
+#         #   ylabelcolor = :red,
+#           rightspinevisible = false)
+# l1 = lines!(ax, time_interp_mins[expt][restricted_time], dₜek[expt][restricted_time])
+# ax2 = Axis(fig[1, 1], ylabel = L"$\overline{κ_{eff}}$ (m²s$^{-1}$, log10)",
+#             yaxisposition = :right,
+#             yticklabelcolor = haline_grad[expt],
+#             rightspinecolor = haline_grad[expt],
+#             ytickcolor = haline_grad[expt],
+#             ylabelcolor = haline_grad[expt],
+#             leftspinevisible = false)
+# l4 = lines!(ax2, time_interp_mins[expt][restricted_time], log10.(abs.(∫κₛ[expt][restricted_time])),
+#             color = haline_grad[expt], label = rmn_label_stability[expt])
+# Legend(fig[2, 1], [l1, l4],
+#         [L"\mathrm{d}_{t}\mathcal{KR}",  L"$\overline{κ_{eff}}$"], orientation = :horizontal)
+# fig
+# ## Print out lenght scales
+# for file ∈ all_output
+#     jldopen(file) do f
+#         η, Ba = f["attrib/η"], f["attrib/Ba"]
+#         println("η = $(round(η, digits = 5) * 1e3), Ba = $(round(Ba, digits = 5) * 1e3)")
+#     end
+# end
+##
+# # Time mean during different periods
+# last_time = 600
+# mean(∫κₛ[1][10:last_time]) # isothermal
+# mean(∫κₛ[2][10:last_time]) # stable
+# # cabbeling 1
+# mean(∫κₛ[3][10:last_time])
+# mean(∫κₛ[3][10:100])
+# mean(∫κₛ[3][300:last_time])
+# # cabbeling 2
+# mean(∫κₛ[4][10:last_time])
+# mean(∫κₛ[4][10:200])
+# mean(∫κₛ[4][500:last_time])
+# # unstable
+# mean(∫κₛ[5][10:last_time])
+# fig, ax = lines(time_interp_mins[expt], dₜek[expt])
+# lines!(ax, time_interp_mins[expt], RHS)
+# ax2 = Axis(fig[2, 1])
+# lines!(ax2, time_interp_mins[expt], abs.(dₜek[expt] - RHS))
+# fig
+
+## I will still only show the energetics for the most active (i.e. cabbeling) case.
+##
+# fig, ax = lines(time_interp_mins[expt], dₜek[expt])
+# lines!(ax, time_interp_mins[expt], RHS)
+# ax2 = Axis(fig[2, 1])
+# lines!(ax2, time_interp_mins[expt], abs.(dₜek[expt] - RHS))
+# fig
+# Time mean over 10-100minutes so noise is dissipated
+# mean_∫κₛ = Vector{Float64}(undef, length(all_output))
+# mean_time = 300
+# for i ∈ eachindex(mean_∫κₛ)
+#     mean_∫κₛ[i] = mean(abs.(∫κₛ[i][11:mean_time]))
+# end
+# α✶, β✶ = gsw_alpha(S✶, Θ✶, 0), gsw_beta(S✶, Θ✶, 0)
+# ΔΘ = -2
+# Δρ_cab = total_density(Θ✶ + ΔΘ, S✶ + (α✶/β✶)*ΔΘ, 0, eos) - model_ρ✶
+# Δρ_mix_upper = ρ_max_model .- model_ρ✶
+# fig = Figure(size = (800, 400))
+# ax = Axis(fig[1, 1],
+#             xlabel = "Initial Δσ₀ (kgm⁻³)",
+#             ylabel = L"$\langle\overline{κ_{eff}}\rangle_{t=11:%$(mean_time)}$ (m²s$^{-1}$, log10)",
+#             )
+# vlines!(ax, 0, label = "Static instability threshold", color = :grey)
+# vlines!(ax, Δρ_cab, label = "Cabbeling instability threshold", color = :red)
+# for i ∈ 2:length(Δρ)
+#     scatter!(ax, Δρ[i], log10(mean_∫κₛ[i]); color = haline_grad[i],
+#             marker = :rect, markersize, label = rmn_label_stability[i])
+# end
+# Legend(fig[1, 2], ax)
+# fig
+# ##
+# save("eff_diff_instability.png", fig)
