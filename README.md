@@ -1,6 +1,8 @@
 # Cabbeling Experiments
 
-Direct Numerical Simulation (DNS) experiments run as part of the study: *Cabbeling as a catalyst and driver of turbluent mixing*, submitted to the Journal of Fluid Mechanics.
+Direct Numerical Simulation (DNS) experiments run as part of the study:
+
+Bisits JI, Zika JD, Sohail T. Cabbeling as a catalyst and driver of turbulent mixing. *Journal of Fluid Mechanics.* 2025;1011:A17. doi:10.1017/jfm.2025.349
 
 ## Reproducing the experiments
 
